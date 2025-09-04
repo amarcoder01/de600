@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
 import { AuthService } from '@/lib/auth-service'
+import { query, withTransaction } from '@/lib/pg'
+import { randomUUID } from 'crypto'
 
 // GET - Get all trades for a portfolio
 export async function GET(
@@ -33,26 +34,14 @@ export async function GET(
 
     console.log('👤 Trades API - User verified:', { userId: user.id, userEmail: user.email })
 
-    // Test database connection
-    console.log('🔌 Trades API - Testing database connection...')
-    try {
-      await prisma.$connect()
-      console.log('✅ Trades API - Database connection successful')
-    } catch (dbError) {
-      console.error('❌ Trades API - Database connection failed:', dbError)
-      return NextResponse.json(
-        { success: false, error: 'Database connection failed' },
-        { status: 500 }
-      )
-    }
-
     // Verify portfolio belongs to user
     console.log('📊 Trades API - Verifying portfolio ownership...')
-    const portfolio = await prisma.portfolio.findFirst({
-      where: { id, userId: user.id }
-    })
+    const { rows: portfolioRows } = await query<{ id: string }>(
+      'SELECT "id" FROM "Portfolio" WHERE "id" = $1 AND "userId" = $2 LIMIT 1',
+      [id, user.id]
+    )
 
-    if (!portfolio) {
+    if (portfolioRows.length === 0) {
       console.log('❌ Trades API - Portfolio not found or access denied:', { portfolioId: id, userId: user.id })
       return NextResponse.json(
         { success: false, error: 'Portfolio not found' },
@@ -60,14 +49,14 @@ export async function GET(
       )
     }
 
-    console.log('✅ Trades API - Portfolio access verified:', { portfolioId: portfolio.id, portfolioName: portfolio.name })
+    console.log('✅ Trades API - Portfolio access verified:', { portfolioId: id })
 
     // Fetch trades
     console.log('📈 Trades API - Fetching trades...')
-    const trades = await prisma.trade.findMany({
-      where: { portfolioId: id },
-      orderBy: { date: 'desc' }
-    })
+    const { rows: trades } = await query(
+      'SELECT * FROM "Trade" WHERE "portfolioId" = $1 ORDER BY "date" DESC',
+      [id]
+    )
 
     console.log('✅ Trades API - Trades fetched successfully:', { count: trades.length })
 
@@ -103,13 +92,7 @@ export async function GET(
       error: errorMessage
     }, { status: statusCode })
   } finally {
-    // Always disconnect from database
-    try {
-      await prisma.$disconnect()
-      console.log('🔌 Trades API - Database disconnected')
-    } catch (disconnectError) {
-      console.warn('⚠️ Trades API - Error disconnecting from database:', disconnectError)
-    }
+    // No explicit disconnect required; pool manages connections.
   }
 }
 
@@ -166,26 +149,14 @@ export async function POST(
 
     console.log('👤 Trades API - User verified for trade creation:', { userId: user.id, userEmail: user.email })
 
-    // Test database connection
-    console.log('🔌 Trades API - Testing database connection for trade creation...')
-    try {
-      await prisma.$connect()
-      console.log('✅ Trades API - Database connection successful for trade creation')
-    } catch (dbError) {
-      console.error('❌ Trades API - Database connection failed for trade creation:', dbError)
-      return NextResponse.json(
-        { success: false, error: 'Database connection failed' },
-        { status: 500 }
-      )
-    }
-
     // Verify portfolio belongs to user
     console.log('📊 Trades API - Verifying portfolio ownership for trade creation...')
-    const portfolio = await prisma.portfolio.findFirst({
-      where: { id, userId: user.id }
-    })
+    const { rows: portfolioRows } = await query<{ id: string }>(
+      'SELECT "id" FROM "Portfolio" WHERE "id" = $1 AND "userId" = $2 LIMIT 1',
+      [id, user.id]
+    )
 
-    if (!portfolio) {
+    if (portfolioRows.length === 0) {
       console.log('❌ Trades API - Portfolio not found or access denied for trade creation:', { portfolioId: id, userId: user.id })
       return NextResponse.json(
         { success: false, error: 'Portfolio not found' },
@@ -193,145 +164,90 @@ export async function POST(
       )
     }
 
-    console.log('✅ Trades API - Portfolio access verified for trade creation:', { portfolioId: portfolio.id, portfolioName: portfolio.name })
+    console.log('✅ Trades API - Portfolio access verified for trade creation:', { portfolioId: id })
 
-    // For sell trades, check if user has enough shares
+    // For sell trades, pre-check if user has enough shares
     if (type === 'sell') {
       console.log('📉 Trades API - Checking position for sell trade...')
-      const currentPosition = await prisma.position.findFirst({
-        where: { 
-          portfolioId: id,
-          symbol: symbol.toUpperCase()
-        }
-      })
+      const { rows: posRows } = await query<{ quantity: number }>(
+        'SELECT "quantity" FROM "Position" WHERE "portfolioId" = $1 AND "symbol" = $2 LIMIT 1',
+        [id, symbol.toUpperCase()]
+      )
 
-      if (!currentPosition || currentPosition.quantity < quantity) {
-        console.log('❌ Trades API - Insufficient shares for sell trade:', { 
-          symbol, 
-          requestedQuantity: quantity, 
-          availableQuantity: currentPosition?.quantity || 0 
+      const currentQty = posRows[0]?.quantity || 0
+      if (currentQty < parseFloat(quantity)) {
+        console.log('❌ Trades API - Insufficient shares for sell trade:', {
+          symbol,
+          requestedQuantity: quantity,
+          availableQuantity: currentQty,
         })
         return NextResponse.json({
           success: false,
-          error: `Insufficient shares. You only own ${currentPosition?.quantity || 0} shares of ${symbol.toUpperCase()}`
+          error: `Insufficient shares. You only own ${currentQty} shares of ${symbol.toUpperCase()}`
         }, { status: 400 })
       }
 
-      console.log('✅ Trades API - Position check passed for sell trade:', { 
-        symbol, 
-        availableQuantity: currentPosition.quantity 
+      console.log('✅ Trades API - Position check passed for sell trade:', {
+        symbol,
+        availableQuantity: currentQty,
       })
     }
 
     console.log('📝 Trades API - Creating trade:', { symbol, type, quantity, price })
 
-    // Create the trade
-    const trade = await prisma.trade.create({
-      data: {
-        portfolioId: id,
-        symbol: symbol.toUpperCase(),
-        type,
-        quantity: parseFloat(quantity),
-        price: parseFloat(price),
-        amount: parseFloat(quantity) * parseFloat(price),
-        date: new Date(),
-        notes: notes || null
-      }
-    })
+    // Execute trade and position updates in a transaction
+    const trade = await withTransaction(async (client) => {
+      const now = new Date()
+      const qty = parseFloat(quantity)
+      const prc = parseFloat(price)
+      const amount = qty * prc
+      // Insert trade with generated ID
+      const tradeId = randomUUID()
+      const tradeInsert = await client.query<{ id: string }>(
+        'INSERT INTO "Trade" ("id", "portfolioId", "symbol", "type", "quantity", "price", "amount", "date", "notes") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING "id"',
+        [tradeId, id, symbol.toUpperCase(), type, qty, prc, amount, now, notes || null]
+      )
 
-    console.log('✅ Trades API - Trade created successfully:', { tradeId: trade.id, symbol, type, quantity, price })
+      // Fetch existing position
+      const posRes = await client.query<{
+        id: string
+        quantity: number
+        "averagePrice": number
+      }>('SELECT "id", "quantity", "averagePrice" FROM "Position" WHERE "portfolioId" = $1 AND "symbol" = $2 LIMIT 1', [id, symbol.toUpperCase()])
 
-    // Update or create position based on trade type
-    if (type === 'buy') {
-      console.log('📈 Trades API - Processing buy trade position update...')
-      // Check if position already exists
-      const existingPosition = await prisma.position.findFirst({
-        where: { 
-          portfolioId: id,
-          symbol: symbol.toUpperCase()
-        }
-      })
+      if (type === 'buy') {
+        if (posRes.rows.length > 0) {
+          const existing = posRes.rows[0]
+          const totalQuantity = Number(existing.quantity) + qty
+          const totalCost = Number(existing.quantity) * Number(existing["averagePrice"]) + qty * prc
+          const newAveragePrice = totalCost / totalQuantity
 
-      if (existingPosition) {
-        // Update existing position (average down/up)
-        const totalQuantity = existingPosition.quantity + parseFloat(quantity)
-        const totalCost = (existingPosition.quantity * existingPosition.averagePrice) + (parseFloat(quantity) * parseFloat(price))
-        const newAveragePrice = totalCost / totalQuantity
-
-        await prisma.position.update({
-          where: { id: existingPosition.id },
-          data: {
-            quantity: totalQuantity,
-            averagePrice: newAveragePrice,
-            entryDate: new Date()
-          }
-        })
-
-        console.log('✅ Trades API - Existing position updated:', { 
-          positionId: existingPosition.id, 
-          newQuantity: totalQuantity, 
-          newAveragePrice: newAveragePrice 
-        })
-      } else {
-        // Create new position
-        const newPosition = await prisma.position.create({
-          data: {
-            portfolioId: id,
-            symbol: symbol.toUpperCase(),
-            quantity: parseFloat(quantity),
-            averagePrice: parseFloat(price),
-            entryDate: new Date(),
-            notes: notes || null
-          }
-        })
-
-        console.log('✅ Trades API - New position created:', { 
-          positionId: newPosition.id, 
-          symbol, 
-          quantity: parseFloat(quantity), 
-          averagePrice: parseFloat(price) 
-        })
-      }
-    } else if (type === 'sell') {
-      console.log('📉 Trades API - Processing sell trade position update...')
-      // Update position by reducing quantity
-      const existingPosition = await prisma.position.findFirst({
-        where: { 
-          portfolioId: id,
-          symbol: symbol.toUpperCase()
-        }
-      })
-
-      if (existingPosition) {
-        const remainingQuantity = existingPosition.quantity - parseFloat(quantity)
-        
-        if (remainingQuantity <= 0) {
-          // Delete position if all shares sold
-          await prisma.position.delete({
-            where: { id: existingPosition.id }
-          })
-
-          console.log('✅ Trades API - Position deleted (all shares sold):', { 
-            positionId: existingPosition.id, 
-            symbol 
-          })
+          await client.query(
+            'UPDATE "Position" SET "quantity" = $1, "averagePrice" = $2, "entryDate" = $3 WHERE "id" = $4',
+            [totalQuantity, newAveragePrice, now, existing.id]
+          )
         } else {
-          // Update position with remaining quantity
-          await prisma.position.update({
-            where: { id: existingPosition.id },
-            data: {
-              quantity: remainingQuantity
-            }
-          })
-
-          console.log('✅ Trades API - Position updated (partial sell):', { 
-            positionId: existingPosition.id, 
-            symbol, 
-            remainingQuantity 
-          })
+          // Insert new position with generated ID
+          const positionId = randomUUID()
+          await client.query(
+            'INSERT INTO "Position" ("id", "portfolioId", "symbol", "quantity", "averagePrice", "entryDate", "notes") VALUES ($1, $2, $3, $4, $5, $6, $7)',
+            [positionId, id, symbol.toUpperCase(), qty, prc, now, notes || null]
+          )
+        }
+      } else if (type === 'sell') {
+        if (posRes.rows.length > 0) {
+          const existing = posRes.rows[0]
+          const remainingQuantity = Number(existing.quantity) - qty
+          if (remainingQuantity <= 0) {
+            await client.query('DELETE FROM "Position" WHERE "id" = $1', [existing.id])
+          } else {
+            await client.query('UPDATE "Position" SET "quantity" = $1 WHERE "id" = $2', [remainingQuantity, existing.id])
+          }
         }
       }
-    }
+
+      return { id: tradeInsert.rows[0].id, portfolioId: id, symbol: symbol.toUpperCase(), type, quantity: qty, price: prc, amount, date: now, notes: notes || null }
+    })
 
     console.log('✅ Trades API - Trade and position processing completed successfully')
 
@@ -370,12 +286,6 @@ export async function POST(
       error: errorMessage
     }, { status: statusCode })
   } finally {
-    // Always disconnect from database
-    try {
-      await prisma.$disconnect()
-      console.log('🔌 Trades API - Database disconnected')
-    } catch (disconnectError) {
-      console.warn('⚠️ Trades API - Error disconnecting from database:', disconnectError)
-    }
+    // No explicit disconnect required; pool manages connections.
   }
 }

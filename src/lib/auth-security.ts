@@ -1,10 +1,10 @@
-import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import crypto from 'crypto'
 import { NextRequest } from 'next/server'
+import { query } from '@/lib/pg'
 
-const prisma = new PrismaClient()
+// Using direct PostgreSQL client from src/lib/pg
 
 // Security configuration
 const SECURITY_CONFIG = {
@@ -425,19 +425,20 @@ export function validateUserData(data: CreateUserData): { isValid: boolean; erro
 // Log security events
 export async function logSecurityEvent(event: Partial<LoginAttempt>): Promise<void> {
   try {
-    await prisma.loginAttempt.create({
-      data: {
-        userId: event.userId || '',
-        email: event.email || '',
-        ipAddress: event.ipAddress || '',
-        userAgent: event.userAgent || '',
-        deviceFingerprint: event.deviceFingerprint || '',
-        success: event.success || false,
-        failureReason: event.failureReason,
-        location: event.location,
-        timestamp: event.timestamp || new Date()
-      }
-    })
+    await query(
+      'INSERT INTO "LoginAttempt" ("userId", "email", "ipAddress", "userAgent", "deviceFingerprint", "success", "failureReason", "location", "timestamp") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)',
+      [
+        event.userId || null,
+        event.email || '',
+        event.ipAddress || '',
+        event.userAgent || '',
+        event.deviceFingerprint || '',
+        event.success || false,
+        event.failureReason || null,
+        event.location || null,
+        event.timestamp || new Date(),
+      ]
+    )
   } catch (error) {
     console.error('Failed to log security event:', error)
     // Don't throw error for logging failures to avoid breaking auth flow
@@ -450,42 +451,32 @@ export async function detectSuspiciousActivity(userId: string, ipAddress: string
   
   try {
     // Check for multiple failed attempts from same IP
-    const recentFailedAttempts = await prisma.loginAttempt.count({
-      where: {
-        ipAddress,
-        success: false,
-        timestamp: {
-          gte: new Date(Date.now() - 60 * 60 * 1000) // Last hour
-        }
-      }
-    })
+    const { rows: failedRows } = await query<{ count: string }>(
+      'SELECT COUNT(*)::text as count FROM "LoginAttempt" WHERE "ipAddress" = $1 AND "success" = false AND "timestamp" >= $2',
+      [ipAddress, new Date(Date.now() - 60 * 60 * 1000)]
+    )
+    const recentFailedAttempts = parseInt(failedRows[0]?.count || '0', 10)
     
     if (recentFailedAttempts > 10) {
       reasons.push('Multiple failed login attempts from this IP address')
     }
     
     // Check for login from new device
-    const existingDevice = await prisma.deviceTrust.findFirst({
-      where: {
-        userId,
-        deviceFingerprint
-      }
-    })
+    const { rows: deviceRows } = await query<{ id: string }>(
+      'SELECT "id" FROM "DeviceTrust" WHERE "userId" = $1 AND "deviceFingerprint" = $2 LIMIT 1',
+      [userId, deviceFingerprint]
+    )
     
-    if (!existingDevice) {
+    if (deviceRows.length === 0) {
       reasons.push('Login attempt from new device')
     }
     
     // Check for rapid successive logins
-    const recentLogins = await prisma.loginAttempt.count({
-      where: {
-        userId,
-        success: true,
-        timestamp: {
-          gte: new Date(Date.now() - 5 * 60 * 1000) // Last 5 minutes
-        }
-      }
-    })
+    const { rows: loginRows } = await query<{ count: string }>(
+      'SELECT COUNT(*)::text as count FROM "LoginAttempt" WHERE "userId" = $1 AND "success" = true AND "timestamp" >= $2',
+      [userId, new Date(Date.now() - 5 * 60 * 1000)]
+    )
+    const recentLogins = parseInt(loginRows[0]?.count || '0', 10)
     
     if (recentLogins > 3) {
       reasons.push('Rapid successive login attempts')
@@ -504,13 +495,7 @@ export async function detectSuspiciousActivity(userId: string, ipAddress: string
 // Clean up expired sessions
 export async function cleanupExpiredSessions(): Promise<void> {
   try {
-    await prisma.userSession.deleteMany({
-      where: {
-        expiresAt: {
-          lt: new Date()
-        }
-      }
-    })
+    await query('DELETE FROM "UserSession" WHERE "expiresAt" < $1', [new Date()])
   } catch (error) {
     console.error('Failed to cleanup expired sessions:', error)
   }

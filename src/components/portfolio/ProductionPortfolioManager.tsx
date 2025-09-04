@@ -83,6 +83,15 @@ export default function ProductionPortfolioManager() {
   const [retryCount, setRetryCount] = useState(0)
   const [maxRetries] = useState(3)
   
+  // Enhanced loading states for all operations
+  const [isAddingTrade, setIsAddingTrade] = useState(false)
+  const [isDeletingTrade, setIsDeletingTrade] = useState<string | null>(null)
+  const [isDeletingPosition, setIsDeletingPosition] = useState<string | null>(null)
+  const [isRefreshingPortfolio, setIsRefreshingPortfolio] = useState(false)
+  const [isRefreshingData, setIsRefreshingData] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
+  const [isImporting, setIsImporting] = useState(false)
+  
   const [tradeForm, setTradeForm] = useState({
     symbol: '',
     type: 'buy' as 'buy' | 'sell',
@@ -304,15 +313,25 @@ export default function ProductionPortfolioManager() {
 
   // Handle portfolio switching
   const handlePortfolioChange = useCallback(async (portfolio: Portfolio) => {
-    setActivePortfolio(portfolio)
-    setPositions([])
-    setTrades([])
-    
-    // Load positions and trades for the selected portfolio
-    await Promise.all([
-      loadPositions(portfolio.id),
-      loadTrades(portfolio.id)
-    ])
+    try {
+      setIsRefreshingData(true)
+      setError(null)
+      
+      setActivePortfolio(portfolio)
+      setPositions([])
+      setTrades([])
+      
+      // Load positions and trades for the selected portfolio
+      await Promise.all([
+        loadPositions(portfolio.id),
+        loadTrades(portfolio.id)
+      ])
+    } catch (err) {
+      console.error('❌ Portfolio Component - Error switching portfolio:', err)
+      setError(err instanceof Error ? err.message : 'Failed to switch portfolio')
+    } finally {
+      setIsRefreshingData(false)
+    }
   }, [loadPositions, loadTrades])
 
   // Create new portfolio
@@ -420,6 +439,9 @@ export default function ProductionPortfolioManager() {
     }
 
     try {
+      setIsAddingTrade(true)
+      setError(null)
+      
       console.log('📡 Portfolio Component - Adding trade to database:', {
         portfolioId: activePortfolio.id,
         symbol: tradeForm.symbol.toUpperCase(),
@@ -498,6 +520,8 @@ export default function ProductionPortfolioManager() {
     } catch (err) {
       console.error('❌ Portfolio Component - Error adding trade:', err)
       setError(err instanceof Error ? err.message : 'Failed to add trade')
+    } finally {
+      setIsAddingTrade(false)
     }
   }
 
@@ -556,6 +580,9 @@ export default function ProductionPortfolioManager() {
 
     if (window.confirm('Are you sure you want to delete this position? This action cannot be undone.')) {
       try {
+        setIsDeletingPosition(positionId)
+        setError(null)
+        
         console.log('🗑️ Portfolio Component - Deleting position:', positionId)
         
         const response = await fetch(`/api/portfolio/${activePortfolio.id}/positions/${positionId}`, {
@@ -575,7 +602,7 @@ export default function ProductionPortfolioManager() {
           try {
             const errorData = await response.json()
             errorMessage = errorData.error || errorMessage
-          } catch {
+            } catch {
             if (response.status === 401) {
               errorMessage = 'Authentication required. Please sign in and try again.'
             } else if (response.status === 404) {
@@ -597,6 +624,8 @@ export default function ProductionPortfolioManager() {
       } catch (err) {
         console.error('❌ Portfolio Component - Error deleting position:', err)
         setError(err instanceof Error ? err.message : 'Failed to delete position')
+      } finally {
+        setIsDeletingPosition(null)
       }
     }
   }
@@ -610,54 +639,98 @@ export default function ProductionPortfolioManager() {
        positions.reduce((sum, pos) => sum + (pos.quantity * pos.averagePrice), 0)) * 100 : 0
   }
 
-  const exportPortfolio = () => {
-    const data = {
-      portfolios,
-      trades,
-      positions,
-      exportDate: new Date().toISOString(),
-      portfolioStats
+  const exportPortfolio = async () => {
+    try {
+      setIsExporting(true)
+      setError(null)
+      
+      const data = {
+        portfolios,
+        trades,
+        positions,
+        exportDate: new Date().toISOString(),
+        portfolioStats
+      }
+      
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `portfolio-${new Date().toISOString().split('T')[0]}.json`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      
+      // Small delay to show loading state
+      await new Promise(resolve => setTimeout(resolve, 500))
+    } catch (err) {
+      console.error('❌ Portfolio Component - Error exporting portfolio:', err)
+      setError(err instanceof Error ? err.message : 'Failed to export portfolio')
+    } finally {
+      setIsExporting(false)
     }
-    
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `portfolio-${new Date().toISOString().split('T')[0]}.json`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
   }
 
-  const importPortfolio = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const importPortfolio = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
 
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      try {
-        const data = JSON.parse(e.target?.result as string)
-        if (data.trades) setTrades(data.trades)
-        setError(null)
-      } catch (error) {
-        console.error('Error importing portfolio:', error)
-        setError('Error importing portfolio data. Please check the file format.')
+    try {
+      setIsImporting(true)
+      setError(null)
+      
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target?.result as string)
+          if (data.trades) setTrades(data.trades)
+          setError(null)
+        } catch (error) {
+          console.error('Error importing portfolio:', error)
+          setError('Error importing portfolio data. Please check the file format.')
+        }
       }
+      reader.readAsText(file)
+      
+      // Small delay to show loading state
+      await new Promise(resolve => setTimeout(resolve, 500))
+    } catch (err) {
+      console.error('❌ Portfolio Component - Error importing portfolio:', err)
+      setError(err instanceof Error ? err.message : 'Failed to import portfolio')
+    } finally {
+      setIsImporting(false)
     }
-    reader.readAsText(file)
   }
 
-  const refreshPortfolio = () => {
-    loadPortfolios()
+  const refreshPortfolio = async () => {
+    try {
+      setIsRefreshingPortfolio(true)
+      setError(null)
+      await loadPortfolios()
+    } catch (err) {
+      console.error('❌ Portfolio Component - Error refreshing portfolio:', err)
+      setError(err instanceof Error ? err.message : 'Failed to refresh portfolio')
+    } finally {
+      setIsRefreshingPortfolio(false)
+    }
   }
 
   const refreshPortfolioData = async () => {
     if (activePortfolio) {
-      await Promise.all([
-        loadPositions(activePortfolio.id),
-        loadTrades(activePortfolio.id)
-      ])
+      try {
+        setIsRefreshingData(true)
+        setError(null)
+        await Promise.all([
+          loadPositions(activePortfolio.id),
+          loadTrades(activePortfolio.id)
+        ])
+      } catch (err) {
+        console.error('❌ Portfolio Component - Error refreshing portfolio data:', err)
+        setError(err instanceof Error ? err.message : 'Failed to refresh portfolio data')
+      } finally {
+        setIsRefreshingData(false)
+      }
     }
   }
 
@@ -667,6 +740,10 @@ export default function ProductionPortfolioManager() {
         <div className="text-center">
           <Loader2 className="h-12 w-12 text-blue-600 mx-auto mb-4 animate-spin" />
           <p className="text-gray-600">Loading portfolio data...</p>
+          <div className="mt-4 text-sm text-gray-500">
+            <p>Fetching portfolios...</p>
+            <p>Loading positions and trades...</p>
+          </div>
         </div>
       </div>
     )
@@ -712,9 +789,13 @@ export default function ProductionPortfolioManager() {
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>Portfolio Management</span>
-            <Button onClick={refreshPortfolio} variant="outline" size="sm">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
+            <Button onClick={refreshPortfolio} variant="outline" size="sm" disabled={isRefreshingPortfolio}>
+              {isRefreshingPortfolio ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4 mr-2" />
+              )}
+              {isRefreshingPortfolio ? 'Refreshing...' : 'Refresh'}
             </Button>
           </CardTitle>
           <CardDescription>
@@ -722,40 +803,74 @@ export default function ProductionPortfolioManager() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-4 items-center">
-            {portfolios.map((portfolio) => (
-              <Button
-                key={portfolio.id}
-                variant={activePortfolio?.id === portfolio.id ? "default" : "outline"}
-                onClick={() => handlePortfolioChange(portfolio)}
-                className="min-w-[150px]"
-              >
-                <BarChart3 className="h-4 w-4 mr-2" />
-                {portfolio.name}
-              </Button>
-            ))}
-            
-            <div className="flex gap-2">
-              <Input
-                placeholder="New portfolio name"
-                value={newPortfolioName}
-                onChange={(e) => setNewPortfolioName(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && createPortfolio()}
-                className="w-[200px]"
-              />
-              <Button 
-                onClick={createPortfolio} 
-                disabled={isCreatingPortfolio || !newPortfolioName.trim()}
-                size="sm"
-              >
-                {isCreatingPortfolio ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Plus className="h-4 w-4" />
-                )}
-              </Button>
+          {portfolios.length === 0 ? (
+            <div className="text-center py-8">
+              <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500 mb-4">No portfolios yet. Create your first portfolio to get started.</p>
+              <div className="flex gap-2 justify-center">
+                <Input
+                  placeholder="New portfolio name"
+                  value={newPortfolioName}
+                  onChange={(e) => setNewPortfolioName(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && createPortfolio()}
+                  className="w-[200px]"
+                />
+                <Button 
+                  onClick={createPortfolio} 
+                  disabled={isCreatingPortfolio || !newPortfolioName.trim()}
+                  size="sm"
+                >
+                  {isCreatingPortfolio ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Plus className="h-4 w-4" />
+                  )}
+                  {isCreatingPortfolio ? 'Creating...' : 'Create'}
+                </Button>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex flex-wrap gap-4 items-center">
+              {portfolios.map((portfolio) => (
+                <Button
+                  key={portfolio.id}
+                  variant={activePortfolio?.id === portfolio.id ? "default" : "outline"}
+                  onClick={() => handlePortfolioChange(portfolio)}
+                  disabled={isRefreshingData}
+                  className="min-w-[150px]"
+                >
+                  {isRefreshingData && activePortfolio?.id === portfolio.id ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <BarChart3 className="h-4 w-4 mr-2" />
+                  )}
+                  {portfolio.name}
+                </Button>
+              ))}
+              
+              <div className="flex gap-2">
+                <Input
+                  placeholder="New portfolio name"
+                  value={newPortfolioName}
+                  onChange={(e) => setNewPortfolioName(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && createPortfolio()}
+                  className="w-[200px]"
+                />
+                <Button 
+                  onClick={createPortfolio} 
+                  disabled={isCreatingPortfolio || !newPortfolioName.trim()}
+                  size="sm"
+                >
+                  {isCreatingPortfolio ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Plus className="h-4 w-4" />
+                  )}
+                  {isCreatingPortfolio ? 'Creating...' : 'Create'}
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -770,20 +885,32 @@ export default function ProductionPortfolioManager() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-800">
-                ${portfolioStats.totalValue.toLocaleString()}
-              </div>
-              <div className="text-sm text-blue-600">Total Value</div>
+          {!activePortfolio ? (
+            <div className="text-center py-8">
+              <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500">Select a portfolio to view summary</p>
             </div>
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-800">
-                ${portfolioStats.totalCost.toLocaleString()}
-              </div>
-              <div className="text-sm text-green-600">Total Cost</div>
+          ) : isRefreshingData ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 text-blue-600 mr-3 animate-spin" />
+              <span className="text-gray-600">Updating portfolio summary...</span>
             </div>
-          </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="text-center p-4 bg-blue-50 rounded-lg">
+                <div className="text-2xl font-bold text-blue-800">
+                  ${portfolioStats.totalValue.toLocaleString()}
+                </div>
+                <div className="text-sm text-blue-600">Total Value</div>
+              </div>
+              <div className="text-center p-4 bg-green-50 rounded-lg">
+                <div className="text-2xl font-bold text-green-800">
+                  ${portfolioStats.totalCost.toLocaleString()}
+                </div>
+                <div className="text-sm text-green-600">Total Cost</div>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -816,35 +943,48 @@ export default function ProductionPortfolioManager() {
         </TabsList>
 
         <TabsContent value="portfolio" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Current Positions</h3>
-            <div className="flex gap-2">
-              <Button onClick={refreshPortfolioData} variant="outline" size="sm">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
-              </Button>
-              <Button onClick={() => setActiveTab('buy')} variant="outline" size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Trade
-              </Button>
+          {!activePortfolio ? (
+            <div className="text-center py-8">
+              <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500">Select a portfolio to view positions</p>
             </div>
-          </div>
-          
-          {isUpdatingPositions ? (
-            <Card>
-              <CardContent className="text-center py-8">
-                <Loader2 className="h-12 w-12 text-blue-600 mx-auto mb-4 animate-spin" />
-                <p className="text-gray-600">Updating portfolio positions...</p>
-              </CardContent>
-            </Card>
-          ) : positions.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-8">
-                <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">No positions yet. Add your first trade to get started.</p>
-              </CardContent>
-            </Card>
           ) : (
+            <>
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold">Current Positions</h3>
+                <div className="flex gap-2">
+                  <Button onClick={refreshPortfolioData} variant="outline" size="sm" disabled={isRefreshingData}>
+                    {isRefreshingData ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                    )}
+                    {isRefreshingData ? 'Refreshing...' : 'Refresh'}
+                  </Button>
+                  <Button onClick={() => setActiveTab('buy')} variant="outline" size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Trade
+                  </Button>
+                </div>
+              </div>
+              
+              {isUpdatingPositions || isRefreshingData ? (
+                <Card>
+                  <CardContent className="text-center py-8">
+                    <Loader2 className="h-12 w-12 text-blue-600 mx-auto mb-4 animate-spin" />
+                    <p className="text-gray-600">
+                      {isUpdatingPositions ? 'Updating portfolio positions...' : 'Refreshing portfolio data...'}
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : positions.length === 0 ? (
+                <Card>
+                  <CardContent className="text-center py-8">
+                    <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">No positions yet. Add your first trade to get started.</p>
+                  </CardContent>
+                </Card>
+              ) : (
             <div className="grid gap-4">
               {positions.map((position) => (
                 <Card key={position.symbol}>
@@ -917,9 +1057,14 @@ export default function ProductionPortfolioManager() {
                           onClick={() => deletePosition(position.id)}
                           variant="outline" 
                           size="sm"
+                          disabled={isDeletingPosition === position.id}
                           className="text-red-600 hover:text-red-700"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          {isDeletingPosition === position.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
                         </Button>
                       </div>
                     </div>
@@ -928,25 +1073,45 @@ export default function ProductionPortfolioManager() {
               ))}
             </div>
           )}
+            </>
+          )}
         </TabsContent>
 
         <TabsContent value="trades" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Trade History</h3>
-            <Button onClick={() => activePortfolio && loadTrades(activePortfolio.id)} variant="outline" size="sm">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
-            </Button>
-          </div>
-          
-          {trades.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-8">
-                <History className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">No trades yet. Your buy and sell transactions will appear here.</p>
-              </CardContent>
-            </Card>
+          {!activePortfolio ? (
+            <div className="text-center py-8">
+              <History className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500">Select a portfolio to view trade history</p>
+            </div>
           ) : (
+            <>
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold">Trade History</h3>
+                <Button onClick={() => activePortfolio && loadTrades(activePortfolio.id)} variant="outline" size="sm" disabled={isRefreshingData}>
+                  {isRefreshingData ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                  )}
+                  {isRefreshingData ? 'Refreshing...' : 'Refresh'}
+                </Button>
+              </div>
+              
+              {isRefreshingData ? (
+                <Card>
+                  <CardContent className="text-center py-8">
+                    <Loader2 className="h-12 w-12 text-blue-600 mx-auto mb-4 animate-spin" />
+                    <p className="text-gray-600">Refreshing trade history...</p>
+                  </CardContent>
+                </Card>
+              ) : trades.length === 0 ? (
+                <Card>
+                  <CardContent className="text-center py-8">
+                    <History className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">No trades yet. Your buy and sell transactions will appear here.</p>
+                  </CardContent>
+                </Card>
+              ) : (
             <div className="space-y-2">
               {trades
                 .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -977,9 +1142,14 @@ export default function ProductionPortfolioManager() {
                           onClick={() => deleteTrade(trade.id)}
                           variant="ghost" 
                           size="sm"
+                          disabled={isDeletingTrade === trade.id}
                           className="text-red-600 hover:text-red-700 mt-1"
                         >
-                          <Trash2 className="h-3 w-3" />
+                          {isDeletingTrade === trade.id ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-3 w-3" />
+                          )}
                         </Button>
                       </div>
                     </div>
@@ -988,30 +1158,39 @@ export default function ProductionPortfolioManager() {
               ))}
             </div>
           )}
+            </>
+          )}
         </TabsContent>
 
         <TabsContent value="buy" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ArrowUp className="h-5 w-5 text-green-600" />
-                Record Buy Trade
-              </CardTitle>
-              <CardDescription>
-                Record buying shares at a specific price
-              </CardDescription>
-            </CardHeader>
+          {!activePortfolio ? (
+            <div className="text-center py-8">
+              <ArrowUp className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500">Select a portfolio to record buy trades</p>
+            </div>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ArrowUp className="h-5 w-5 text-green-600" />
+                  Record Buy Trade
+                </CardTitle>
+                <CardDescription>
+                  Record buying shares at a specific price
+                </CardDescription>
+              </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="symbol">Stock Symbol</Label>
                 <div className="flex gap-2">
                   <Input
                     id="symbol"
-                    placeholder="Enter stock symbol (e.g., AAPL)"
+                    placeholder={isSearching ? "Searching..." : "Enter stock symbol (e.g., AAPL)"}
                     value={searchSymbol}
                     onChange={(e) => setSearchSymbol(e.target.value.toUpperCase())}
                     onKeyPress={(e) => e.key === 'Enter' && searchStock()}
                     disabled={isSearching}
+                    className="bg-white text-gray-900 placeholder-gray-500 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-900 dark:text-neutral-100 dark:placeholder-neutral-400 dark:border-neutral-700"
                   />
                   <Button 
                     onClick={searchStock} 
@@ -1033,13 +1212,24 @@ export default function ProductionPortfolioManager() {
                 </div>
               </div>
 
+              {isSearching && !stockData && (
+                <Card className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/40">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="h-8 w-8 text-blue-600 mr-3 animate-spin" />
+                      <span className="text-blue-800">Searching for stock data...</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {stockData && (
-                <Card className="bg-green-50">
+                <Card className="bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-900/40">
                   <CardContent className="p-4">
                     <div className="flex justify-between items-center">
                       <div>
                         <h4 className="font-semibold text-lg">{stockData.symbol}</h4>
-                        <p className="text-gray-600">{stockData.name}</p>
+                        <p className="text-gray-600 dark:text-neutral-300">{stockData.name}</p>
                       </div>
                       <div className="text-right">
                         <div className="text-2xl font-bold">${stockData.price}</div>
@@ -1089,39 +1279,51 @@ export default function ProductionPortfolioManager() {
                   <Button 
                     onClick={addTrade} 
                     className="w-full"
-                    disabled={tradeForm.quantity <= 0 || tradeForm.price <= 0}
+                    disabled={tradeForm.quantity <= 0 || tradeForm.price <= 0 || isAddingTrade}
                   >
-                    <ArrowUp className="h-4 w-4 mr-2" />
-                    Record Buy Trade
+                    {isAddingTrade ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <ArrowUp className="h-4 w-4 mr-2" />
+                    )}
+                    {isAddingTrade ? 'Recording Trade...' : 'Record Buy Trade'}
                   </Button>
                 </div>
               )}
             </CardContent>
           </Card>
+            )}
         </TabsContent>
 
         <TabsContent value="sell" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ArrowDown className="h-5 w-5 text-red-600" />
-                Record Sell Trade
-              </CardTitle>
-              <CardDescription>
-                Record selling shares at a specific price
-              </CardDescription>
-            </CardHeader>
+          {!activePortfolio ? (
+            <div className="text-center py-8">
+              <ArrowDown className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500">Select a portfolio to record sell trades</p>
+            </div>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ArrowDown className="h-5 w-5 text-red-600" />
+                  Record Sell Trade
+                </CardTitle>
+                <CardDescription>
+                  Record selling shares at a specific price
+                </CardDescription>
+              </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="sell-symbol">Stock Symbol</Label>
                 <div className="flex gap-2">
                   <Input
                     id="sell-symbol"
-                    placeholder="Enter stock symbol (e.g., AAPL)"
+                    placeholder={isSearching ? "Searching..." : "Enter stock symbol (e.g., AAPL)"}
                     value={searchSymbol}
                     onChange={(e) => setSearchSymbol(e.target.value.toUpperCase())}
                     onKeyPress={(e) => e.key === 'Enter' && searchStock()}
                     disabled={isSearching}
+                    className="bg-white text-gray-900 placeholder-gray-500 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-900 dark:text-neutral-100 dark:placeholder-neutral-400 dark:border-neutral-700"
                   />
                   <Button 
                     onClick={searchStock} 
@@ -1143,13 +1345,24 @@ export default function ProductionPortfolioManager() {
                 </div>
               </div>
 
+              {isSearching && !stockData && (
+                <Card className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/40">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="h-8 w-8 text-blue-600 mr-3 animate-spin" />
+                      <span className="text-blue-800">Searching for stock data...</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {stockData && (
-                <Card className="bg-red-50">
+                <Card className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/40">
                   <CardContent className="p-4">
                     <div className="flex justify-between items-center">
                       <div>
                         <h4 className="font-semibold text-lg">{stockData.symbol}</h4>
-                        <p className="text-gray-600">{stockData.name}</p>
+                        <p className="text-gray-600 dark:text-neutral-300">{stockData.name}</p>
                       </div>
                       <div className="text-right">
                         <div className="text-2xl font-bold">${stockData.price}</div>
@@ -1199,48 +1412,77 @@ export default function ProductionPortfolioManager() {
                   <Button 
                     onClick={addTrade} 
                     className="w-full"
-                    disabled={tradeForm.quantity <= 0 || tradeForm.price <= 0}
+                    disabled={tradeForm.quantity <= 0 || tradeForm.price <= 0 || isAddingTrade}
                   >
-                    <ArrowDown className="h-4 w-4 mr-2" />
-                    Record Sell Trade
+                    {isAddingTrade ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <ArrowDown className="h-4 w-4 mr-2" />
+                    )}
+                    {isAddingTrade ? 'Recording Trade...' : 'Record Sell Trade'}
                   </Button>
                 </div>
               )}
             </CardContent>
           </Card>
+            )}
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">
-          <PortfolioAnalytics 
-            portfolio={activePortfolio} 
-            positions={positions}
-            trades={trades}
-            onRefresh={() => {
-              if (activePortfolio) {
-                Promise.all([
-                  loadPositions(activePortfolio.id),
-                  loadTrades(activePortfolio.id)
-                ])
-              }
-            }}
-          />
+          {!activePortfolio ? (
+            <div className="text-center py-8">
+              <PieChart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500">Select a portfolio to view analytics</p>
+            </div>
+          ) : isRefreshingData ? (
+            <Card>
+              <CardContent className="text-center py-8">
+                <Loader2 className="h-12 w-12 text-blue-600 mx-auto mb-4 animate-spin" />
+                <p className="text-gray-600">Loading portfolio analytics...</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <PortfolioAnalytics 
+              portfolio={activePortfolio} 
+              positions={positions}
+              trades={trades}
+              onRefresh={() => {
+                if (activePortfolio) {
+                  Promise.all([
+                    loadPositions(activePortfolio.id),
+                    loadTrades(activePortfolio.id)
+                  ])
+                }
+              }}
+            />
+          )}
         </TabsContent>
 
         <TabsContent value="settings" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Portfolio Settings</CardTitle>
-              <CardDescription>
-                Manage your portfolio data and settings
-              </CardDescription>
-            </CardHeader>
+          {!activePortfolio ? (
+            <div className="text-center py-8">
+              <Settings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500">Select a portfolio to manage settings</p>
+            </div>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>Portfolio Settings</CardTitle>
+                <CardDescription>
+                  Manage your portfolio data and settings
+                </CardDescription>
+              </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Export Portfolio</Label>
-                  <Button onClick={exportPortfolio} className="w-full" variant="outline">
-                    <Download className="h-4 w-4 mr-2" />
-                    Export Data
+                  <Button onClick={exportPortfolio} className="w-full" variant="outline" disabled={isExporting}>
+                    {isExporting ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Download className="h-4 w-4 mr-2" />
+                    )}
+                    {isExporting ? 'Exporting...' : 'Export Data'}
                   </Button>
                   <p className="text-sm text-gray-600">
                     Download your portfolio data as JSON file
@@ -1253,11 +1495,16 @@ export default function ProductionPortfolioManager() {
                       type="file"
                       accept=".json"
                       onChange={importPortfolio}
+                      disabled={isImporting}
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     />
-                    <Button className="w-full" variant="outline">
-                      <Upload className="h-4 w-4 mr-2" />
-                      Import Data
+                    <Button className="w-full" variant="outline" disabled={isImporting}>
+                      {isImporting ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Upload className="h-4 w-4 mr-2" />
+                      )}
+                      {isImporting ? 'Importing...' : 'Import Data'}
                     </Button>
                   </div>
                   <p className="text-sm text-gray-600">
@@ -1280,6 +1527,7 @@ export default function ProductionPortfolioManager() {
               </div>
             </CardContent>
           </Card>
+            )}
         </TabsContent>
       </Tabs>
     </div>

@@ -1,4 +1,5 @@
 import { prisma } from './db'
+import { query } from '@/lib/pg'
 import { 
   AuthError, 
   AuthErrorType, 
@@ -475,17 +476,46 @@ export class AuthService {
   // Get user by ID with error handling
   static async getUserById(userId: string): Promise<User | null> {
     try {
-      const user = await prisma.user.findUnique({
-        where: { id: userId }
-      })
+      const { rows } = await query<{
+        id: string;
+        email: string;
+        firstName: string;
+        lastName: string;
+        isEmailVerified: boolean;
+        isAccountLocked: boolean;
+        isAccountDisabled: boolean;
+        lastLoginAt: Date | null;
+        failedLoginAttempts: number;
+        lockoutUntil: Date | null;
+        preferences: any;
+        createdAt: Date;
+        updatedAt: Date;
+      }>(
+        'SELECT "id", "email", "firstName", "lastName", "isEmailVerified", "isAccountLocked", "isAccountDisabled", "lastLoginAt", "failedLoginAttempts", "lockoutUntil", "preferences", "createdAt", "updatedAt" FROM "User" WHERE "id" = $1 LIMIT 1',
+        [userId]
+      )
 
-      if (!user) {
+      if (rows.length === 0) {
         return null
       }
 
-      // Return user without password
-      const { password, ...userWithoutPassword } = user
-      return userWithoutPassword as User
+      const u = rows[0]
+      const userWithoutPassword: User = {
+        id: u.id,
+        email: u.email,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        isEmailVerified: u.isEmailVerified,
+        isAccountLocked: u.isAccountLocked,
+        isAccountDisabled: u.isAccountDisabled,
+        lastLoginAt: u.lastLoginAt || undefined,
+        failedLoginAttempts: u.failedLoginAttempts,
+        lockoutUntil: u.lockoutUntil || undefined,
+        preferences: u.preferences,
+        createdAt: u.createdAt,
+        updatedAt: u.updatedAt,
+      }
+      return userWithoutPassword
 
     } catch (error) {
       console.error('Get user error:', error)

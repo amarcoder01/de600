@@ -114,58 +114,48 @@ export class PriceAlertService {
       
       console.log(`📊 Alert details: ${alert.symbol} ${alert.condition} $${alert.targetPrice} (Current: $${currentPrice})`)
       
-      // Send email notification
-      const emailSent = await EmailService.sendPriceAlertEmail({
-        symbol: alert.symbol,
-        assetName: assetName,
-        currentPrice: currentPrice,
-        targetPrice: alert.targetPrice,
-        condition: alert.condition,
-        userEmail: alert.userEmail
+      // First, mark the alert as triggered regardless of email status
+      await prisma.priceAlert.update({
+        where: { id: alert.id },
+        data: {
+          status: 'triggered',
+          isActive: false,
+          triggeredAt: new Date(),
+          lastChecked: new Date()
+        }
       })
 
-      if (emailSent) {
-        console.log(`✅ Email sent successfully to ${alert.userEmail}`)
-        
-        // Update alert status
-        await prisma.priceAlert.update({
-          where: { id: alert.id },
-          data: {
-            status: 'triggered',
-            isActive: false,
-            triggeredAt: new Date(),
-            lastChecked: new Date()
-          }
+      // Try sending the email notification (best-effort)
+      let emailSent = false
+      try {
+        emailSent = await EmailService.sendPriceAlertEmail({
+          symbol: alert.symbol,
+          assetName: assetName,
+          currentPrice: currentPrice,
+          targetPrice: alert.targetPrice,
+          condition: alert.condition,
+          userEmail: alert.userEmail
         })
-
-        // Create history entry
-        await prisma.priceAlertHistory.create({
-          data: {
-            alertId: alert.id,
-            action: 'triggered',
-            price: currentPrice,
-            message: `Alert triggered: ${alert.symbol} ${alert.condition} $${alert.targetPrice} (Current: $${currentPrice}) - Email sent to ${alert.userEmail}`
-          }
-        })
-
-        console.log(`✅ Alert ${alert.id} marked as triggered and history recorded`)
-      } else {
-        console.error(`❌ Failed to send email notification for alert ${alert.id}`)
-        console.error(`📧 Email address: ${alert.userEmail}`)
-        
-        // Create history entry for failed notification
-        await prisma.priceAlertHistory.create({
-          data: {
-            alertId: alert.id,
-            action: 'checked',
-            price: currentPrice,
-            message: `Email notification failed: ${alert.symbol} ${alert.condition} $${alert.targetPrice} (Current: $${currentPrice}) - Check SendGrid configuration`
-          }
-        })
-        
-        // Keep alert active if email fails (so it can be retried)
-        console.log(`⚠️ Alert ${alert.id} kept active due to email failure`)
+        if (emailSent) {
+          console.log(`✅ Email sent successfully to ${alert.userEmail}`)
+        } else {
+          console.warn(`⚠️ Email service returned false for alert ${alert.id}`)
+        }
+      } catch (emailError) {
+        console.error(`❌ Error sending email for alert ${alert.id}:`, emailError)
       }
+
+      // Record a single history entry indicating the alert triggered, noting email status
+      await prisma.priceAlertHistory.create({
+        data: {
+          alertId: alert.id,
+          action: 'triggered',
+          price: currentPrice,
+          message: `Alert triggered: ${alert.symbol} ${alert.condition} $${alert.targetPrice} (Current: $${currentPrice}) - Email ${emailSent ? 'sent' : 'not sent'}`
+        }
+      })
+
+      console.log(`✅ Alert ${alert.id} marked as triggered and history recorded`)
     } catch (error) {
       console.error(`❌ Error triggering alert ${alert.id}:`, error)
       console.error(`📧 Email address: ${alert.userEmail}`)
@@ -175,9 +165,9 @@ export class PriceAlertService {
       await prisma.priceAlertHistory.create({
         data: {
           alertId: alert.id,
-          action: 'checked',
+          action: 'triggered',
           price: currentPrice,
-          message: `Error triggering alert: ${error instanceof Error ? error.message : String(error)}`
+          message: `Alert triggered but error occurred during processing: ${error instanceof Error ? error.message : String(error)}`
         }
       })
     }

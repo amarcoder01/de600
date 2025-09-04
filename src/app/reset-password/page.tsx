@@ -1,11 +1,12 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import React, { useState, useEffect, Suspense } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { ResetPasswordModal } from '@/components/auth/ResetPasswordModal'
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const token = searchParams.get('token')
   const [showModal, setShowModal] = useState(false)
 
@@ -18,7 +19,7 @@ export default function ResetPasswordPage() {
   const handleCloseModal = () => {
     setShowModal(false)
     // Redirect to home page after closing
-    window.location.href = '/'
+    router.push('/')
   }
 
   if (!token) {
@@ -48,5 +49,20 @@ export default function ResetPasswordPage() {
         token={token}
       />
     </div>
+  )
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <ResetPasswordContent />
+    </Suspense>
   )
 }

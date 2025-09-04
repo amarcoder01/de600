@@ -21,7 +21,9 @@ import {
   Brain,
   DollarSign,
   BrainCircuit,
-  Target
+  Target,
+  Newspaper,
+  Bell
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUIStore } from '@/store'
@@ -57,6 +59,13 @@ export function Sidebar() {
       description: 'Browse and search stocks'
     },
     {
+      id: 'news',
+      label: 'News',
+      icon: Newspaper,
+      href: '/news',
+      description: 'Real-time market news and updates'
+    },
+    {
       id: 'top-movers',
       label: 'Top Movers',
       icon: TrendingDown,
@@ -76,6 +85,13 @@ export function Sidebar() {
       icon: Eye,
       href: '/watchlist',
       description: 'Track favorite assets'
+    },
+    {
+      id: 'price-alerts',
+      label: 'Alerts',
+      icon: Bell,
+      href: '/price-alerts',
+      description: 'Price alerts and notifications'
     },
     {
       id: 'paper-trading',

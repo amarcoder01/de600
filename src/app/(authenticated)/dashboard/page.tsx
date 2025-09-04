@@ -16,17 +16,62 @@ import {
   TrendingUp,
   TrendingDown
 } from 'lucide-react'
-import { useAuthStore, usePortfolioStore, useWatchlistStore } from '@/store'
+import { useAuthStore, usePortfolioStore, useWatchlistStore, usePriceAlertStore } from '@/store'
+import { TodayTradesCard } from '@/components/dashboard/PortfolioCard'
 import { useRouter } from 'next/navigation'
+import { AlertsPanel } from '@/components/dashboard/AlertsPanel'
 
 export default function Dashboard() {
   const { user, isAuthenticated } = useAuthStore()
   const { portfolios } = usePortfolioStore()
   const { watchlists, loadWatchlists, clearWatchlists, isLoading: watchlistsLoading } = useWatchlistStore()
+  const { 
+    alerts: priceAlerts,
+    loadAlerts: loadPriceAlerts,
+    cancelAlert: cancelPriceAlert,
+  } = usePriceAlertStore()
   const router = useRouter()
   
   const [isLoading, setIsLoading] = useState(true)
   const [selectedWatchlistId, setSelectedWatchlistId] = useState<string | null>(null)
+
+  // Trades state (kept separate from existing loading to avoid regressions)
+  type Trade = {
+    id: string
+    portfolioId: string
+    symbol: string
+    type: 'buy' | 'sell'
+    quantity: number
+    price: number
+    amount: number
+    date: string | Date
+    notes?: string | null
+  }
+  const [trades, setTrades] = useState<Trade[]>([])
+  const [tradesLoading, setTradesLoading] = useState(false)
+  const [activePortfolioId, setActivePortfolioId] = useState<string | null>(null)
+  const [portfolioOptions, setPortfolioOptions] = useState<Array<{ id: string; name: string }>>([])
+
+  // Helper to load trades for a given portfolio
+  const fetchTradesForPortfolio = async (portfolioId: string) => {
+    try {
+      setTradesLoading(true)
+      const trRes = await fetch(`/api/portfolio/${portfolioId}/trades`)
+      if (!trRes.ok) {
+        console.warn('⚠️ Failed to load trades for portfolio:', portfolioId, trRes.status)
+        setTrades([])
+        return
+      }
+      const trJson = await trRes.json()
+      const items: Trade[] = trJson?.data || []
+      setTrades(items)
+    } catch (err) {
+      console.error('Error loading trades for portfolio:', portfolioId, err)
+      setTrades([])
+    } finally {
+      setTradesLoading(false)
+    }
+  }
 
   // Load user data on component mount
   useEffect(() => {
@@ -57,6 +102,55 @@ export default function Dashboard() {
     }
   }, [isAuthenticated, user, clearWatchlists])
 
+  // Load portfolios and then recent trades (non-intrusive, separate state)
+  useEffect(() => {
+    const loadPortfoliosAndTrades = async () => {
+      if (!isAuthenticated || !user) return
+      try {
+        setTradesLoading(true)
+        // Fetch portfolios via API (cookie-based auth)
+        const pfRes = await fetch('/api/portfolio')
+        if (!pfRes.ok) {
+          console.warn('⚠️ Failed to load portfolios for trades section:', pfRes.status)
+          setTrades([])
+          return
+        }
+        const pfJson = await pfRes.json()
+        const pfList: Array<{ id: string; name: string }> = pfJson?.data || []
+        setPortfolioOptions(pfList)
+        const firstPortfolioId = pfList?.[0]?.id || null
+        setActivePortfolioId(firstPortfolioId)
+        if (!firstPortfolioId) {
+          setTrades([])
+          return
+        }
+        // Initial trades load for first portfolio
+        await fetchTradesForPortfolio(firstPortfolioId)
+      } catch (err) {
+        console.error('Error loading portfolios/trades:', err)
+        setTrades([])
+      } finally {
+        setTradesLoading(false)
+      }
+    }
+
+    loadPortfoliosAndTrades()
+  }, [isAuthenticated, user])
+
+  // Load price alerts for the authenticated user (isolated side-effect)
+  useEffect(() => {
+    const loadAlertsSafe = async () => {
+      if (!isAuthenticated || !user) return
+      try {
+        await loadPriceAlerts()
+      } catch (e) {
+        console.warn('⚠️ Failed to load price alerts:', e)
+      }
+    }
+    loadAlertsSafe()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, user])
+
   // Helper function to get items to display based on current selection
   const getItemsToDisplay = () => {
     if (selectedWatchlistId) {
@@ -84,6 +178,54 @@ export default function Dashboard() {
   const totalChangePercent = totalStocks > 0 
     ? watchlistItems.reduce((sum, item) => sum + (item.changePercent || 0), 0) / totalStocks 
     : 0
+
+  // Today trades count
+  const today = new Date()
+  const isSameDay = (d: Date) => d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth() && d.getDate() === today.getDate()
+  const todaysTradesCount = trades.filter(t => {
+    const dt = new Date(t.date)
+    return isSameDay(dt)
+  }).length
+
+  // Map store alerts to AlertsPanel UI shape with safe index-based IDs (no mutation of store data)
+  const alertsList = Array.isArray(priceAlerts) ? priceAlerts : []
+  const dashboardAlerts = alertsList.map((a, idx) => {
+    const status: 'active' | 'triggered' | 'expired' =
+      a.status === 'active' && a.isActive
+        ? 'active'
+        : a.status === 'triggered'
+        ? 'triggered'
+        : 'expired'
+
+    return {
+      id: idx + 1,
+      type: 'price' as const,
+      symbol: a.symbol,
+      condition: a.condition,
+      value: a.targetPrice,
+      status,
+      time: new Date(a.updatedAt).toLocaleString(),
+    }
+  })
+
+  const handleAddAlert = () => {
+    router.push('/price-alerts')
+  }
+
+  const handleDismissAlert = (uiId: number) => {
+    const alert = alertsList[uiId - 1]
+    if (alert) {
+      // Soft-cancel via store; does not affect other dashboard state
+      cancelPriceAlert(alert.id)
+    }
+  }
+
+  const handleEditAlert = (uiId: number) => {
+    const alert = alertsList[uiId - 1]
+    if (alert) {
+      router.push(`/price-alerts?id=${alert.id}`)
+    }
+  }
 
   // Check if user is new (no portfolios and no watchlist items)
   const isNewUser = portfolios.length === 0 && totalStocks === 0
@@ -384,112 +526,102 @@ export default function Dashboard() {
         </motion.div>
       )}
 
-      {/* Show create watchlist prompt if no watchlist exists */}
-      {isAuthenticated && user && totalStocks === 0 && (
+      {/* Portfolio Trades Summary */}
+      {isAuthenticated && user && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="space-y-6"
         >
-          <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
-            <Star className="w-16 h-16 text-blue-500 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              Start Tracking Your Favorite Stocks
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
-              Create a watchlist to track stocks you're interested in and monitor their performance in real-time.
-            </p>
-            <div className="space-y-3">
-              <Button 
-                onClick={() => router.push('/watchlist')}
-                className="px-6 py-3"
-                size="lg"
-              >
-                <Plus className="w-5 h-5 mr-2" />
-                Create Watchlist
-              </Button>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                You'll be able to search and add stocks to your watchlist
-              </p>
-            </div>
+          {/* Portfolio Selector */}
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Portfolio Trades</h2>
+            {portfolioOptions.length > 0 && (
+              <div className="flex items-center space-x-2">
+                <label htmlFor="portfolio-select" className="text-sm text-gray-600 dark:text-gray-300">Portfolio</label>
+                <select
+                  id="portfolio-select"
+                  value={activePortfolioId || ''}
+                  onChange={async (e) => {
+                    const newId = e.target.value || null
+                    setActivePortfolioId(newId)
+                    if (newId) {
+                      await fetchTradesForPortfolio(newId)
+                    } else {
+                      setTrades([])
+                    }
+                  }}
+                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                >
+                  {portfolioOptions.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <TodayTradesCard count={todaysTradesCount} />
+          </div>
+
+          {/* Recent Trades List */}
+          {(tradesLoading || trades.length > 0) && (
+            <Card>
+              <CardHeader>
+                <h3 className="text-lg font-semibold">Recent Trades {activePortfolioId ? '' : '(No Portfolio Yet)'}</h3>
+              </CardHeader>
+              <CardContent>
+                {tradesLoading && (
+                  <div className="text-sm text-gray-500 dark:text-gray-400">Loading trades…</div>
+                )}
+                {!tradesLoading && trades.length === 0 && (
+                  <div className="text-sm text-gray-500 dark:text-gray-400">No trades found.</div>
+                )}
+                {!tradesLoading && trades.length > 0 && (
+                  <div className="space-y-3">
+                    {trades.slice(0, 5).map((t) => (
+                      <div key={t.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-blue-600 rounded-lg flex items-center justify-center">
+                            <span className="text-white font-bold text-sm">{t.symbol?.[0]}</span>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900 dark:text-white">{t.symbol} • {t.type.toUpperCase()}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              {new Date(t.date).toLocaleString()} • {t.quantity} @ ${t.price.toFixed(2)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className={`font-medium ${t.type === 'buy' ? 'text-red-600' : 'text-green-600'}`}>
+                            {t.type === 'buy' ? '-' : '+'}${t.amount.toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </motion.div>
       )}
 
-      {/* Quick Actions for New Users */}
-      {isNewUser && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Star className="w-5 h-5 text-yellow-500" />
-                <span>Get Started</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <div>
-                    <p className="font-medium">Create Your First Watchlist</p>
-                    <p className="text-sm text-muted-foreground">Track stocks you're interested in</p>
-                  </div>
-                  <Button 
-                    onClick={() => router.push('/watchlist')}
-                    size="sm"
-                    className="flex items-center space-x-1"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Create</span>
-                  </Button>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <div>
-                    <p className="font-medium">Start Paper Trading</p>
-                    <p className="text-sm text-muted-foreground">Practice with virtual money</p>
-                  </div>
-                  <Button 
-                    onClick={() => router.push('/paper-trading')}
-                    size="sm"
-                    variant="outline"
-                    className="flex items-center space-x-1"
-                  >
-                    <ArrowRight className="w-4 h-4" />
-                    <span>Start</span>
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <BarChart3 className="w-5 h-5 text-blue-500" />
-                <span>Market Insights</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="p-3 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-200 dark:border-blue-800">
-                  <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                    Real-time Market Data
-                  </p>
-                  <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
-                    Access comprehensive market data and analysis tools
-                  </p>
-                </div>
-                <div className="p-3 bg-green-50 dark:bg-green-900/10 rounded-lg border border-green-200 dark:border-green-800">
-                  <p className="text-sm font-medium text-green-900 dark:text-green-100">
-                    Professional Tools
-                  </p>
-                  <p className="text-xs text-green-700 dark:text-green-300 mt-1">
-                    Access advanced charts and analysis tools
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+      {/* Price Alerts Snapshot */}
+      {isAuthenticated && user && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-6"
+        >
+          <AlertsPanel
+            alerts={dashboardAlerts}
+            onAddAlert={handleAddAlert}
+            onDismissAlert={handleDismissAlert}
+            onEditAlert={handleEditAlert}
+          />
+        </motion.div>
       )}
     </div>
   )

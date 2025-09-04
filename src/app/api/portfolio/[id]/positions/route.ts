@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
 import { AuthService } from '@/lib/auth-service'
+import { query } from '@/lib/pg'
+import { randomUUID } from 'crypto'
 
 export async function GET(
   request: NextRequest,
@@ -32,11 +33,12 @@ export async function GET(
 
     console.log('👤 Positions API - User verified:', { userId: user.id, userEmail: user.email })
 
-    const portfolio = await prisma.portfolio.findFirst({ 
-      where: { id, userId: user.id } 
-    })
+    const { rows: portfolioRows } = await query<{ id: string; name: string }>(
+      'SELECT "id", "name" FROM "Portfolio" WHERE "id" = $1 AND "userId" = $2 LIMIT 1',
+      [id, user.id]
+    )
     
-    if (!portfolio) {
+    if (portfolioRows.length === 0) {
       console.log('❌ Positions API - Portfolio not found or access denied:', { portfolioId: id, userId: user.id })
       return NextResponse.json(
         { success: false, error: 'Portfolio not found' },
@@ -44,12 +46,13 @@ export async function GET(
       )
     }
 
+    const portfolio = portfolioRows[0]
     console.log('✅ Positions API - Portfolio access verified:', { portfolioId: portfolio.id, portfolioName: portfolio.name })
 
-    const positions = await prisma.position.findMany({
-      where: { portfolioId: id },
-      orderBy: { entryDate: 'desc' }
-    })
+    const { rows: positions } = await query(
+      'SELECT * FROM "Position" WHERE "portfolioId" = $1 ORDER BY "entryDate" DESC',
+      [id]
+    )
 
     console.log('✅ Positions API - Positions fetched successfully:', { count: positions.length })
 
@@ -126,11 +129,12 @@ export async function POST(
 
     console.log('👤 Positions API - User verified for position creation:', { userId: user.id, userEmail: user.email })
 
-    const portfolio = await prisma.portfolio.findFirst({ 
-      where: { id, userId: user.id } 
-    })
+    const { rows: portfolioRows } = await query<{ id: string; name: string }>(
+      'SELECT "id", "name" FROM "Portfolio" WHERE "id" = $1 AND "userId" = $2 LIMIT 1',
+      [id, user.id]
+    )
     
-    if (!portfolio) {
+    if (portfolioRows.length === 0) {
       console.log('❌ Positions API - Portfolio not found or access denied for position creation:', { portfolioId: id, userId: user.id })
       return NextResponse.json(
         { success: false, error: 'Portfolio not found' },
@@ -138,18 +142,18 @@ export async function POST(
       )
     }
 
+    const portfolio = portfolioRows[0]
     console.log('✅ Positions API - Portfolio access verified for position creation:', { portfolioId: portfolio.id, portfolioName: portfolio.name })
 
-    const position = await prisma.position.create({
-      data: {
-        portfolioId: id,
-        symbol: symbol.toUpperCase(),
-        quantity: parseFloat(quantity),
-        averagePrice: parseFloat(averagePrice),
-        entryDate: new Date(),
-        notes: notes || null
-      }
-    })
+    const now = new Date()
+    const qty = parseFloat(quantity)
+    const avg = parseFloat(averagePrice)
+    const positionId = randomUUID()
+    const { rows: createdRows } = await query(
+      'INSERT INTO "Position" ("id", "portfolioId", "symbol", "quantity", "averagePrice", "entryDate", "notes") VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+      [positionId, id, symbol.toUpperCase(), qty, avg, now, notes || null]
+    )
+    const position = createdRows[0]
 
     console.log('✅ Positions API - Position created successfully:', { positionId: position.id, symbol, quantity, averagePrice })
 

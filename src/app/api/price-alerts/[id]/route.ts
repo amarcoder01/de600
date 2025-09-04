@@ -163,23 +163,13 @@ export async function DELETE(
       )
     }
 
-    // Soft delete by setting isActive to false
-    const deletedAlert = await prisma.priceAlert.update({
-      where: { id: params.id },
-      data: {
-        isActive: false,
-        status: 'cancelled',
-        updatedAt: new Date()
-      }
+    // Hard delete: remove history first, then the alert
+    await prisma.priceAlertHistory.deleteMany({
+      where: { alertId: params.id }
     })
 
-    // Create history entry
-    await prisma.priceAlertHistory.create({
-      data: {
-        alertId: params.id,
-        action: 'cancelled',
-        message: `Price alert cancelled for ${deletedAlert.symbol}`
-      }
+    await prisma.priceAlert.delete({
+      where: { id: params.id }
     })
 
     return NextResponse.json({
