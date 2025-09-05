@@ -8,6 +8,8 @@ import sys
 import json
 from datetime import datetime
 import traceback
+import io
+import contextlib
 
 # Try to import yfinance, handle gracefully if not available
 try:
@@ -27,50 +29,53 @@ def get_stock_data(symbol):
         }
     
     try:
+        # Only print debug info to stderr, never to stdout
         print(f"🔍 Fetching data for {symbol} using yfinance...", file=sys.stderr)
         
-        # Get ticker info
-        ticker = yf.Ticker(symbol)
-        info = ticker.info
-        
-        # Check if we got valid data
-        if not info or not info.get('regularMarketPrice') or info.get('regularMarketPrice') == 0:
-            print(f"⚠️ No valid data for {symbol}", file=sys.stderr)
-            return None
-        
-        # Calculate change and change percent
-        current_price = info.get('regularMarketPrice', 0)
-        previous_close = info.get('regularMarketPreviousClose', current_price)
-        change = current_price - previous_close
-        change_percent = (change / previous_close * 100) if previous_close > 0 else 0
-        
-        # Build stock data object
-        stock_data = {
-            "symbol": symbol.upper(),
-            "name": info.get('longName') or info.get('shortName') or symbol,
-            "price": current_price,
-            "change": change,
-            "changePercent": change_percent,
-            "volume": info.get('volume', 0),
-            "marketCap": info.get('marketCap', 0),
-            "pe": info.get('trailingPE', 0),
-            "dividend": info.get('dividendRate', 0),
-            "sector": info.get('sector', 'Unknown'),
-            "industry": info.get('industry', 'Unknown'),
-            "exchange": info.get('exchange', 'NASDAQ'),
-            "dayHigh": info.get('dayHigh', current_price),
-            "dayLow": info.get('dayLow', current_price),
-            "fiftyTwoWeekHigh": info.get('fiftyTwoWeekHigh', current_price),
-            "fiftyTwoWeekLow": info.get('fiftyTwoWeekLow', current_price),
-            "avgVolume": info.get('averageVolume', 0),
-            "dividendYield": (info.get('dividendYield', 0) * 100) if info.get('dividendYield') else 0,
-            "beta": info.get('beta', 0),
-            "eps": info.get('trailingEps', 0),
-            "lastUpdated": datetime.now().isoformat()
-        }
-        
-        print(f"✅ Successfully fetched data for {symbol}: ${current_price}", file=sys.stderr)
-        return stock_data
+        # Suppress stdout output from yfinance to prevent JSON parsing issues
+        with contextlib.redirect_stdout(io.StringIO()):
+            # Get ticker info
+            ticker = yf.Ticker(symbol)
+            info = ticker.info
+            
+            # Check if we got valid data
+            if not info or not info.get('regularMarketPrice') or info.get('regularMarketPrice') == 0:
+                print(f"⚠️ No valid data for {symbol}", file=sys.stderr)
+                return None
+            
+            # Calculate change and change percent
+            current_price = info.get('regularMarketPrice', 0)
+            previous_close = info.get('regularMarketPreviousClose', current_price)
+            change = current_price - previous_close
+            change_percent = (change / previous_close * 100) if previous_close > 0 else 0
+            
+            # Build stock data object
+            stock_data = {
+                "symbol": symbol.upper(),
+                "name": info.get('longName') or info.get('shortName') or symbol,
+                "price": current_price,
+                "change": change,
+                "changePercent": change_percent,
+                "volume": info.get('volume', 0),
+                "marketCap": info.get('marketCap', 0),
+                "pe": info.get('trailingPE', 0),
+                "dividend": info.get('dividendRate', 0),
+                "sector": info.get('sector', 'Unknown'),
+                "industry": info.get('industry', 'Unknown'),
+                "exchange": info.get('exchange', 'NASDAQ'),
+                "dayHigh": info.get('dayHigh', current_price),
+                "dayLow": info.get('dayLow', current_price),
+                "fiftyTwoWeekHigh": info.get('fiftyTwoWeekHigh', current_price),
+                "fiftyTwoWeekLow": info.get('fiftyTwoWeekLow', current_price),
+                "avgVolume": info.get('averageVolume', 0),
+                "dividendYield": (info.get('dividendYield', 0) * 100) if info.get('dividendYield') else 0,
+                "beta": info.get('beta', 0),
+                "eps": info.get('trailingEps', 0),
+                "lastUpdated": datetime.now().isoformat()
+            }
+            
+            print(f"✅ Successfully fetched data for {symbol}: ${current_price}", file=sys.stderr)
+            return stock_data
         
     except Exception as e:
         print(f"❌ Error fetching data for {symbol}: {str(e)}", file=sys.stderr)
