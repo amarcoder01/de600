@@ -38,9 +38,13 @@ const nextConfig = {
   compress: true,
   poweredByHeader: false,
   generateEtags: false,
-  // Static export settings for Render
+  // Server-side rendering settings for Render
   output: 'standalone', // Use standalone output for better deployment
-  trailingSlash: true, // Enable for better static export compatibility
+  trailingSlash: true, // Enable for better compatibility
+  // Disable static export to prevent React Context issues
+  experimental: {
+    esmExternals: false,
+  },
   // Environment variables are handled by Next.js automatically
   // Headers for security
   async headers() {

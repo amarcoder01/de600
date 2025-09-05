@@ -6,12 +6,26 @@ This script can be called from Next.js API routes
 
 import sys
 import json
-import yfinance as yf
 from datetime import datetime
 import traceback
 
+# Try to import yfinance, handle gracefully if not available
+try:
+    import yfinance as yf
+    YFINANCE_AVAILABLE = True
+except ImportError:
+    YFINANCE_AVAILABLE = False
+    print("⚠️ yfinance not available, using fallback data", file=sys.stderr)
+
 def get_stock_data(symbol):
     """Fetch stock data for a given symbol using yfinance"""
+    if not YFINANCE_AVAILABLE:
+        return {
+            "success": False,
+            "error": "yfinance module not available",
+            "fallback": True
+        }
+    
     try:
         print(f"🔍 Fetching data for {symbol} using yfinance...", file=sys.stderr)
         
@@ -129,18 +143,26 @@ def main():
     
     elif command == "test":
         # Test with AAPL
-        test_data = get_stock_data("AAPL")
-        if test_data:
-            print(json.dumps({
-                "success": True,
-                "message": "yfinance integration is working",
-                "data": test_data
-            }))
-        else:
+        if not YFINANCE_AVAILABLE:
             print(json.dumps({
                 "success": False,
-                "message": "yfinance integration test failed"
+                "message": "yfinance module not available",
+                "error": "ModuleNotFoundError: No module named 'yfinance'"
             }))
+        else:
+            test_data = get_stock_data("AAPL")
+            if test_data and test_data.get("success", False):
+                print(json.dumps({
+                    "success": True,
+                    "message": "yfinance integration is working",
+                    "data": test_data
+                }))
+            else:
+                print(json.dumps({
+                    "success": False,
+                    "message": "yfinance integration test failed",
+                    "error": test_data.get("error", "Unknown error") if test_data else "No data returned"
+                }))
     
     else:
         print(json.dumps({"error": "Invalid command. Use 'search <query>' or 'test'"}))

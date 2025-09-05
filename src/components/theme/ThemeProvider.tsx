@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useUIStore } from '@/store'
 
 interface ThemeProviderProps {
@@ -8,9 +8,17 @@ interface ThemeProviderProps {
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
+  const [mounted, setMounted] = useState(false)
   const { theme } = useUIStore()
 
+  // Ensure component is mounted before applying theme
   useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted) return
+
     const root = window.document.documentElement
 
     // Remove existing theme classes
@@ -23,11 +31,11 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     } else {
       root.classList.add(theme)
     }
-  }, [theme])
+  }, [theme, mounted])
 
   // Listen for system theme changes when theme is set to 'system'
   useEffect(() => {
-    if (theme !== 'system') return
+    if (!mounted || theme !== 'system') return
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
     
@@ -40,7 +48,12 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
     mediaQuery.addEventListener('change', handleChange)
     return () => mediaQuery.removeEventListener('change', handleChange)
-  }, [theme])
+  }, [theme, mounted])
+
+  // Don't render anything until mounted to prevent hydration issues
+  if (!mounted) {
+    return <>{children}</>
+  }
 
   return <>{children}</>
 }
