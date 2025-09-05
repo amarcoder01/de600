@@ -1,7 +1,7 @@
 import { Stock, StockPrice, StockDetails, ApiResponse, ApiError, AppError } from '../types/stock';
 
 const API_BASE_URL = 'https://api.polygon.io';
-const API_KEY = import.meta.env.VITE_POLYGON_API_KEY || process.env.POLYGON_API_KEY;
+const API_KEY = process.env.POLYGON_API_KEY;
 
 class StockService {
   private async makeRequest<T>(url: string): Promise<T> {
