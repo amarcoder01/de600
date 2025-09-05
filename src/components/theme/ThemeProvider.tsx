@@ -9,15 +9,23 @@ interface ThemeProviderProps {
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
   const [mounted, setMounted] = useState(false)
-  const { theme } = useUIStore()
+  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system')
 
   // Ensure component is mounted before applying theme
   useEffect(() => {
     setMounted(true)
+    
+    // Initialize theme from store after mounting
+    try {
+      const { theme: storeTheme } = useUIStore.getState()
+      setTheme(storeTheme)
+    } catch (error) {
+      console.warn('Could not access theme from store:', error)
+    }
   }, [])
 
   useEffect(() => {
-    if (!mounted) return
+    if (!mounted || typeof window === 'undefined') return
 
     const root = window.document.documentElement
 
@@ -35,7 +43,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
   // Listen for system theme changes when theme is set to 'system'
   useEffect(() => {
-    if (!mounted || theme !== 'system') return
+    if (!mounted || theme !== 'system' || typeof window === 'undefined') return
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
     
@@ -50,10 +58,6 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     return () => mediaQuery.removeEventListener('change', handleChange)
   }, [theme, mounted])
 
-  // Don't render anything until mounted to prevent hydration issues
-  if (!mounted) {
-    return <>{children}</>
-  }
-
+  // Always render children, but theme logic only runs after mounting
   return <>{children}</>
 }

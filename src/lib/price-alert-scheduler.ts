@@ -53,9 +53,13 @@ class PriceAlertScheduler {
   // Manual check alerts (can be called independently)
   async checkAlerts() {
     try {
-      console.log(`🔍 [${new Date().toLocaleTimeString()}] Running automatic price alert check...`)
-      await PriceAlertService.checkAllAlerts()
-      console.log(`✅ [${new Date().toLocaleTimeString()}] Automatic price alert check completed`)
+      // Only log if there are active alerts to reduce log spam
+      const alertCount = await PriceAlertService.getActiveAlertCount()
+      if (alertCount > 0) {
+        console.log(`🔍 [${new Date().toLocaleTimeString()}] Running automatic price alert check...`)
+        await PriceAlertService.checkAllAlerts()
+        console.log(`✅ [${new Date().toLocaleTimeString()}] Automatic price alert check completed`)
+      }
     } catch (error) {
       console.error(`❌ [${new Date().toLocaleTimeString()}] Error in automatic price alert check:`, error)
     }

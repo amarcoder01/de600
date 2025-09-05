@@ -41,14 +41,15 @@ const nextConfig = {
   // Server-side rendering settings for Render
   output: 'standalone', // Use standalone output for better deployment
   trailingSlash: true, // Enable for better compatibility
-  // Disable static generation completely to prevent React Context issues
+  // Completely disable static generation to prevent React Context issues
   experimental: {
     esmExternals: false,
   },
-  // Force all pages to be server-side rendered
+  // Force all pages to be server-side rendered - disable static generation completely
   generateStaticParams: false,
-  // Disable static optimization
   staticPageGenerationTimeout: 0,
+  // Disable static optimization completely
+  distDir: '.next',
   // Environment variables are handled by Next.js automatically
   // Headers for security
   async headers() {

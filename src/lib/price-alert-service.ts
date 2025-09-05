@@ -230,6 +230,24 @@ export class PriceAlertService {
     }
   }
 
+  // Get count of active alerts
+  static async getActiveAlertCount(userId?: string): Promise<number> {
+    try {
+      await ensureDatabaseReady()
+      const baseWhere = userId ? { userId } : {}
+      return await prisma.priceAlert.count({ 
+        where: { 
+          ...baseWhere, 
+          status: 'active', 
+          isActive: true 
+        } 
+      })
+    } catch (error) {
+      console.error('❌ Error getting active alert count:', error)
+      return 0
+    }
+  }
+
   // Get alert statistics
   static async getAlertStats(userId?: string): Promise<{
     total: number
