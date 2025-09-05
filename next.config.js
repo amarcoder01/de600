@@ -45,9 +45,6 @@ const nextConfig = {
   experimental: {
     esmExternals: false,
   },
-  // Force all pages to be server-side rendered - disable static generation completely
-  generateStaticParams: false,
-  staticPageGenerationTimeout: 0,
   // Disable static optimization completely
   distDir: '.next',
   // Environment variables are handled by Next.js automatically

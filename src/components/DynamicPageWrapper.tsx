@@ -39,7 +39,10 @@ export const withDynamicClient = (Component: React.ComponentType<any>, loadingCo
     <DynamicPageWrapper loadingComponent={loadingComponent}>
       <Component {...props} />
     </DynamicPageWrapper>
-  )), { ssr: false, loading: () => loadingComponent || <DefaultLoadingComponent /> })
+  )), { 
+    ssr: false, 
+    loading: () => (loadingComponent || <DefaultLoadingComponent />) as React.ReactElement
+  })
 }
 
 export default DynamicPageWrapper
