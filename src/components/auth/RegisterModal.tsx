@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Mail, Lock, Eye, EyeOff, Loader2, User } from 'lucide-react'
 import { useAuthStore } from '@/store'
@@ -27,8 +27,20 @@ export function RegisterModal({ isOpen, onClose, onSwitchToLogin }: RegisterModa
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const [privacyPolicyAccepted, setPrivacyPolicyAccepted] = useState(false)
   
-  const { register, error, clearError } = useAuthStore()
+  const { register, error, clearError, setAuthModalOpen } = useAuthStore()
   const router = useRouter()
+
+  // Clear validation errors when modal opens and mark auth modal as open
+  useEffect(() => {
+    if (isOpen) {
+      setValidationErrors({})
+      clearError()
+      setAuthModalOpen(true)
+    }
+    return () => {
+      setAuthModalOpen(false)
+    }
+  }, [isOpen, clearError])
 
   // Clear any authentication state when modal opens to ensure clean state
   React.useEffect(() => {
@@ -142,26 +154,10 @@ export function RegisterModal({ isOpen, onClose, onSwitchToLogin }: RegisterModa
     } catch (error: any) {
       console.error('🔐 RegisterModal: Registration failed:', error)
       
-      // Registration failed - handle the error and keep modal open
-      if (error?.message) {
-        if (error.message.includes('already exists')) {
-          setValidationErrors({ email: 'An account with this email already exists' })
-        } else if (error.message.includes('Validation failed')) {
-          // Parse validation errors if they exist
-          const validationError = error.message
-          if (validationError.includes('email')) {
-            setValidationErrors({ email: 'Please enter a valid email address' })
-          } else if (validationError.includes('password')) {
-            setValidationErrors({ password: 'Password does not meet requirements' })
-          } else {
-            setValidationErrors({ email: validationError })
-          }
-        } else {
-          setValidationErrors({ email: error.message })
-        }
-      } else {
-        setValidationErrors({ email: 'Registration failed. Please try again.' })
-      }
+      // The auth store will handle setting the error state
+      // We don't need to set validation errors here as the auth store error will be displayed
+      // Just clear any existing validation errors
+      setValidationErrors({})
     } finally {
       setIsLoading(false)
     }
@@ -195,6 +191,7 @@ export function RegisterModal({ isOpen, onClose, onSwitchToLogin }: RegisterModa
     setPassword('')
     setConfirmPassword('')
     setPrivacyPolicyAccepted(false)
+    setAuthModalOpen(false)
     onClose()
   }
 
@@ -299,7 +296,16 @@ export function RegisterModal({ isOpen, onClose, onSwitchToLogin }: RegisterModa
                     id="email"
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value)
+                      if (validationErrors.email) {
+                        setValidationErrors(prev => ({ ...prev, email: '' }))
+                      }
+                      // Clear auth store error when user starts typing
+                      if (error) {
+                        clearError()
+                      }
+                    }}
                     placeholder="Enter your email"
                     className={`pl-10 ${validationErrors.email ? 'border-red-500 focus:border-red-500' : ''}`}
                     required

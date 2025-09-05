@@ -36,7 +36,7 @@ export async function GET(
 
     // Verify portfolio belongs to user
     console.log('📊 Trades API - Verifying portfolio ownership...')
-    const { rows: portfolioRows } = await query<{ id: string }>(
+    const { rows: portfolioRows } = await query(
       'SELECT "id" FROM "Portfolio" WHERE "id" = $1 AND "userId" = $2 LIMIT 1',
       [id, user.id]
     )
@@ -151,7 +151,7 @@ export async function POST(
 
     // Verify portfolio belongs to user
     console.log('📊 Trades API - Verifying portfolio ownership for trade creation...')
-    const { rows: portfolioRows } = await query<{ id: string }>(
+    const { rows: portfolioRows } = await query(
       'SELECT "id" FROM "Portfolio" WHERE "id" = $1 AND "userId" = $2 LIMIT 1',
       [id, user.id]
     )
@@ -169,7 +169,7 @@ export async function POST(
     // For sell trades, pre-check if user has enough shares
     if (type === 'sell') {
       console.log('📉 Trades API - Checking position for sell trade...')
-      const { rows: posRows } = await query<{ quantity: number }>(
+      const { rows: posRows } = await query(
         'SELECT "quantity" FROM "Position" WHERE "portfolioId" = $1 AND "symbol" = $2 LIMIT 1',
         [id, symbol.toUpperCase()]
       )
@@ -203,17 +203,13 @@ export async function POST(
       const amount = qty * prc
       // Insert trade with generated ID
       const tradeId = randomUUID()
-      const tradeInsert = await client.query<{ id: string }>(
+      const tradeInsert = await client.query(
         'INSERT INTO "Trade" ("id", "portfolioId", "symbol", "type", "quantity", "price", "amount", "date", "notes") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING "id"',
         [tradeId, id, symbol.toUpperCase(), type, qty, prc, amount, now, notes || null]
       )
 
       // Fetch existing position
-      const posRes = await client.query<{
-        id: string
-        quantity: number
-        "averagePrice": number
-      }>('SELECT "id", "quantity", "averagePrice" FROM "Position" WHERE "portfolioId" = $1 AND "symbol" = $2 LIMIT 1', [id, symbol.toUpperCase()])
+      const posRes = await client.query('SELECT "id", "quantity", "averagePrice" FROM "Position" WHERE "portfolioId" = $1 AND "symbol" = $2 LIMIT 1', [id, symbol.toUpperCase()])
 
       if (type === 'buy') {
         if (posRes.rows.length > 0) {

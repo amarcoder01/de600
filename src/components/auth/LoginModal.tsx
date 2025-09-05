@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useAuthStore } from '@/store'
@@ -24,8 +24,21 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalPr
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const [showForgotPassword, setShowForgotPassword] = useState(false)
   
-  const { login, error, clearError } = useAuthStore()
+  const { login, error, clearError, setAuthModalOpen } = useAuthStore()
   const router = useRouter()
+
+  // Clear validation errors when modal opens and signal that an auth modal is open
+  useEffect(() => {
+    if (isOpen) {
+      setValidationErrors({})
+      clearError()
+      setAuthModalOpen(true)
+    }
+    return () => {
+      // Ensure flag is reset if component unmounts
+      setAuthModalOpen(false)
+    }
+  }, [isOpen, clearError])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -55,32 +68,22 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalPr
     try {
       await login({ email: email.trim().toLowerCase(), password })
       
-      // Check if login was successful by checking the store state
-      const loginState = useAuthStore.getState()
-      if (loginState.isAuthenticated && loginState.user && !loginState.error) {
-        console.log('🔐 LoginModal: Login successful, closing modal')
-        onClose()
-        setEmail('')
-        setPassword('')
-        setValidationErrors({})
-        
-        // Let the parent component handle the redirect
-        console.log('🔐 LoginModal: Login completed successfully')
-      } else {
-        console.log('🔐 LoginModal: Login failed - no authentication state set')
-        setValidationErrors({ password: 'Login failed. Please try again.' })
-      }
-    } catch (error: any) {
-      console.error('Login failed:', error)
+      // If we reach here, login was successful
+      console.log('🔐 LoginModal: Login successful, closing modal')
+      onClose()
+      setEmail('')
+      setPassword('')
+      setValidationErrors({})
       
-      // Handle API error responses
-      if (error?.error) {
-        setValidationErrors({ password: error.error })
-      } else if (error?.message) {
-        setValidationErrors({ password: error.message })
-      } else {
-        setValidationErrors({ password: 'Login failed. Please check your connection and try again.' })
-      }
+      // Let the parent component handle the redirect
+      console.log('🔐 LoginModal: Login completed successfully')
+    } catch (error: any) {
+      console.error('🔐 LoginModal: Login failed:', error)
+      
+      // The auth store will handle setting the error state
+      // We don't need to set validation errors here as the auth store error will be displayed
+      // Just clear any existing validation errors
+      setValidationErrors({})
     } finally {
       setIsLoading(false)
     }
@@ -91,6 +94,7 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalPr
     setEmail('')
     setPassword('')
     setValidationErrors({})
+    setAuthModalOpen(false)
     onClose()
   }
 
@@ -99,7 +103,11 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalPr
   }
 
   const handleSwitchToRegister = () => {
-    handleClose()
+    // Keep modal-open flag true across the transition
+    setAuthModalOpen(true)
+    clearError()
+    setValidationErrors({})
+    onClose()
     onSwitchToRegister()
   }
 
@@ -152,8 +160,12 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalPr
                       if (validationErrors.email) {
                         setValidationErrors(prev => ({ ...prev, email: '' }))
                       }
+                      // Clear auth store error when user starts typing
+                      if (error) {
+                        clearError()
+                      }
                     }}
-                    className={validationErrors.email ? 'border-red-500 focus:border-red-500' : ''}
+                    className={`pl-10 ${validationErrors.email ? 'border-red-500 focus:border-red-500' : ''}`}
                     placeholder="Enter your email"
                   />
                 </div>
@@ -187,6 +199,10 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalPr
                       setPassword(e.target.value)
                       if (validationErrors.password) {
                         setValidationErrors(prev => ({ ...prev, password: '' }))
+                      }
+                      // Clear auth store error when user starts typing
+                      if (error) {
+                        clearError()
                       }
                     }}
                     className={`pl-10 pr-10 ${validationErrors.password ? 'border-red-500 focus:border-red-500' : ''}`}

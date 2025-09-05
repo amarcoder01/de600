@@ -40,11 +40,7 @@ export default function TopMoversPage() {
               <p className="text-gray-600 mt-1">
                 Real-time Top Gainers &amp; Losers
               </p>
-              {lastUpdated && (
-                <p className="text-xs text-gray-500 mt-1">
-                  Last updated: {lastUpdated.toLocaleTimeString()}
-                </p>
-              )}
+              {/* Last updated hidden for cleaner production UI */}
               {isMarketClosed && (
                 <p className="text-xs text-amber-600 mt-1 font-medium">
                   ⚠️ Market is currently closed - showing last available data
@@ -159,11 +155,7 @@ export default function TopMoversPage() {
         )}
 
         {/* Next Refresh Info */}
-        {nextRefresh && hasAnyData && (
-          <div className="text-center mt-12 text-sm text-gray-500">
-            <p>Next automatic refresh at {nextRefresh.toLocaleTimeString()}</p>
-          </div>
-        )}
+        {/* Next automatic refresh hidden for cleaner production UI */}
       </main>
     </div>
   )

@@ -163,21 +163,25 @@ export class MarketViewApiService {
   }
 
   isMarketClosed(): boolean {
+    // Use US/Eastern timezone to avoid client local-time discrepancies
     const now = new Date()
-    const day = now.getDay() // 0 = Sunday, 6 = Saturday
-    const hour = now.getHours()
-    
-    // Weekend
+    const etNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }))
+    const day = etNow.getDay() // 0 = Sunday, 6 = Saturday
+    const hour = etNow.getHours()
+    const minute = etNow.getMinutes()
+
+    // Weekend: closed
     if (day === 0 || day === 6) {
       return true
     }
-    
-    // Weekday but outside market hours (9:30 AM - 4:00 PM EST)
-    if (hour < 9 || (hour === 9 && now.getMinutes() < 30) || hour >= 16) {
-      return true
-    }
-    
-    return false
+
+    // Regular US market hours: 9:30 AM – 4:00 PM ET
+    const timeInMinutes = hour * 60 + minute
+    const openMinutes = 9 * 60 + 30 // 9:30 AM
+    const closeMinutes = 16 * 60 // 4:00 PM
+
+    const isOpen = timeInMinutes >= openMinutes && timeInMinutes < closeMinutes
+    return !isOpen
   }
 
   // Test connection to the API

@@ -189,13 +189,15 @@ export function MarketOverview() {
   // Using static market data since Market Overview API has been removed
   const marketData: MarketData[] = defaultMarketData
   
-  // Simple market status based on current time (ET)
+  // Market status based on US/Eastern time with precise 9:30–16:00 window
   const now = new Date()
-  const etTime = new Date(now.toLocaleString("en-US", {timeZone: "America/New_York"}))
-  const hour = etTime.getHours()
+  const etTime = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }))
   const day = etTime.getDay()
+  const hour = etTime.getHours()
+  const minute = etTime.getMinutes()
   const isWeekday = day >= 1 && day <= 5
-  const isMarketHours = hour >= 9 && hour < 16
+  const minutes = hour * 60 + minute
+  const isMarketHours = minutes >= (9 * 60 + 30) && minutes < (16 * 60)
   const isOpen = isWeekday && isMarketHours
 
   return (

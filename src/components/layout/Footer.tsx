@@ -122,6 +122,13 @@ export function Footer() {
                 <Lock className="w-3 h-3 mr-2" />
                 Security
               </Link>
+              <Link 
+                href="/how-it-works" 
+                className="block text-slate-400 hover:text-white transition-colors text-sm flex items-center"
+              >
+                <Globe className="w-3 h-3 mr-2" />
+                How It Works
+              </Link>
             </div>
           </div>
 
@@ -143,6 +150,17 @@ export function Footer() {
               <span>v1.0.0</span>
               <span>•</span>
               <span>August 2025</span>
+              <span>•</span>
+              <a
+                href="https://t.me/VidalityPulse_bot"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 hover:text-white transition-colors"
+                aria-label="Follow Vidality Pulse on Telegram"
+              >
+                <Globe className="w-3 h-3" />
+                Telegram
+              </a>
             </div>
           </div>
         </div>

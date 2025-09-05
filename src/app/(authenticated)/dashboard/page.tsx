@@ -20,6 +20,7 @@ import { useAuthStore, usePortfolioStore, useWatchlistStore, usePriceAlertStore 
 import { TodayTradesCard } from '@/components/dashboard/PortfolioCard'
 import { useRouter } from 'next/navigation'
 import { AlertsPanel } from '@/components/dashboard/AlertsPanel'
+import TopMoversWidget from '@/components/dashboard/TopMoversWidget'
 
 export default function Dashboard() {
   const { user, isAuthenticated } = useAuthStore()
@@ -319,6 +320,9 @@ export default function Dashboard() {
           </div>
         </motion.div>
       )}
+
+      {/* Market Top Movers Snapshot - compact, non-intrusive */}
+      <TopMoversWidget />
 
       {/* Quick Watchlist Summary - show for all users with watchlists */}
       {!isNewUser && watchlists.length > 0 && (

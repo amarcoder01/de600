@@ -1,11 +1,12 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Mail, Loader2, CheckCircle, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useAuthStore } from '@/store'
 
 interface ForgotPasswordModalProps {
   isOpen: boolean
@@ -20,6 +21,17 @@ export function ForgotPasswordModal({ isOpen, onClose, onSwitchToLogin }: Forgot
   const [error, setError] = useState<string | null>(null)
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const [resetUrl, setResetUrl] = useState<string | null>(null)
+  const { setAuthModalOpen } = useAuthStore()
+
+  // Mark auth modal open when visible to avoid redirects
+  useEffect(() => {
+    if (isOpen) {
+      setAuthModalOpen(true)
+    }
+    return () => {
+      setAuthModalOpen(false)
+    }
+  }, [isOpen, setAuthModalOpen])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -88,10 +100,13 @@ export function ForgotPasswordModal({ isOpen, onClose, onSwitchToLogin }: Forgot
     setValidationErrors({})
     setIsSuccess(false)
     setResetUrl(null)
+    setAuthModalOpen(false)
     onClose()
   }
 
   const handleSwitchToLogin = () => {
+    // Keep the modal-open flag true during transition back to login
+    setAuthModalOpen(true)
     handleClose()
     onSwitchToLogin()
   }
@@ -161,7 +176,7 @@ export function ForgotPasswordModal({ isOpen, onClose, onSwitchToLogin }: Forgot
                               setValidationErrors(prev => ({ ...prev, email: '' }))
                             }
                           }}
-                          className={validationErrors.email ? 'border-red-500 focus:border-red-500' : ''}
+                          className={`pl-10 ${validationErrors.email ? 'border-red-500 focus:border-red-500' : ''}`}
                           placeholder="Enter your email"
                           disabled={isLoading}
                         />

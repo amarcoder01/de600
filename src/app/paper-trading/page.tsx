@@ -22,7 +22,6 @@ import {
   Shield,
   Activity,
   PieChart,
-  LineChart,
   Calendar,
   Users,
   Star,
@@ -45,13 +44,13 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { PaperTradingAccount, PaperPosition, PaperOrder, PaperTransaction, Stock } from '@/types'
 import { TradingOrderForm } from '@/components/trading/TradingOrderForm'
-import { TradingAnalysis } from '@/components/trading/TradingAnalysis'
+ 
 
 export default function PaperTradingPage() {
   // State
   const [accounts, setAccounts] = useState<PaperTradingAccount[]>([])
   const [selectedAccount, setSelectedAccount] = useState<PaperTradingAccount | null>(null)
-  const [activeTab, setActiveTab] = useState<'overview' | 'positions' | 'orders' | 'history' | 'analysis'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'positions' | 'orders' | 'history'>('overview')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showCreateAccount, setShowCreateAccount] = useState(false)
@@ -314,6 +313,37 @@ export default function PaperTradingPage() {
     return stock ? stock.changePercent : 0
   }
 
+  // Export selected account data as a JSON file
+  const exportSelectedAccountData = () => {
+    if (!selectedAccount) return
+
+    try {
+      const payload = {
+        meta: {
+          exportedAt: new Date().toISOString(),
+          app: 'PaperTrading',
+          version: '1.0',
+        },
+        account: selectedAccount,
+        // Convert Map to array for serialization
+        realTimeData: Array.from(realTimeData.entries()),
+      }
+
+      const fileNameSafe = selectedAccount.name.replace(/[^a-z0-9-_]+/gi, '_')
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `paper_trading_${fileNameSafe}_${new Date().toISOString().slice(0,19).replace(/[:T]/g, '-')}.json`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (e) {
+      console.error('Failed to export account data:', e)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -500,15 +530,7 @@ export default function PaperTradingPage() {
                   <Plus className="w-4 h-4 mr-2" />
                   New Order
                 </Button>
-                <Button 
-                  className="w-full" 
-                  variant="outline"
-                  onClick={() => setActiveTab('analysis')}
-                >
-                  <BarChart3 className="w-4 h-4 mr-2" />
-                  View Analysis
-                </Button>
-                <Button className="w-full" variant="outline">
+                <Button className="w-full" variant="outline" onClick={exportSelectedAccountData} disabled={!selectedAccount}>
                   <Download className="w-4 h-4 mr-2" />
                   Export Data
                 </Button>
@@ -522,12 +544,11 @@ export default function PaperTradingPage() {
             <Card>
               <CardContent className="pt-6">
                 <div className="flex space-x-1">
-                  {[
+                  {[ 
                     { id: 'overview', label: 'Overview', icon: Eye },
                     { id: 'positions', label: 'Positions', icon: BarChart3 },
                     { id: 'orders', label: 'Orders', icon: Clock },
                     { id: 'history', label: 'History', icon: Calendar },
-                    { id: 'analysis', label: 'Analysis', icon: TrendingUp },
                   ].map((tab) => {
                     const Icon = tab.icon
                     return (
@@ -598,16 +619,48 @@ export default function PaperTradingPage() {
                   <CardTitle>Current Positions</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-center py-8">
-                    <BarChart3 className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">Positions Feature Removed</h3>
-                    <p className="text-muted-foreground mb-4">
-                      The positions display has been removed as requested.
-                    </p>
-                  </div>
+                  {selectedAccount.positions.length === 0 ? (
+                    <div className="text-center py-8">
+                      <BarChart3 className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">No Positions</h3>
+                      <p className="text-muted-foreground">
+                        You don't have any open positions yet. Place an order to get started.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="text-left p-2">Symbol</th>
+                            <th className="text-right p-2">Quantity</th>
+                            <th className="text-right p-2">Avg Price</th>
+                            <th className="text-right p-2">Current Price</th>
+                            <th className="text-right p-2">Market Value</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {selectedAccount.positions.map((position) => {
+                            const rtPrice = getRealTimePrice(position.symbol) || position.currentPrice
+                            const marketValue = position.quantity * rtPrice
+                            return (
+                              <tr key={position.id} className="border-b hover:bg-gray-50">
+                                <td className="p-2 font-medium">{position.symbol}</td>
+                                <td className="p-2 text-right">{position.quantity.toLocaleString()}</td>
+                                <td className="p-2 text-right">{formatCurrency(position.averagePrice)}</td>
+                                <td className="p-2 text-right">{formatCurrency(rtPrice)}</td>
+                                <td className="p-2 text-right">{formatCurrency(marketValue)}</td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
+
 
             {activeTab === 'orders' && (
               <Card>
@@ -700,20 +753,7 @@ export default function PaperTradingPage() {
               </Card>
             )}
 
-            {activeTab === 'analysis' && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Performance Analysis</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <TradingAnalysis 
-                    account={selectedAccount} 
-                    realTimeData={realTimeData}
-                    onRefresh={updateRealTimeData}
-                  />
-                </CardContent>
-              </Card>
-            )}
+            
           </div>
         </div>
       )}
@@ -732,7 +772,7 @@ export default function PaperTradingPage() {
                   type="text"
                   value={newAccountName}
                   onChange={(e) => setNewAccountName(e.target.value)}
-                  className="w-full mt-1 p-2 border rounded-md"
+                  className="w-full mt-1 p-2 border rounded-md bg-white text-gray-900 placeholder-gray-500 dark:bg-white dark:text-gray-900 dark:placeholder-gray-600"
                   placeholder="Enter account name"
                 />
               </div>
@@ -769,7 +809,7 @@ export default function PaperTradingPage() {
                     <input
                       type="text"
                       placeholder="e.g., AAPL, MSFT, GOOGL"
-                      className="w-full p-2 border rounded-md"
+                      className="w-full p-2 border rounded-md bg-white text-gray-900 placeholder-gray-500 dark:bg-white dark:text-gray-900 dark:placeholder-gray-600"
                       value={selectedSymbol}
                       onChange={(e) => {
                         setSelectedSymbol(e.target.value.toUpperCase())

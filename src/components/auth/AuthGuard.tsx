@@ -45,7 +45,7 @@ export function AuthGuard({
 }: AuthGuardProps) {
   const router = useRouter()
   const pathname = usePathname()
-  const { isAuthenticated, isLoading, checkAuth } = useAuthStore()
+  const { isAuthenticated, isLoading, checkAuth, authModalOpen } = useAuthStore()
   const [isChecking, setIsChecking] = useState(true)
   const [redirectCount, setRedirectCount] = useState(0)
   const [lastPath, setLastPath] = useState<string | null>(null)
@@ -59,11 +59,17 @@ export function AuthGuard({
       try {
         setIsChecking(true)
         
-        // Always check authentication to handle redirects properly
-        await checkAuth()
-        
-        // Add a small delay to ensure state is properly set
-        await new Promise(resolve => setTimeout(resolve, 100))
+        // Only check authentication if we're on a protected route or require auth
+        // For public routes like landing page, skip the auth check to prevent interference
+        // This prevents checkAuth from setting isAuthenticated: false and triggering redirects
+        if (requireAuth || PROTECTED_ROUTES.some(route => pathname.startsWith(route))) {
+          await checkAuth()
+          // Add a small delay to ensure state is properly set
+          await new Promise(resolve => setTimeout(resolve, 100))
+        } else {
+          // For public routes, just set initialized without checking auth
+          console.log('🔐 AuthGuard: Skipping auth check on public route:', pathname)
+        }
         
       } catch (error) {
         console.error('Auth initialization error:', error)
@@ -74,12 +80,17 @@ export function AuthGuard({
     }
 
     initializeAuth()
-  }, [checkAuth])
+  }, [checkAuth, requireAuth, pathname])
 
   // Handle authentication state changes and redirects
   useEffect(() => {
     // Don't process redirects until initialization is complete
     if (!hasInitialized || isChecking || isLoading) {
+      return
+    }
+
+    // If an auth modal is open, do not redirect; let the modal UX complete
+    if (authModalOpen) {
       return
     }
 
@@ -158,11 +169,14 @@ export function AuthGuard({
       setRedirectCount(0)
     }
 
-  }, [isAuthenticated, isLoading, isChecking, pathname, router, redirectCount, lastPath, requireAuth, redirectTo, hasInitialized])
+  }, [isAuthenticated, isLoading, isChecking, pathname, router, redirectCount, lastPath, requireAuth, redirectTo, hasInitialized, authModalOpen])
 
   // Additional effect to handle authentication state changes specifically
   useEffect(() => {
     if (hasInitialized && !isChecking && !isLoading) {
+      if (authModalOpen) {
+        return
+      }
       console.log('🔐 AuthGuard: Authentication state changed:', {
         isAuthenticated,
         pathname,
@@ -180,7 +194,7 @@ export function AuthGuard({
         }, 1000)
       }
     }
-  }, [isAuthenticated, pathname, hasInitialized, isChecking, isLoading, router])
+  }, [isAuthenticated, pathname, hasInitialized, isChecking, isLoading, router, authModalOpen])
 
   // Show loading state while checking authentication
   if (isChecking || isLoading) {

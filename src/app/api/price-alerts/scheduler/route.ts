@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { priceAlertScheduler } from '@/lib/price-alert-scheduler'
+import { withAuth } from '@/lib/auth-middleware'
+import type { AuthenticatedRequest } from '@/lib/auth-middleware'
 
 // GET /api/price-alerts/scheduler - Get scheduler status
-export async function GET(request: NextRequest) {
+export const GET = withAuth(async (request: AuthenticatedRequest) => {
   try {
     const status = {
       isActive: priceAlertScheduler.isActive(),
@@ -21,10 +23,10 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
-}
+})
 
 // POST /api/price-alerts/scheduler - Start/stop scheduler
-export async function POST(request: NextRequest) {
+export const POST = withAuth(async (request: AuthenticatedRequest) => {
   try {
     const body = await request.json()
     const { action } = body
@@ -60,4 +62,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
-}
+})

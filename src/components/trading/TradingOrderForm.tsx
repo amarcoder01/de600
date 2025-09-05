@@ -262,7 +262,7 @@ export function TradingOrderForm({ symbol = '', accountId, onOrderPlaced, onCanc
               type="number"
               value={quantity}
               onChange={(e) => setQuantity(Number(e.target.value))}
-              className="w-full mt-1 p-2 border rounded-md"
+              className="w-full mt-1 p-2 border rounded-md bg-white text-gray-900 placeholder-gray-500 dark:bg-white dark:text-gray-900 dark:placeholder-gray-600"
               placeholder="Enter quantity"
               min="1"
               step="1"
@@ -277,7 +277,7 @@ export function TradingOrderForm({ symbol = '', accountId, onOrderPlaced, onCanc
                 type="number"
                 value={price}
                 onChange={(e) => setPrice(Number(e.target.value))}
-                className="w-full mt-1 p-2 border rounded-md"
+                className="w-full mt-1 p-2 border rounded-md bg-white text-gray-900 placeholder-gray-500 dark:bg-white dark:text-gray-900 dark:placeholder-gray-600"
                 placeholder="Enter price"
                 min="0.01"
                 step="0.01"
@@ -293,7 +293,7 @@ export function TradingOrderForm({ symbol = '', accountId, onOrderPlaced, onCanc
                 type="number"
                 value={stopPrice}
                 onChange={(e) => setStopPrice(Number(e.target.value))}
-                className="w-full mt-1 p-2 border rounded-md"
+                className="w-full mt-1 p-2 border rounded-md bg-white text-gray-900 placeholder-gray-500 dark:bg-white dark:text-gray-900 dark:placeholder-gray-600"
                 placeholder="Enter stop price"
                 min="0.01"
                 step="0.01"
@@ -307,7 +307,7 @@ export function TradingOrderForm({ symbol = '', accountId, onOrderPlaced, onCanc
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full mt-1 p-2 border rounded-md"
+              className="w-full mt-1 p-2 border rounded-md bg-white text-gray-900 placeholder-gray-500 dark:bg-white dark:text-gray-900 dark:placeholder-gray-600"
               placeholder="Add notes about this order"
               rows={2}
             />

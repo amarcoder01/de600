@@ -8,6 +8,7 @@ import { StockList } from '@/components/market-view/StockList'
 import { LoadMoreButton } from '@/components/market-view/LoadMoreButton'
 import { StockModal } from '@/components/market-view/StockModal'
 import { AlertCircle, TrendingUp } from 'lucide-react'
+import { TopMoversApiService } from '@/lib/top-movers-api'
 
 export default function MarketViewPage() {
   const [stocks, setStocks] = useState<Stock[]>([])
@@ -23,6 +24,7 @@ export default function MarketViewPage() {
   const [isSearching, setIsSearching] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [isMarketClosed, setIsMarketClosed] = useState(false)
+  const [sessionLabel, setSessionLabel] = useState<'Pre-Market' | 'Regular' | 'After Hours' | 'Closed'>('Closed')
 
   useEffect(() => {
     const initializeMarketView = async () => {
@@ -56,7 +58,52 @@ export default function MarketViewPage() {
     }
     
     initializeMarketView()
-    setIsMarketClosed(marketViewApiService.isMarketClosed())
+
+    // Fetch authoritative market status from server (Polygon-backed)
+    const fetchMarketStatus = async () => {
+      try {
+        const status = await TopMoversApiService.getMarketStatus()
+        // Derive session label and strict open/closed using US/Eastern windows
+        const now = new Date()
+        const et = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }))
+        const minutes = et.getHours() * 60 + et.getMinutes()
+        const preStart = 4 * 60, regularOpen = 9 * 60 + 30, regularClose = 16 * 60, afterEnd = 20 * 60
+        const inRegular = minutes >= regularOpen && minutes < regularClose
+        const closed = !(status.market === 'open' && inRegular)
+        setIsMarketClosed(closed)
+        let label: typeof sessionLabel = 'Closed'
+        if (!closed) {
+          label = 'Regular'
+        } else if (minutes >= preStart && minutes < regularOpen) {
+          label = 'Pre-Market'
+        } else if (minutes >= regularClose && minutes < afterEnd) {
+          label = 'After Hours'
+        } else {
+          label = 'Closed'
+        }
+        setSessionLabel(label)
+      } catch (e) {
+        // Fallback to ET heuristic if server status fails
+        const now = new Date()
+        const et = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }))
+        const minutes = et.getHours() * 60 + et.getMinutes()
+        const preStart = 4 * 60, regularOpen = 9 * 60 + 30, regularClose = 16 * 60, afterEnd = 20 * 60
+        // Heuristic closed state
+        const closed = !(minutes >= regularOpen && minutes < regularClose)
+        setIsMarketClosed(closed)
+        let label: typeof sessionLabel = 'Closed'
+        if (!closed) {
+          label = 'Regular'
+        } else if (minutes >= preStart && minutes < regularOpen) {
+          label = 'Pre-Market'
+        } else if (minutes >= regularClose && minutes < afterEnd) {
+          label = 'After Hours'
+        }
+        setSessionLabel(label)
+      }
+    }
+
+    fetchMarketStatus()
   }, [])
 
   const loadInitialStocks = async () => {
@@ -213,19 +260,25 @@ export default function MarketViewPage() {
         </div>
       </header>
 
-      {/* Market Status Banner */}
-      {isMarketClosed && (
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center">
-              <AlertCircle className="h-5 w-5 text-yellow-400 mr-2" />
-              <p className="text-yellow-800 font-medium">
-                Market Closed – Showing Last Close Data
-              </p>
-            </div>
+      {/* Market Status Banner (server-driven) */}
+      <div className={`${isMarketClosed ? 'bg-yellow-50 border-yellow-400' : 'bg-green-50 border-green-400'} border-l-4 p-4`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center">
+            {isMarketClosed ? (
+              <AlertCircle className="h-5 w-5 text-yellow-500 mr-2" />
+            ) : (
+              <span className="h-3 w-3 rounded-full bg-green-500 mr-2 inline-block" />
+            )}
+            <p className={`${isMarketClosed ? 'text-yellow-800' : 'text-green-800'} font-medium`}>
+              {isMarketClosed ? (
+                <>Market Closed – Showing Last Close Data{sessionLabel && sessionLabel !== 'Closed' ? ` • ${sessionLabel}` : ''}</>
+              ) : (
+                <>Market Open – Showing Real-Time Data</>
+              )}
+            </p>
           </div>
         </div>
-      )}
+      </div>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

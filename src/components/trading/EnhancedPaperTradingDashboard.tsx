@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -40,6 +40,19 @@ export default function EnhancedPaperTradingDashboard({ userId }: EnhancedPaperT
     stopPrice: '',
     notes: ''
   })
+
+  // NEW: Risk management state
+  const [riskManagement, setRiskManagement] = useState({
+    symbol: '',
+    stopLoss: '',
+    takeProfit: '',
+    trailingStop: ''
+  })
+
+  // NEW: Enhanced statistics state
+  const [enhancedStats, setEnhancedStats] = useState<any>(null)
+  const [riskMetrics, setRiskMetrics] = useState<any>(null)
+  const [isLoadingStats, setIsLoadingStats] = useState(false)
 
   // Fetch accounts on component mount
   useEffect(() => {
@@ -86,6 +99,134 @@ export default function EnhancedPaperTradingDashboard({ userId }: EnhancedPaperT
       }
     } catch (error) {
       console.error('Error fetching market status:', error)
+    }
+  }
+
+  // NEW: Add risk management to a position
+  const addRiskManagement = async () => {
+    if (!selectedAccount || !riskManagement.symbol) {
+      setError('Please select an account and enter a symbol')
+      return
+    }
+
+    try {
+      setIsLoading(true)
+      const response = await fetch('/api/paper-trading/enhanced', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'add-risk-management',
+          accountId: selectedAccount.id,
+          symbol: riskManagement.symbol,
+          stopLoss: riskManagement.stopLoss ? parseFloat(riskManagement.stopLoss) : undefined,
+          takeProfit: riskManagement.takeProfit ? parseFloat(riskManagement.takeProfit) : undefined,
+          trailingStop: riskManagement.trailingStop ? parseFloat(riskManagement.trailingStop) : undefined,
+          userId
+        })
+      })
+
+      const data = await response.json()
+      
+      if (data.success) {
+        setError(null)
+        // Reset form
+        setRiskManagement({
+          symbol: '',
+          stopLoss: '',
+          takeProfit: '',
+          trailingStop: ''
+        })
+        // Refresh accounts to show updated data
+        fetchAccounts()
+      } else {
+        setError(data.error || 'Failed to add risk management')
+      }
+    } catch (error) {
+      setError('Failed to add risk management')
+      console.error('Error adding risk management:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // NEW: Fetch enhanced trading statistics
+  const fetchEnhancedStats = async () => {
+    if (!selectedAccount) return
+
+    try {
+      setIsLoadingStats(true)
+      const response = await fetch('/api/paper-trading/enhanced', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'get-enhanced-stats',
+          accountId: selectedAccount.id,
+          userId
+        })
+      })
+
+      const data = await response.json()
+      
+      if (data.success) {
+        setEnhancedStats(data.data)
+      } else {
+        console.error('Failed to fetch enhanced stats:', data.error)
+      }
+    } catch (error) {
+      console.error('Error fetching enhanced stats:', error)
+    } finally {
+      setIsLoadingStats(false)
+    }
+  }
+
+  // NEW: Fetch risk metrics
+  const fetchRiskMetrics = async () => {
+    if (!selectedAccount) return
+
+    try {
+      const response = await fetch('/api/paper-trading/enhanced', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'get-risk-metrics',
+          accountId: selectedAccount.id,
+          userId
+        })
+      })
+
+      const data = await response.json()
+      
+      if (data.success) {
+        setRiskMetrics(data.data)
+      } else {
+        console.error('Failed to fetch risk metrics:', data.error)
+      }
+    } catch (error) {
+      console.error('Error fetching risk metrics:', error)
+    }
+  }
+
+  // NEW: Start order monitoring
+  const startOrderMonitoring = async () => {
+    try {
+      const response = await fetch('/api/paper-trading/enhanced', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'monitor-orders',
+          userId
+        })
+      })
+
+      const data = await response.json()
+      
+      if (data.success) {
+        console.log('Order monitoring started')
+      } else {
+        console.error('Failed to start order monitoring:', data.error)
+      }
+    } catch (error) {
+      console.error('Error starting order monitoring:', error)
     }
   }
 
@@ -669,6 +810,163 @@ export default function EnhancedPaperTradingDashboard({ userId }: EnhancedPaperT
                       ))}
                     </tbody>
                   </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* NEW: Risk Management */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Risk Management</CardTitle>
+              <CardDescription>Set stop-loss, take-profit, and trailing stops for your positions</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Symbol *
+                  </label>
+                  <Input
+                    placeholder="AAPL"
+                    value={riskManagement.symbol}
+                    onChange={(e) => setRiskManagement({ ...riskManagement, symbol: e.target.value.toUpperCase() })}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Stop Loss ($)
+                  </label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="140.00"
+                    value={riskManagement.stopLoss}
+                    onChange={(e) => setRiskManagement({ ...riskManagement, stopLoss: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Take Profit ($)
+                  </label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="160.00"
+                    value={riskManagement.takeProfit}
+                    onChange={(e) => setRiskManagement({ ...riskManagement, takeProfit: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Trailing Stop (%)
+                  </label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    placeholder="5.0"
+                    value={riskManagement.trailingStop}
+                    onChange={(e) => setRiskManagement({ ...riskManagement, trailingStop: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <Button 
+                  onClick={addRiskManagement} 
+                  disabled={isLoading || !riskManagement.symbol}
+                  className="w-full"
+                >
+                  {isLoading ? 'Adding...' : 'Add Risk Management'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* NEW: Enhanced Statistics */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Enhanced Trading Statistics</CardTitle>
+              <CardDescription>Advanced performance metrics and risk analysis</CardDescription>
+              <div className="flex space-x-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={fetchEnhancedStats}
+                  disabled={isLoadingStats}
+                >
+                  {isLoadingStats ? 'Loading...' : 'Refresh Stats'}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={fetchRiskMetrics}
+                >
+                  Risk Metrics
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={startOrderMonitoring}
+                >
+                  Start Monitoring
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {enhancedStats && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                  <div className="text-center p-3 bg-blue-50 rounded-lg">
+                    <div className="text-2xl font-bold text-blue-600">{enhancedStats.totalTrades}</div>
+                    <div className="text-sm text-blue-600">Total Trades</div>
+                  </div>
+                  <div className="text-center p-3 bg-green-50 rounded-lg">
+                    <div className="text-2xl font-bold text-green-600">{enhancedStats.winRate}%</div>
+                    <div className="text-sm text-green-600">Win Rate</div>
+                  </div>
+                  <div className="text-center p-3 bg-purple-50 rounded-lg">
+                    <div className="text-2xl font-bold text-purple-600">{enhancedStats.profitFactor}</div>
+                    <div className="text-sm text-purple-600">Profit Factor</div>
+                  </div>
+                  <div className="text-center p-3 bg-orange-50 rounded-lg">
+                    <div className="text-2xl font-bold text-orange-600">{enhancedStats.sharpeRatio}</div>
+                    <div className="text-sm text-orange-600">Sharpe Ratio</div>
+                  </div>
+                </div>
+              )}
+
+              {riskMetrics && (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <div className="text-center p-3 bg-red-50 rounded-lg">
+                    <div className="text-xl font-bold text-red-600">{riskMetrics.volatility.toFixed(2)}%</div>
+                    <div className="text-sm text-red-600">Volatility</div>
+                  </div>
+                  <div className="text-center p-3 bg-yellow-50 rounded-lg">
+                    <div className="text-xl font-bold text-yellow-600">{riskMetrics.beta.toFixed(2)}</div>
+                    <div className="text-sm text-yellow-600">Beta</div>
+                  </div>
+                  <div className="text-center p-3 bg-indigo-50 rounded-lg">
+                    <div className="text-xl font-bold text-indigo-600">{riskMetrics.maxDrawdown.toFixed(2)}%</div>
+                    <div className="text-sm text-indigo-600">Max Drawdown</div>
+                  </div>
+                  <div className="text-center p-3 bg-pink-50 rounded-lg">
+                    <div className="text-xl font-bold text-pink-600">{riskMetrics.var95.toFixed(2)}</div>
+                    <div className="text-sm text-pink-600">VaR (95%)</div>
+                  </div>
+                  <div className="text-center p-3 bg-teal-50 rounded-lg">
+                    <div className="text-xl font-bold text-teal-600">{riskMetrics.correlation.toFixed(2)}</div>
+                    <div className="text-sm text-teal-600">Correlation</div>
+                  </div>
+                </div>
+              )}
+
+              {!enhancedStats && !riskMetrics && (
+                <div className="text-center py-8 text-gray-500">
+                  <p>Click "Refresh Stats" to load enhanced trading statistics.</p>
+                  <p className="text-sm">This includes win rate, profit factor, Sharpe ratio, and risk metrics.</p>
                 </div>
               )}
             </CardContent>

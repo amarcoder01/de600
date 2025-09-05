@@ -234,7 +234,6 @@ export default function TermsPage() {
                 <li>These Terms shall be governed by and construed in accordance with applicable law of the relevant jurisdiction, without regard to conflict-of-law rules.</li>
                 <li>Any disputes shall be resolved exclusively through arbitration or courts in a competent forum, subject to applicable law.</li>
               </ol>
-              <p class="note">If you need a specific jurisdiction named (e.g., Western Australia), replace this section's language accordingly.</p>
           </section>
 
             <section id="modifications" aria-labelledby="h-mods">

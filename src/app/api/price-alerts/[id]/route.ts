@@ -1,21 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-import { DatabaseService } from '@/lib/db'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/db'
+import { withAuth } from '@/lib/auth-middleware'
+import type { AuthenticatedRequest } from '@/lib/auth-middleware'
 
 // GET /api/price-alerts/[id] - Get a specific price alert
-export async function GET(
-  request: NextRequest,
+export const GET = withAuth(async (
+  request: AuthenticatedRequest,
   { params }: { params: { id: string } }
-) {
+) => {
   try {
-    const user = await DatabaseService.getOrCreateDemoUser()
-    
+    const userId = request.user!.id
     const alert = await prisma.priceAlert.findFirst({
       where: {
         id: params.id,
-        userId: user.id
+        userId
       }
     })
 
@@ -43,22 +41,22 @@ export async function GET(
       { status: 500 }
     )
   }
-}
+})
 
 // PUT /api/price-alerts/[id] - Update a price alert
-export async function PUT(
-  request: NextRequest,
+export const PUT = withAuth(async (
+  request: AuthenticatedRequest,
   { params }: { params: { id: string } }
-) {
+) => {
   try {
     const body = await request.json()
-    const user = await DatabaseService.getOrCreateDemoUser()
+    const userId = request.user!.id
 
     // Check if alert exists and belongs to user
     const existingAlert = await prisma.priceAlert.findFirst({
       where: {
         id: params.id,
-        userId: user.id
+        userId
       }
     })
 
@@ -138,21 +136,21 @@ export async function PUT(
       { status: 500 }
     )
   }
-}
+})
 
 // DELETE /api/price-alerts/[id] - Delete a price alert
-export async function DELETE(
-  request: NextRequest,
+export const DELETE = withAuth(async (
+  request: AuthenticatedRequest,
   { params }: { params: { id: string } }
-) {
+) => {
   try {
-    const user = await DatabaseService.getOrCreateDemoUser()
+    const userId = request.user!.id
 
     // Check if alert exists and belongs to user
     const existingAlert = await prisma.priceAlert.findFirst({
       where: {
         id: params.id,
-        userId: user.id
+        userId
       }
     })
 
@@ -183,4 +181,4 @@ export async function DELETE(
       { status: 500 }
     )
   }
-}
+})

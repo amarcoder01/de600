@@ -1,16 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PriceAlertService } from '@/lib/price-alert-service'
+import { withAuth } from '@/lib/auth-middleware'
+import type { AuthenticatedRequest } from '@/lib/auth-middleware'
 
 // POST /api/price-alerts/check - Manually trigger price alert check
-export async function POST(request: NextRequest) {
+export const POST = withAuth(async (request: AuthenticatedRequest) => {
   try {
     console.log('🔍 Manual price alert check triggered')
     
     // Check all active alerts
-    await PriceAlertService.checkAllAlerts()
+    await PriceAlertService.checkAllAlerts(request.user!.id)
     
     // Get statistics
-    const stats = await PriceAlertService.getAlertStats()
+    const stats = await PriceAlertService.getAlertStats(request.user!.id)
     
     return NextResponse.json({
       success: true,
@@ -24,12 +26,12 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
-}
+})
 
 // GET /api/price-alerts/check - Get price alert statistics
-export async function GET(request: NextRequest) {
+export const GET = withAuth(async (request: AuthenticatedRequest) => {
   try {
-    const stats = await PriceAlertService.getAlertStats()
+    const stats = await PriceAlertService.getAlertStats(request.user!.id)
     
     return NextResponse.json({
       success: true,
@@ -42,4 +44,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
-}
+})

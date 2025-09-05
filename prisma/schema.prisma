@@ -196,6 +196,7 @@ model PaperPosition {
   type                 String              @default("stock")
   exchange             String?
   sector               String?
+  notes                String?             // NEW: For storing risk management parameters
   entryDate            DateTime            @default(now())
   lastUpdated          DateTime            @default(now())
   account              PaperTradingAccount @relation(fields: [accountId], references: [id])

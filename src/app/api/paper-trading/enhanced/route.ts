@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { enhancedPaperTrading } from '@/lib/enhanced-paper-trading'
+import { prisma } from '@/lib/db'
 
 // Enhanced Paper Trading API with Real Market Data
 
@@ -28,8 +29,15 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ success: true, message: 'Real-time updates stopped' })
 
       case 'get-account':
-        if (!accountId) {
-          return NextResponse.json({ error: 'Account ID is required' }, { status: 400 })
+        if (!accountId || !userId) {
+          return NextResponse.json({ error: 'Account ID and userId are required' }, { status: 400 })
+        }
+        // Ownership check
+        {
+          const acct = await prisma.paperTradingAccount.findUnique({ where: { id: accountId } })
+          if (!acct || acct.userId !== userId) {
+            return NextResponse.json({ error: 'Account not found or access denied' }, { status: 403 })
+          }
         }
         const account = await enhancedPaperTrading.getAccount(accountId)
         return NextResponse.json({ success: true, data: account })
@@ -42,8 +50,14 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ success: true, data: accounts })
 
       case 'get-stats':
-        if (!accountId) {
-          return NextResponse.json({ error: 'Account ID is required' }, { status: 400 })
+        if (!accountId || !userId) {
+          return NextResponse.json({ error: 'Account ID and userId are required' }, { status: 400 })
+        }
+        {
+          const acct = await prisma.paperTradingAccount.findUnique({ where: { id: accountId } })
+          if (!acct || acct.userId !== userId) {
+            return NextResponse.json({ error: 'Account not found or access denied' }, { status: 403 })
+          }
         }
         const stats = await enhancedPaperTrading.getEnhancedTradingStats(accountId)
         return NextResponse.json({ success: true, data: stats })
@@ -94,13 +108,21 @@ export async function POST(request: NextRequest) {
           quantity, 
           price, 
           stopPrice, 
-          notes 
+          notes, 
+          userId: orderUserId 
         } = data
         
-        if (!orderAccountId || !symbol || !type || !side || !quantity) {
+        if (!orderAccountId || !symbol || !type || !side || !quantity || !orderUserId) {
           return NextResponse.json({ 
-            error: 'Account ID, symbol, type, side, and quantity are required' 
+            error: 'Account ID, userId, symbol, type, side, and quantity are required' 
           }, { status: 400 })
+        }
+        // Ownership check
+        {
+          const acct = await prisma.paperTradingAccount.findUnique({ where: { id: orderAccountId } })
+          if (!acct || acct.userId !== orderUserId) {
+            return NextResponse.json({ error: 'Account not found or access denied' }, { status: 403 })
+          }
         }
         
         const order = await enhancedPaperTrading.placeOrder(
@@ -115,18 +137,118 @@ export async function POST(request: NextRequest) {
         )
         return NextResponse.json({ success: true, data: order })
 
+      case 'add-risk-management':
+        const { 
+          accountId: riskAccountId, 
+          symbol: riskSymbol, 
+          stopLoss, 
+          takeProfit, 
+          trailingStop, 
+          userId: riskUserId 
+        } = data
+        
+        if (!riskAccountId || !riskSymbol || !riskUserId) {
+          return NextResponse.json({ 
+            error: 'Account ID, symbol, and userId are required' 
+          }, { status: 400 })
+        }
+        
+        // Ownership check
+        {
+          const acct = await prisma.paperTradingAccount.findUnique({ where: { id: riskAccountId } })
+          if (!acct || acct.userId !== riskUserId) {
+            return NextResponse.json({ error: 'Account not found or access denied' }, { status: 403 })
+          }
+        }
+        
+        await enhancedPaperTrading.addRiskManagement(
+          riskAccountId, 
+          riskSymbol, 
+          stopLoss, 
+          takeProfit, 
+          trailingStop
+        )
+        return NextResponse.json({ success: true, message: 'Risk management added successfully' })
+
+      case 'get-enhanced-stats':
+        const { accountId: statsAccountId, userId: statsUserId } = data
+        
+        if (!statsAccountId || !statsUserId) {
+          return NextResponse.json({ 
+            error: 'Account ID and userId are required' 
+          }, { status: 400 })
+        }
+        
+        // Ownership check
+        {
+          const acct = await prisma.paperTradingAccount.findUnique({ where: { id: statsAccountId } })
+          if (!acct || acct.userId !== statsUserId) {
+            return NextResponse.json({ error: 'Account not found or access denied' }, { status: 403 })
+          }
+        }
+        
+        const stats = await enhancedPaperTrading.getEnhancedTradingStats(statsAccountId)
+        return NextResponse.json({ success: true, data: stats })
+
+      case 'get-risk-metrics':
+        const { accountId: riskMetricsAccountId, userId: riskMetricsUserId } = data
+        
+        if (!riskMetricsAccountId || !riskMetricsUserId) {
+          return NextResponse.json({ 
+            error: 'Account ID and userId are required' 
+          }, { status: 400 })
+        }
+        
+        // Ownership check
+        {
+          const acct = await prisma.paperTradingAccount.findUnique({ where: { id: riskMetricsAccountId } })
+          if (!acct || acct.userId !== riskMetricsUserId) {
+            return NextResponse.json({ error: 'Account not found or access denied' }, { status: 403 })
+          }
+        }
+        
+        const riskMetrics = await enhancedPaperTrading.calculatePortfolioRiskMetrics(riskMetricsAccountId)
+        return NextResponse.json({ success: true, data: riskMetrics })
+
+      case 'monitor-orders':
+        const { userId: monitorUserId } = data
+        
+        if (!monitorUserId) {
+          return NextResponse.json({ 
+            error: 'UserId is required' 
+          }, { status: 400 })
+        }
+        
+        // Start order monitoring (this is a background process)
+        enhancedPaperTrading.monitorAllOrders()
+        return NextResponse.json({ success: true, message: 'Order monitoring started' })
+
       case 'cancel-order':
-        const { orderId } = data
-        if (!orderId) {
-          return NextResponse.json({ error: 'Order ID is required' }, { status: 400 })
+        const { orderId, userId: cancelUserId } = data
+        if (!orderId || !cancelUserId) {
+          return NextResponse.json({ error: 'Order ID and userId are required' }, { status: 400 })
+        }
+        // Ownership check via order->account
+        {
+          const ord = await prisma.paperOrder.findUnique({ where: { id: orderId }, include: { account: true } })
+          if (!ord || ord.account.userId !== cancelUserId) {
+            return NextResponse.json({ error: 'Order not found or access denied' }, { status: 403 })
+          }
         }
         await enhancedPaperTrading.cancelOrder(orderId)
         return NextResponse.json({ success: true, message: 'Order cancelled successfully' })
 
       case 'delete-account':
-        const { accountId: deleteAccountId } = data
-        if (!deleteAccountId) {
-          return NextResponse.json({ error: 'Account ID is required' }, { status: 400 })
+        const { accountId: deleteAccountId, userId: deleteUserId } = data
+        if (!deleteAccountId || !deleteUserId) {
+          return NextResponse.json({ error: 'Account ID and userId are required' }, { status: 400 })
+        }
+        // Ownership check
+        {
+          const acct = await prisma.paperTradingAccount.findUnique({ where: { id: deleteAccountId } })
+          if (!acct || acct.userId !== deleteUserId) {
+            return NextResponse.json({ error: 'Account not found or access denied' }, { status: 403 })
+          }
         }
         await enhancedPaperTrading.deleteAccount(deleteAccountId)
         return NextResponse.json({ success: true, message: 'Account deleted successfully' })

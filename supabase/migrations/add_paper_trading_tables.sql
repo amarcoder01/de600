@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS "PaperPosition" (
     "type" TEXT NOT NULL DEFAULT 'stock',
     "exchange" TEXT,
     "sector" TEXT,
+    "notes" TEXT, -- NEW: For storing risk management parameters
     "entryDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "lastUpdated" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 

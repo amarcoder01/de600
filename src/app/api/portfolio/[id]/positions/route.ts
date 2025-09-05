@@ -33,7 +33,7 @@ export async function GET(
 
     console.log('👤 Positions API - User verified:', { userId: user.id, userEmail: user.email })
 
-    const { rows: portfolioRows } = await query<{ id: string; name: string }>(
+    const { rows: portfolioRows } = await query(
       'SELECT "id", "name" FROM "Portfolio" WHERE "id" = $1 AND "userId" = $2 LIMIT 1',
       [id, user.id]
     )
@@ -129,7 +129,7 @@ export async function POST(
 
     console.log('👤 Positions API - User verified for position creation:', { userId: user.id, userEmail: user.email })
 
-    const { rows: portfolioRows } = await query<{ id: string; name: string }>(
+    const { rows: portfolioRows } = await query(
       'SELECT "id", "name" FROM "Portfolio" WHERE "id" = $1 AND "userId" = $2 LIMIT 1',
       [id, user.id]
     )

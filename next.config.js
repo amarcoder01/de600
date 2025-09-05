@@ -1,7 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['localhost', 'render.com', '*.render.com'],
+    domains: ['localhost', 'render.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**.render.com',
+      },
+    ],
     unoptimized: true, // For static export compatibility
   },
   webpack: (config) => {

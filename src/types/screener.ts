@@ -21,11 +21,14 @@ export interface StockPrice {
   ticker: string;
   name?: string;
   price: number;
-  change: number;
-  change_percent: number;
-  volume: number;
+  change?: number;
+  change_percent?: number;
+  volume?: number;
   market_cap?: number;
   primary_exchange?: string;
+  // Indicates that change/change_percent were reliably computed.
+  // When false or absent, callers may treat change fields as unavailable.
+  has_change?: boolean;
 }
 
 // Screener-specific stock interface

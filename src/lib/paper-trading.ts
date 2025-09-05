@@ -129,9 +129,11 @@ export class PaperTradingService {
         throw new Error('Account not found')
       }
 
-      // Check if user has enough cash for buy orders
+      // Check if user has enough cash for buy orders (including estimated commission)
       if (side === 'buy') {
-        const requiredCash = (price || stockData.price) * quantity
+        const estPrice = price || stockData.price
+        const estimatedCommission = this.calculateCommission(quantity, estPrice)
+        const requiredCash = estPrice * quantity + estimatedCommission
         if (account.availableCash < requiredCash) {
           throw new Error('Insufficient cash for this order')
         }

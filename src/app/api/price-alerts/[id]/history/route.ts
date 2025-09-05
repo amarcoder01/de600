@@ -1,22 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-import { DatabaseService } from '@/lib/db'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/db'
+import { withAuth } from '@/lib/auth-middleware'
+import type { AuthenticatedRequest } from '@/lib/auth-middleware'
 
 // GET /api/price-alerts/[id]/history - Get history for a specific price alert
-export async function GET(
-  request: NextRequest,
+export const GET = withAuth(async (
+  request: AuthenticatedRequest,
   { params }: { params: { id: string } }
-) {
+) => {
   try {
-    const user = await DatabaseService.getOrCreateDemoUser()
+    const userId = request.user!.id
     
     // Check if alert exists and belongs to user
     const alert = await prisma.priceAlert.findFirst({
       where: {
         id: params.id,
-        userId: user.id
+        userId
       }
     })
 
@@ -51,4 +50,4 @@ export async function GET(
       { status: 500 }
     )
   }
-}
+})

@@ -219,9 +219,12 @@ export const useWatchlistStore = create<WatchlistStore>()(
             
             set({ watchlists: [], isLoading: false })
             
-            // Redirect to login page
+            // Redirect to login page unless an auth modal is open
             if (typeof window !== 'undefined') {
-              window.location.href = '/login?message=session_expired'
+              const authOpen = useAuthStore.getState().authModalOpen
+              if (!authOpen) {
+                window.location.href = '/login?message=session_expired'
+              }
             }
             return
           }
@@ -1096,9 +1099,13 @@ export const usePriceAlertStore = create<PriceAlertStore>()(
       createAlert: async (alertData: CreatePriceAlertRequest) => {
         set({ isLoading: true, error: null })
         try {
+          const token = localStorage.getItem('token')
           const response = await fetch('/api/price-alerts', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
             body: JSON.stringify(alertData)
           })
           
@@ -1129,9 +1136,13 @@ export const usePriceAlertStore = create<PriceAlertStore>()(
       updateAlert: async (id: string, updates: Partial<PriceAlert>) => {
         set({ isLoading: true, error: null })
         try {
+          const token = localStorage.getItem('token')
           const response = await fetch(`/api/price-alerts/${id}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
             body: JSON.stringify(updates)
           })
           
@@ -1164,8 +1175,12 @@ export const usePriceAlertStore = create<PriceAlertStore>()(
       deleteAlert: async (id: string) => {
         set({ isLoading: true, error: null })
         try {
+          const token = localStorage.getItem('token')
           const response = await fetch(`/api/price-alerts/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: {
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            }
           })
           
           if (response.ok) {
@@ -1198,7 +1213,12 @@ export const usePriceAlertStore = create<PriceAlertStore>()(
       loadAlerts: async () => {
         set({ isLoading: true, error: null })
         try {
-          const response = await fetch('/api/price-alerts')
+          const token = localStorage.getItem('token')
+          const response = await fetch('/api/price-alerts', {
+            headers: {
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            }
+          })
           
           if (response.ok) {
             const { data } = await response.json()
@@ -1223,7 +1243,12 @@ export const usePriceAlertStore = create<PriceAlertStore>()(
 
       loadCurrentPrices: async () => {
         try {
-          const response = await fetch('/api/price-alerts/prices')
+          const token = localStorage.getItem('token')
+          const response = await fetch('/api/price-alerts/prices', {
+            headers: {
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            }
+          })
           
           if (response.ok) {
             const { data } = await response.json()
@@ -1246,7 +1271,12 @@ export const usePriceAlertStore = create<PriceAlertStore>()(
 
       loadSchedulerStatus: async () => {
         try {
-          const response = await fetch('/api/price-alerts/scheduler')
+          const token = localStorage.getItem('token')
+          const response = await fetch('/api/price-alerts/scheduler', {
+            headers: {
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            }
+          })
           
           if (response.ok) {
             const { data } = await response.json()
@@ -1259,9 +1289,13 @@ export const usePriceAlertStore = create<PriceAlertStore>()(
 
       startScheduler: async () => {
         try {
+          const token = localStorage.getItem('token')
           const response = await fetch('/api/price-alerts/scheduler', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
             body: JSON.stringify({ action: 'start' })
           })
           
@@ -1280,9 +1314,13 @@ export const usePriceAlertStore = create<PriceAlertStore>()(
 
       stopScheduler: async () => {
         try {
+          const token = localStorage.getItem('token')
           const response = await fetch('/api/price-alerts/scheduler', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
             body: JSON.stringify({ action: 'stop' })
           })
           
@@ -1309,7 +1347,12 @@ export const usePriceAlertStore = create<PriceAlertStore>()(
       
       getAlertHistory: async (alertId: string) => {
         try {
-          const response = await fetch(`/api/price-alerts/${alertId}/history`)
+          const token = localStorage.getItem('token')
+          const response = await fetch(`/api/price-alerts/${alertId}/history`, {
+            headers: {
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            }
+          })
           
           if (response.ok) {
             const { data } = await response.json()
@@ -1339,6 +1382,9 @@ interface AuthStore extends AuthState {
   updateUser: (updates: Partial<User>) => void
   refreshToken: () => Promise<void>
   checkAuth: () => Promise<void>
+  // UI coordination: whether any auth modal (login/register/forgot) is open
+  authModalOpen: boolean
+  setAuthModalOpen: (open: boolean) => void
 }
 
 export const useAuthStore = create<AuthStore>()(
@@ -1349,6 +1395,8 @@ export const useAuthStore = create<AuthStore>()(
       isLoading: false,
       error: null,
       token: null,
+      authModalOpen: false,
+      setAuthModalOpen: (open: boolean) => set({ authModalOpen: open }),
       
       login: async (credentials: LoginCredentials) => {
         set({ isLoading: true, error: null })
@@ -1495,18 +1543,10 @@ export const useAuthStore = create<AuthStore>()(
             // Set error state and loading false - DO NOT change authentication state
             set({
               error: errorMessage,
-              isLoading: false,
-              isAuthenticated: false,  // Explicitly ensure authentication is false
-              user: null,
-              token: null
+              isLoading: false
+              // Don't change isAuthenticated, user, or token on registration failure
+              // Don't clear tokens either - let the user stay in their current state
             })
-            
-            // Clear localStorage token to prevent confusion
-            localStorage.removeItem('token')
-            
-            // Clear any auth cookies from the client side as well
-            document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
-            document.cookie = 'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
             
             // Track failed registration
             trackAuthEvent('register_failed', false, {
@@ -1637,10 +1677,13 @@ export const useAuthStore = create<AuthStore>()(
         
         // Redirect to landing page with a small delay to ensure state is cleared
         if (typeof window !== 'undefined') {
-          console.log('🔐 Auth Store: Redirecting to landing page...')
-          setTimeout(() => {
-            window.location.href = '/'
-          }, 100)
+          const authOpen = useAuthStore.getState().authModalOpen
+          if (!authOpen) {
+            console.log('🔐 Auth Store: Redirecting to landing page...')
+            setTimeout(() => {
+              window.location.href = '/'
+            }, 100)
+          }
         }
       },
       
@@ -1766,11 +1809,17 @@ export const useAuthStore = create<AuthStore>()(
           }
         }
         
-        // If no token at all, user is not authenticated
+        // If no token at all, only clear auth state if we were previously authenticated
+        // This prevents clearing auth state when user is just on a public page
         if (!validToken) {
-          console.log('🔐 Auth Store: No token found, user not authenticated')
-          set({ isAuthenticated: false, user: null, token: null })
-          localStorage.removeItem('token')
+          const currentState = useAuthStore.getState()
+          if (currentState.isAuthenticated) {
+            console.log('🔐 Auth Store: No token found, clearing previous auth state')
+            set({ isAuthenticated: false, user: null, token: null })
+            localStorage.removeItem('token')
+          } else {
+            console.log('🔐 Auth Store: No token found, user already not authenticated')
+          }
           return
         }
         

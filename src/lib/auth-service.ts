@@ -476,21 +476,7 @@ export class AuthService {
   // Get user by ID with error handling
   static async getUserById(userId: string): Promise<User | null> {
     try {
-      const { rows } = await query<{
-        id: string;
-        email: string;
-        firstName: string;
-        lastName: string;
-        isEmailVerified: boolean;
-        isAccountLocked: boolean;
-        isAccountDisabled: boolean;
-        lastLoginAt: Date | null;
-        failedLoginAttempts: number;
-        lockoutUntil: Date | null;
-        preferences: any;
-        createdAt: Date;
-        updatedAt: Date;
-      }>(
+      const { rows } = await query(
         'SELECT "id", "email", "firstName", "lastName", "isEmailVerified", "isAccountLocked", "isAccountDisabled", "lastLoginAt", "failedLoginAttempts", "lockoutUntil", "preferences", "createdAt", "updatedAt" FROM "User" WHERE "id" = $1 LIMIT 1',
         [userId]
       )

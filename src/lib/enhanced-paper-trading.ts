@@ -9,6 +9,7 @@ import {
 } from '@/types'
 import { prisma } from './db'
 import { getStockData } from './multi-source-api'
+import { getMarketStatus as getClockStatus, isRegularOpen, isPreMarket as clockPre, isAfterHours as clockAfter } from './market-clock'
 
 // Market hours configuration (US Eastern Time)
 const MARKET_HOURS = {
@@ -40,6 +41,7 @@ export class EnhancedPaperTradingService {
   private static instance: EnhancedPaperTradingService
   private static realTimeDataCache = new Map<string, { data: Stock; timestamp: number }>()
   private static updateInterval: NodeJS.Timeout | null = null
+  private static orderMonitoringInterval: NodeJS.Timeout | null = null
   private static isRunning = false
 
   static getInstance(): EnhancedPaperTradingService {
@@ -56,47 +58,49 @@ export class EnhancedPaperTradingService {
     EnhancedPaperTradingService.isRunning = true
     console.log('🚀 Starting enhanced paper trading real-time updates...')
     
-    // Update every 5 seconds during market hours, 30 seconds after hours
+    // Update positions every 5 seconds during market hours, 30 seconds after hours
     EnhancedPaperTradingService.updateInterval = setInterval(() => {
       this.updateAllPositions()
     }, this.isMarketOpen() ? 5000 : 30000)
+
+    // NEW: Monitor orders every 2 seconds during market hours, 10 seconds after hours
+    EnhancedPaperTradingService.orderMonitoringInterval = setInterval(() => {
+      this.monitorAllOrders()
+    }, this.isMarketOpen() ? 2000 : 10000)
   }
 
-  // Stop real-time updates
+  // Stop real-time data updates
   stopRealTimeUpdates(): void {
+    if (!EnhancedPaperTradingService.isRunning) return
+    
+    EnhancedPaperTradingService.isRunning = false
+    console.log('🛑 Stopping enhanced paper trading real-time updates...')
+    
     if (EnhancedPaperTradingService.updateInterval) {
       clearInterval(EnhancedPaperTradingService.updateInterval)
       EnhancedPaperTradingService.updateInterval = null
     }
-    EnhancedPaperTradingService.isRunning = false
-    console.log('⏹️ Stopped enhanced paper trading updates')
+
+    // NEW: Clear order monitoring interval
+    if (EnhancedPaperTradingService.orderMonitoringInterval) {
+      clearInterval(EnhancedPaperTradingService.orderMonitoringInterval)
+      EnhancedPaperTradingService.orderMonitoringInterval = null
+    }
   }
 
-  // Check if market is currently open
+  // Check if market is currently open (regular hours)
   isMarketOpen(): boolean {
-    const now = new Date()
-    const easternTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }))
-    const currentTime = easternTime.toTimeString().slice(0, 5)
-    
-    return currentTime >= MARKET_HOURS.regular.start && currentTime < MARKET_HOURS.regular.end
+    return isRegularOpen()
   }
 
   // Check if we're in pre-market hours
   isPreMarket(): boolean {
-    const now = new Date()
-    const easternTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }))
-    const currentTime = easternTime.toTimeString().slice(0, 5)
-    
-    return currentTime >= MARKET_HOURS.preMarket.start && currentTime < MARKET_HOURS.preMarket.start
+    return clockPre()
   }
 
   // Check if we're in after-hours
   isAfterHours(): boolean {
-    const now = new Date()
-    const easternTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }))
-    const currentTime = easternTime.toTimeString().slice(0, 5)
-    
-    return currentTime >= MARKET_HOURS.afterHours.start && currentTime < MARKET_HOURS.afterHours.end
+    return clockAfter()
   }
 
   // Get current market status
@@ -106,38 +110,7 @@ export class EnhancedPaperTradingService {
     nextOpen: string
     nextClose: string
   } {
-    const now = new Date()
-    const easternTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }))
-    const currentTime = easternTime.toTimeString().slice(0, 5)
-    
-    let status: 'pre-market' | 'open' | 'after-hours' | 'closed'
-    let nextOpen = ''
-    let nextClose = ''
-    
-    if (this.isPreMarket()) {
-      status = 'pre-market'
-      nextOpen = '09:30'
-      nextClose = '16:00'
-    } else if (this.isMarketOpen()) {
-      status = 'open'
-      nextOpen = '09:30'
-      nextClose = '16:00'
-    } else if (this.isAfterHours()) {
-      status = 'after-hours'
-      nextOpen = '09:30'
-      nextClose = '16:00'
-    } else {
-      status = 'closed'
-      nextOpen = '09:30'
-      nextClose = '16:00'
-    }
-    
-    return {
-      isOpen: this.isMarketOpen(),
-      status,
-      nextOpen,
-      nextClose
-    }
+    return getClockStatus()
   }
 
   // Create a new paper trading account with enhanced features
@@ -222,14 +195,16 @@ export class EnhancedPaperTradingService {
 
       // Check trading restrictions based on market hours
       const marketStatus = this.getMarketStatus()
-      if (type === 'market' && !marketStatus.isOpen && !marketStatus.status.includes('market')) {
+      // Only allow market orders during regular market hours
+      if (type === 'market' && !marketStatus.isOpen) {
         throw new Error('Market orders can only be placed during regular market hours')
       }
 
-      // Check if user has enough cash for buy orders
+      // Check if user has enough cash for buy orders (including estimated commission)
       if (side === 'buy') {
         const estimatedPrice = price || stockData.price
-        const requiredCash = estimatedPrice * quantity
+        const estimatedCommission = this.calculateCommission(quantity, estimatedPrice)
+        const requiredCash = estimatedPrice * quantity + estimatedCommission
         const maxCashUsage = account.availableCash * TRADING_RULES.maxCashUsage
         
         if (requiredCash > maxCashUsage) {
@@ -340,6 +315,304 @@ export class EnhancedPaperTradingService {
     } catch (error) {
       console.error('Error processing enhanced market order:', error)
       throw error
+    }
+  }
+
+  // NEW: Process limit orders with realistic execution
+  async processLimitOrder(orderId: string): Promise<void> {
+    try {
+      const order = await prisma.paperOrder.findUnique({
+        where: { id: orderId },
+        include: { account: true },
+      })
+
+      if (!order || order.status !== 'pending' || !order.price) {
+        return
+      }
+
+      // Get current stock price
+      const stockData = await getStockData(order.symbol)
+      if (!stockData) {
+        return // Wait for data to be available
+      }
+
+      const currentPrice = stockData.price
+      let shouldExecute = false
+
+      // Check if limit order conditions are met
+      if (order.side === 'buy' && currentPrice <= order.price) {
+        shouldExecute = true
+      } else if (order.side === 'sell' && currentPrice >= order.price) {
+        shouldExecute = true
+      }
+
+      if (shouldExecute) {
+        // Add small random delay to simulate market execution time (100-500ms)
+        const executionDelay = Math.random() * 400 + 100
+        await new Promise(resolve => setTimeout(resolve, executionDelay))
+
+        // Re-check price after delay to ensure conditions still exist
+        const updatedStockData = await getStockData(order.symbol)
+        if (updatedStockData) {
+          const finalPrice = updatedStockData.price
+          const finalSlippage = this.calculateSlippage(order.quantity * finalPrice)
+          const executionPrice = order.side === 'buy' 
+            ? finalPrice * (1 + finalSlippage) 
+            : finalPrice * (1 - finalSlippage)
+
+          const totalAmount = executionPrice * order.quantity
+          const commission = this.calculateCommission(order.quantity, executionPrice)
+
+          // Update order
+          await prisma.paperOrder.update({
+            where: { id: orderId },
+            data: {
+              status: 'filled',
+              filledQuantity: order.quantity,
+              averagePrice: executionPrice,
+            },
+          })
+
+          // Create transaction
+          await prisma.paperTransaction.create({
+            data: {
+              accountId: order.accountId,
+              orderId: orderId,
+              symbol: order.symbol,
+              type: order.side,
+              quantity: order.quantity,
+              price: executionPrice,
+              amount: totalAmount + commission,
+              commission,
+              description: `LIMIT ${order.side.toUpperCase()} ${order.quantity} shares of ${order.symbol} at $${executionPrice.toFixed(2)} (triggered at $${finalPrice.toFixed(2)})`,
+            },
+          })
+
+          // Update account and positions
+          await this.updateAccountAfterTrade(order.accountId, order.symbol, order.side as 'buy' | 'sell', order.quantity, executionPrice, commission)
+          
+          console.log(`✅ Executed limit order: ${order.side} ${order.quantity} ${order.symbol} at $${executionPrice.toFixed(2)}`)
+        }
+      }
+    } catch (error) {
+      console.error('Error processing limit order:', error)
+    }
+  }
+
+  // NEW: Process stop orders with realistic execution
+  async processStopOrder(orderId: string): Promise<void> {
+    try {
+      const order = await prisma.paperOrder.findUnique({
+        where: { id: orderId },
+        include: { account: true },
+      })
+
+      if (!order || order.status !== 'pending' || !order.stopPrice) {
+        return
+      }
+
+      // Get current stock price
+      const stockData = await getStockData(order.symbol)
+      if (!stockData) {
+        return // Wait for data to be available
+      }
+
+      const currentPrice = stockData.price
+      let shouldExecute = false
+
+      // Check if stop order conditions are met
+      if (order.side === 'buy' && currentPrice >= order.stopPrice) {
+        shouldExecute = true
+      } else if (order.side === 'sell' && currentPrice <= order.stopPrice) {
+        shouldExecute = true
+      }
+
+      if (shouldExecute) {
+        // Add small random delay to simulate market execution time (100-500ms)
+        const executionDelay = Math.random() * 400 + 100
+        await new Promise(resolve => setTimeout(resolve, executionDelay))
+
+        // Re-check price after delay
+        const updatedStockData = await getStockData(order.symbol)
+        if (updatedStockData) {
+          const finalPrice = updatedStockData.price
+          const finalSlippage = this.calculateSlippage(order.quantity * finalPrice)
+          const executionPrice = order.side === 'buy' 
+            ? finalPrice * (1 + finalSlippage) 
+            : finalPrice * (1 - finalSlippage)
+
+          const totalAmount = executionPrice * order.quantity
+          const commission = this.calculateCommission(order.quantity, executionPrice)
+
+          // Update order
+          await prisma.paperOrder.update({
+            where: { id: orderId },
+            data: {
+              status: 'filled',
+              filledQuantity: order.quantity,
+              averagePrice: executionPrice,
+            },
+          })
+
+          // Create transaction
+          await prisma.paperTransaction.create({
+            data: {
+              accountId: order.accountId,
+              orderId: orderId,
+              symbol: order.symbol,
+              type: order.side,
+              quantity: order.quantity,
+              price: executionPrice,
+              amount: totalAmount + commission,
+              commission,
+              description: `STOP ${order.side.toUpperCase()} ${order.quantity} shares of ${order.symbol} at $${executionPrice.toFixed(2)} (triggered at $${finalPrice.toFixed(2)})`,
+            },
+          })
+
+          // Update account and positions
+          await this.updateAccountAfterTrade(order.accountId, order.symbol, order.side as 'buy' | 'sell', order.quantity, executionPrice, commission)
+          
+          console.log(`✅ Executed stop order: ${order.side} ${order.quantity} ${order.symbol} at $${executionPrice.toFixed(2)}`)
+        }
+      }
+    } catch (error) {
+      console.error('Error processing stop order:', error)
+    }
+  }
+
+  // NEW: Process stop-limit orders with realistic execution
+  async processStopLimitOrder(orderId: string): Promise<void> {
+    try {
+      const order = await prisma.paperOrder.findUnique({
+        where: { id: orderId },
+        include: { account: true },
+      })
+
+      if (!order || order.status !== 'pending' || !order.stopPrice || !order.price) {
+        return
+      }
+
+      // Get current stock price
+      const stockData = await getStockData(order.symbol)
+      if (!stockData) {
+        return // Wait for data to be available
+      }
+
+      const currentPrice = stockData.price
+      let shouldTrigger = false
+
+      // Check if stop condition is met
+      if (order.side === 'buy' && currentPrice >= order.stopPrice) {
+        shouldTrigger = true
+      } else if (order.side === 'sell' && currentPrice <= order.stopPrice) {
+        shouldTrigger = true
+      }
+
+      if (shouldTrigger) {
+        // Add small random delay to simulate market execution time (100-500ms)
+        const executionDelay = Math.random() * 400 + 100
+        await new Promise(resolve => setTimeout(resolve, executionDelay))
+
+        // Re-check price after delay
+        const updatedStockData = await getStockData(order.symbol)
+        if (updatedStockData) {
+          const finalPrice = updatedStockData.price
+          
+          // Check if limit price condition is also met
+          let shouldExecute = false
+          if (order.side === 'buy' && finalPrice <= order.price) {
+            shouldExecute = true
+          } else if (order.side === 'sell' && finalPrice >= order.price) {
+            shouldExecute = true
+          }
+
+          if (shouldExecute) {
+            const finalSlippage = this.calculateSlippage(order.quantity * finalPrice)
+            const executionPrice = order.side === 'buy' 
+              ? finalPrice * (1 + finalSlippage) 
+              : finalPrice * (1 - finalSlippage)
+
+            const totalAmount = executionPrice * order.quantity
+            const commission = this.calculateCommission(order.quantity, executionPrice)
+
+            // Update order
+            await prisma.paperOrder.update({
+              where: { id: orderId },
+              data: {
+                status: 'filled',
+                filledQuantity: order.quantity,
+                averagePrice: executionPrice,
+              },
+            })
+
+            // Create transaction
+            await prisma.paperTransaction.create({
+              data: {
+                accountId: order.accountId,
+                orderId: orderId,
+                symbol: order.symbol,
+                type: order.side,
+                quantity: order.quantity,
+                price: executionPrice,
+                amount: totalAmount + commission,
+                commission,
+                description: `STOP-LIMIT ${order.side.toUpperCase()} ${order.quantity} shares of ${order.symbol} at $${executionPrice.toFixed(2)} (stop: $${order.stopPrice}, limit: $${order.price})`,
+              },
+            })
+
+            // Update account and positions
+            await this.updateAccountAfterTrade(order.accountId, order.symbol, order.side as 'buy' | 'sell', order.quantity, executionPrice, commission)
+            
+            console.log(`✅ Executed stop-limit order: ${order.side} ${order.quantity} ${order.symbol} at $${executionPrice.toFixed(2)}`)
+          } else {
+            // Stop triggered but limit not met - reject order
+            await prisma.paperOrder.update({
+              where: { id: orderId },
+              data: {
+                status: 'rejected',
+                notes: `Stop triggered at $${finalPrice.toFixed(2)} but limit price $${order.price} not met`,
+              },
+            })
+            console.log(`❌ Stop-limit order rejected: ${order.symbol} - limit price not met`)
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error processing stop-limit order:', error)
+    }
+  }
+
+  // NEW: Comprehensive order monitoring system
+  async monitorAllOrders(): Promise<void> {
+    try {
+      // Get all pending orders
+      const pendingOrders = await prisma.paperOrder.findMany({
+        where: { status: 'pending' },
+        include: { account: true },
+      })
+
+      for (const order of pendingOrders) {
+        try {
+          switch (order.type) {
+            case 'market':
+              // Market orders should already be processed
+              break
+            case 'limit':
+              await this.processLimitOrder(order.id)
+              break
+            case 'stop':
+              await this.processStopOrder(order.id)
+              break
+            case 'stop-limit':
+              await this.processStopLimitOrder(order.id)
+              break
+          }
+        } catch (error) {
+          console.error(`Error monitoring order ${order.id}:`, error)
+        }
+      }
+    } catch (error) {
+      console.error('Error in order monitoring system:', error)
     }
   }
 
@@ -543,6 +816,9 @@ export class EnhancedPaperTradingService {
         // Update account totals after position updates
         await this.updateAccountTotals(account.id)
       }
+
+      // NEW: Check risk management after position updates
+      await this.checkRiskManagement()
     } catch (error) {
       console.error('Error updating all positions:', error)
     }
@@ -668,22 +944,76 @@ export class EnhancedPaperTradingService {
 
   // Calculate advanced trading statistics
   private async calculateAdvancedStats(account: PaperTradingAccount, transactions: any[]): Promise<PaperTradingStats> {
-    // Implementation of advanced statistics calculation
-    // This would include Sharpe ratio, max drawdown, volatility, etc.
-    
-    // For now, return basic stats
-    return {
-      totalTrades: transactions.length / 2, // Each trade has buy and sell
-      winningTrades: 0,
-      losingTrades: 0,
-      winRate: 0,
-      averageWin: 0,
-      averageLoss: 0,
-      profitFactor: 0,
-      maxDrawdown: 0,
-      sharpeRatio: 0,
-      totalReturn: account.totalPnL,
-      annualizedReturn: 0,
+    try {
+      // Get risk metrics
+      const riskMetrics = await this.calculatePortfolioRiskMetrics(account.id)
+      
+      // Calculate basic trade statistics
+      const buyTransactions = transactions.filter(t => t.type === 'buy')
+      const sellTransactions = transactions.filter(t => t.type === 'sell')
+      
+      let totalTrades = 0
+      let winningTrades = 0
+      let losingTrades = 0
+      let totalWins = 0
+      let totalLosses = 0
+      
+      // Match buy and sell transactions to calculate trade performance
+      for (const buy of buyTransactions) {
+        const correspondingSell = sellTransactions.find(s => s.symbol === buy.symbol)
+        if (correspondingSell) {
+          totalTrades++
+          const tradePnL = (correspondingSell.price - buy.price) * buy.quantity - buy.commission - correspondingSell.commission
+          
+          if (tradePnL > 0) {
+            winningTrades++
+            totalWins += tradePnL
+          } else {
+            losingTrades++
+            totalLosses += Math.abs(tradePnL)
+          }
+        }
+      }
+      
+      const winRate = totalTrades > 0 ? (winningTrades / totalTrades) * 100 : 0
+      const averageWin = winningTrades > 0 ? totalWins / winningTrades : 0
+      const averageLoss = losingTrades > 0 ? totalLosses / losingTrades : 0
+      const profitFactor = averageLoss > 0 ? averageWin / averageLoss : 0
+      
+      // Calculate annualized return
+      const accountAge = (Date.now() - new Date(account.createdAt).getTime()) / (1000 * 60 * 60 * 24 * 365)
+      const annualizedReturn = accountAge > 0 ? (account.totalPnL / account.initialBalance) / accountAge * 100 : 0
+      
+      return {
+        totalTrades,
+        winningTrades,
+        losingTrades,
+        winRate: Math.round(winRate * 100) / 100,
+        averageWin: Math.round(averageWin * 100) / 100,
+        averageLoss: Math.round(averageLoss * 100) / 100,
+        profitFactor: Math.round(profitFactor * 100) / 100,
+        maxDrawdown: Math.round(riskMetrics.maxDrawdown * 100) / 100,
+        sharpeRatio: Math.round(riskMetrics.sharpeRatio * 100) / 100,
+        totalReturn: Math.round(account.totalPnL * 100) / 100,
+        annualizedReturn: Math.round(annualizedReturn * 100) / 100,
+      }
+    } catch (error) {
+      console.error('Error calculating advanced stats:', error)
+      
+      // Return basic stats as fallback
+      return {
+        totalTrades: 0,
+        winningTrades: 0,
+        losingTrades: 0,
+        winRate: 0,
+        averageWin: 0,
+        averageLoss: 0,
+        profitFactor: 0,
+        maxDrawdown: 0,
+        sharpeRatio: 0,
+        totalReturn: account.totalPnL,
+        annualizedReturn: 0,
+      }
     }
   }
 
@@ -702,10 +1032,10 @@ export class EnhancedPaperTradingService {
         throw new Error('Order cannot be cancelled')
       }
 
-      // Check if market is open for cancellation
+      // Only allow cancellation during regular market hours
       const marketStatus = this.getMarketStatus()
-      if (!marketStatus.isOpen && !marketStatus.status.includes('market')) {
-        throw new Error('Orders can only be cancelled during market hours')
+      if (!marketStatus.isOpen) {
+        throw new Error('Orders can only be cancelled during regular market hours')
       }
 
       await prisma.paperOrder.update({
@@ -749,6 +1079,236 @@ export class EnhancedPaperTradingService {
     } catch (error) {
       console.error('Error deleting enhanced paper trading account:', error)
       throw new Error('Failed to delete account')
+    }
+  }
+
+  // NEW: Enhanced risk management with automatic stop-loss and take-profit
+  async addRiskManagement(
+    accountId: string,
+    symbol: string,
+    stopLoss?: number,
+    takeProfit?: number,
+    trailingStop?: number
+  ): Promise<void> {
+    try {
+      const position = await prisma.paperPosition.findFirst({
+        where: { accountId, symbol }
+      })
+
+      if (!position) {
+        throw new Error('Position not found for risk management')
+      }
+
+      // Store risk management parameters in position notes (can be enhanced with a separate table later)
+      const riskParams = {
+        stopLoss,
+        takeProfit,
+        trailingStop,
+        entryPrice: position.averagePrice,
+        lastUpdated: new Date()
+      }
+
+      await prisma.paperPosition.update({
+        where: { id: position.id },
+        data: {
+          notes: JSON.stringify(riskParams),
+          lastUpdated: new Date()
+        }
+      })
+
+      console.log(`🛡️ Added risk management for ${symbol}: SL: ${stopLoss}, TP: ${takeProfit}, TS: ${trailingStop}`)
+    } catch (error) {
+      console.error('Error adding risk management:', error)
+      throw error
+    }
+  }
+
+  // NEW: Check and execute risk management orders
+  async checkRiskManagement(): Promise<void> {
+    try {
+      const positions = await prisma.paperPosition.findMany({
+        where: {
+          notes: { not: null }
+        }
+      })
+
+      for (const position of positions) {
+        try {
+          const riskParams = JSON.parse(position.notes || '{}')
+          if (!riskParams.stopLoss && !riskParams.takeProfit && !riskParams.trailingStop) {
+            continue
+          }
+
+          const stockData = await getStockData(position.symbol)
+          if (!stockData) continue
+
+          const currentPrice = stockData.price
+          let shouldExecute = false
+          let exitReason = ''
+
+          // Check stop-loss
+          if (riskParams.stopLoss && currentPrice <= riskParams.stopLoss) {
+            shouldExecute = true
+            exitReason = 'stop_loss'
+          }
+
+          // Check take-profit
+          if (riskParams.takeProfit && currentPrice >= riskParams.takeProfit) {
+            shouldExecute = true
+            exitReason = 'take_profit'
+          }
+
+          // Check trailing stop
+          if (riskParams.trailingStop && riskParams.entryPrice) {
+            const maxPrice = Math.max(riskParams.entryPrice, position.currentPrice)
+            const trailingStopPrice = maxPrice * (1 - riskParams.trailingStop / 100)
+            
+            if (currentPrice <= trailingStopPrice) {
+              shouldExecute = true
+              exitReason = 'trailing_stop'
+            }
+          }
+
+          if (shouldExecute) {
+            await this.executeRiskExit(position, currentPrice, exitReason)
+          }
+        } catch (error) {
+          console.error(`Error checking risk management for ${position.symbol}:`, error)
+        }
+      }
+    } catch (error) {
+      console.error('Error in risk management check:', error)
+    }
+  }
+
+  // NEW: Execute risk-based exit
+  private async executeRiskExit(
+    position: any,
+    exitPrice: number,
+    exitReason: string
+  ): Promise<void> {
+    try {
+      const slippage = this.calculateSlippage(position.quantity * exitPrice)
+      const executionPrice = exitPrice * (1 - slippage) // Sell order
+      const totalAmount = executionPrice * position.quantity
+      const commission = this.calculateCommission(position.quantity, executionPrice)
+
+      // Create sell transaction
+      await prisma.paperTransaction.create({
+        data: {
+          accountId: position.accountId,
+          symbol: position.symbol,
+          type: 'sell',
+          quantity: position.quantity,
+          price: executionPrice,
+          amount: totalAmount - commission,
+          commission,
+          description: `RISK EXIT: ${exitReason.toUpperCase()} - ${position.quantity} shares of ${position.symbol} at $${executionPrice.toFixed(2)}`,
+        },
+      })
+
+      // Update account cash
+      await prisma.paperTradingAccount.update({
+        where: { id: position.accountId },
+        data: {
+          availableCash: { increment: totalAmount - commission },
+          updatedAt: new Date(),
+        },
+      })
+
+      // Delete position
+      await prisma.paperPosition.delete({
+        where: { id: position.id },
+      })
+
+      // Update account totals
+      await this.updateAccountTotals(position.accountId)
+
+      console.log(`🛡️ Risk exit executed: ${position.symbol} - ${exitReason} at $${executionPrice.toFixed(2)}`)
+    } catch (error) {
+      console.error('Error executing risk exit:', error)
+    }
+  }
+
+  // NEW: Calculate enhanced portfolio risk metrics
+  async calculatePortfolioRiskMetrics(accountId: string): Promise<{
+    volatility: number
+    beta: number
+    sharpeRatio: number
+    maxDrawdown: number
+    var95: number
+    correlation: number
+  }> {
+    try {
+      const account = await this.getAccount(accountId)
+      if (!account || account.positions.length === 0) {
+        return {
+          volatility: 0,
+          beta: 0,
+          sharpeRatio: 0,
+          maxDrawdown: 0,
+          var95: 0,
+          correlation: 0
+        }
+      }
+
+      // Get historical data for risk calculation (simplified version)
+      const riskMetrics = await this.calculateBasicRiskMetrics(account)
+      
+      return riskMetrics
+    } catch (error) {
+      console.error('Error calculating portfolio risk metrics:', error)
+      return {
+        volatility: 0,
+        beta: 0,
+        sharpeRatio: 0,
+        maxDrawdown: 0,
+        var95: 0,
+        correlation: 0
+      }
+    }
+  }
+
+  // NEW: Calculate basic risk metrics
+  private async calculateBasicRiskMetrics(account: any): Promise<{
+    volatility: number
+    beta: number
+    sharpeRatio: number
+    maxDrawdown: number
+    var95: number
+    correlation: number
+  }> {
+    // Simplified risk calculation - in production, this would use historical data
+    const totalValue = account.totalValue
+    const totalPnL = account.totalPnL
+    const initialBalance = account.initialBalance
+
+    // Basic volatility estimate based on P&L
+    const volatility = Math.abs(totalPnL / totalValue) * 100
+
+    // Simplified beta (market correlation)
+    const beta = totalPnL > 0 ? 0.8 : 1.2
+
+    // Basic Sharpe ratio
+    const riskFreeRate = 0.02 // 2% annual
+    const sharpeRatio = (totalPnL / totalValue - riskFreeRate) / (volatility / 100)
+
+    // Max drawdown estimate
+    const maxDrawdown = Math.min(0, totalPnL / initialBalance) * 100
+
+    // Value at Risk (95% confidence)
+    const var95 = totalValue * (volatility / 100) * 1.65
+
+    // Portfolio correlation (simplified)
+    const correlation = account.positions.length > 1 ? 0.3 : 0
+
+    return {
+      volatility: Math.max(0, Math.min(100, volatility)),
+      beta: Math.max(0, Math.min(3, beta)),
+      sharpeRatio: Math.max(-3, Math.min(3, sharpeRatio)),
+      maxDrawdown: Math.max(-100, Math.min(0, maxDrawdown)),
+      var95: Math.max(0, var95),
+      correlation: Math.max(0, Math.min(1, correlation))
     }
   }
 }

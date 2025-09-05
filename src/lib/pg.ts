@@ -42,9 +42,8 @@ export const pool = new Pool({
   connectionTimeoutMillis: 10_000,
 })
 
-export async function query<T = any>(text: string, params?: any[]): Promise<{ rows: T[] }>
-export async function query<T = any>(text: string, params: any[] = []) {
-  return pool.query<T>(text, params)
+export async function query(text: string, params: any[] = []): Promise<{ rows: any[] }> {
+  return pool.query(text, params)
 }
 
 export async function withTransaction<T>(fn: (client: import('pg').PoolClient) => Promise<T>): Promise<T> {

@@ -51,7 +51,14 @@ export class TopMoversApiService {
 
   static isMarketOpen(marketStatus: MarketStatus | null): boolean {
     if (!marketStatus) return false
-    return marketStatus.market === 'open'
+    // Only treat as OPEN during regular trading session (9:30–16:00 ET)
+    const now = new Date()
+    const et = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }))
+    const minutes = et.getHours() * 60 + et.getMinutes()
+    const regularOpen = 9 * 60 + 30
+    const regularClose = 16 * 60
+    const inRegular = minutes >= regularOpen && minutes < regularClose
+    return marketStatus.market === 'open' && inRegular
   }
 
   static formatMarketStatusMessage(marketStatus: MarketStatus | null): string {

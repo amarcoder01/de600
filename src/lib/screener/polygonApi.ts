@@ -240,6 +240,7 @@ class PolygonApiService {
     try {
       // First try to get today's data if available
       const today = this.getTodayDateString();
+      const isMarketOpen = await this.isUsMarketOpen();
       let price: number | undefined;
       let volume: number | undefined;
       let change: number | undefined;
@@ -261,12 +262,6 @@ class PolygonApiService {
           const todayData = todayResponse.data.results[0];
           price = todayData.c; // Close price
           volume = todayData.v;
-          
-          // Calculate change from open if available
-          if (todayData.o && todayData.c) {
-            change = todayData.c - todayData.o;
-            changePercent = (change / todayData.o) * 100;
-          }
         }
       } catch (todayError) {
         console.warn(`Today's data not available for ${ticker}, using previous day`);
@@ -293,14 +288,64 @@ class PolygonApiService {
         price = result.c;
         volume = result.v;
         
-        // For previous day data, no change
-        change = 0;
-        changePercent = 0;
+        // For previous session data, compute session change (close - open)
+        if (typeof result.o === 'number' && typeof result.c === 'number') {
+          change = result.c - result.o;
+          changePercent = result.o !== 0 ? (change / result.o) * 100 : 0;
+        }
       }
 
       // Validate price data
       if (typeof price !== 'number' || isNaN(price) || price <= 0) {
         throw new Error(`Invalid price data for ${ticker}: ${price}`);
+      }
+
+      // Standardize change baseline
+      try {
+        if (isMarketOpen) {
+          // Market open: change vs previous close
+          const prevResp = await axios.get(
+            `${POLYGON_BASE_URL}/v2/aggs/ticker/${ticker}/prev`,
+            { params: { adjusted: true, apikey: this.apiKey }, timeout: 7000 }
+          );
+          const prevClose = prevResp?.data?.results?.[0]?.c;
+          if (typeof prevClose === 'number' && prevClose > 0) {
+            change = price - prevClose;
+            changePercent = (change / prevClose) * 100;
+          }
+        } else {
+          // Market closed: use last two daily closes (day-over-day)
+          const from = this.getDateNDaysAgoString(10);
+          const to = this.getTodayDateString();
+          const twoDays = await axios.get(
+            `${POLYGON_BASE_URL}/v2/aggs/ticker/${ticker}/range/1/day/${from}/${to}`,
+            { params: { adjusted: true, apikey: this.apiKey, sort: 'desc', limit: 2 }, timeout: 8000 }
+          );
+          const r0 = twoDays?.data?.results?.[0]; // last completed session
+          const r1 = twoDays?.data?.results?.[1]; // prior session
+          const c2 = r0?.c;
+          const c1 = r1?.c;
+          if (typeof c2 === 'number' && c2 > 0 && typeof c1 === 'number' && c1 > 0) {
+            // Ensure price reflects last completed session if not already
+            if (price === undefined || price <= 0) price = c2;
+            change = c2 - c1;
+            changePercent = (change / c1) * 100;
+          } else if (typeof c2 === 'number' && typeof c1 !== 'number') {
+            // Fallback: change vs previous close if only one day available
+            const prevResp = await axios.get(
+              `${POLYGON_BASE_URL}/v2/aggs/ticker/${ticker}/prev`,
+              { params: { adjusted: true, apikey: this.apiKey }, timeout: 7000 }
+            );
+            const prevClose = prevResp?.data?.results?.[0]?.c;
+            if (typeof prevClose === 'number' && prevClose > 0) {
+              if (price === undefined || price <= 0) price = c2;
+              change = c2 - prevClose;
+              changePercent = (change / prevClose) * 100;
+            }
+          }
+        }
+      } catch (baselineErr) {
+        console.warn(`Baseline change computation failed for ${ticker}:`, baselineErr);
       }
 
       let market_cap: number | undefined = undefined;
@@ -317,10 +362,11 @@ class PolygonApiService {
       return {
         ticker,
         price,
-        change: change || 0,
-        change_percent: changePercent || 0,
-        volume: volume || 0,
-        market_cap
+        change,
+        change_percent: changePercent,
+        volume: volume ?? 0,
+        market_cap,
+        has_change: typeof change === 'number' && typeof changePercent === 'number'
       };
     } catch (error) {
       console.error(`Error fetching price for ${ticker}:`, error);
@@ -338,7 +384,7 @@ class PolygonApiService {
       // Use the more reliable v2/aggs endpoint for current day data
       const today = new Date();
       const isWeekend = today.getDay() === 0 || today.getDay() === 6;
-      const isMarketHours = this.isMarketOpen();
+      const isMarketHours = await this.isUsMarketOpen();
       
       let price: number | undefined;
       let change: number | undefined;
@@ -388,12 +434,6 @@ class PolygonApiService {
           const todayData = dailyResponse.data.results[0];
           price = todayData.c; // Close price
           volume = todayData.v;
-          
-          // Calculate change from open
-          if (todayData.o && todayData.c) {
-            change = todayData.c - todayData.o;
-            change_percent = (change / todayData.o) * 100;
-          }
         }
       }
 
@@ -414,8 +454,6 @@ class PolygonApiService {
           const prevData = prevResponse.data.results[0];
           price = prevData.c;
           volume = prevData.v;
-          change = 0; // No change for previous day
-          change_percent = 0;
         }
       }
 
@@ -424,32 +462,53 @@ class PolygonApiService {
         throw new Error(`Unable to get price data for ${ticker}`);
       }
 
-      // If we still don't have change data, calculate from previous close
-      if (change === undefined || change_percent === undefined) {
-        try {
+      // Standardize change baseline
+      try {
+        if (isMarketHours && !isWeekend) {
+          // Market open: change vs previous close
           const prevCloseResponse = await axios.get(
             `${POLYGON_BASE_URL}/v2/aggs/ticker/${ticker}/prev`,
             {
-              params: {
-                adjusted: true,
-                apikey: this.apiKey,
-              },
-              timeout: 5000
+              params: { adjusted: true, apikey: this.apiKey },
+              timeout: 7000
             }
           );
-
-          if (prevCloseResponse.data.results && prevCloseResponse.data.results.length > 0) {
-            const prevClose = prevCloseResponse.data.results[0].c;
-            if (prevClose > 0) {
-              change = price - prevClose;
+          const prevClose = prevCloseResponse?.data?.results?.[0]?.c;
+          if (typeof prevClose === 'number' && prevClose > 0) {
+            change = price - prevClose;
+            change_percent = (change / prevClose) * 100;
+          }
+        } else {
+          // Market closed: use last two COMPLETED daily closes (exclude today's partial bar)
+          const from = this.getDateNDaysAgoString(30);
+          const to = this.getDateNDaysAgoString(1); // up to yesterday
+          const twoDays = await axios.get(
+            `${POLYGON_BASE_URL}/v2/aggs/ticker/${ticker}/range/1/day/${from}/${to}`,
+            { params: { adjusted: true, apikey: this.apiKey, sort: 'desc', limit: 2 }, timeout: 8000 }
+          );
+          const r0 = twoDays?.data?.results?.[0];
+          const r1 = twoDays?.data?.results?.[1];
+          const c2 = r0?.c;
+          const c1 = r1?.c;
+          if (typeof c2 === 'number' && c2 > 0 && typeof c1 === 'number' && c1 > 0) {
+            if (price === undefined || price <= 0) price = c2;
+            change = c2 - c1;
+            change_percent = (change / c1) * 100;
+          } else if (typeof c2 === 'number') {
+            const prevResp = await axios.get(
+              `${POLYGON_BASE_URL}/v2/aggs/ticker/${ticker}/prev`,
+              { params: { adjusted: true, apikey: this.apiKey }, timeout: 7000 }
+            );
+            const prevClose = prevResp?.data?.results?.[0]?.c;
+            if (typeof prevClose === 'number' && prevClose > 0) {
+              if (price === undefined || price <= 0) price = c2;
+              change = c2 - prevClose;
               change_percent = (change / prevClose) * 100;
             }
           }
-        } catch (prevCloseError) {
-          // If we can't get previous close, set change to 0
-          change = 0;
-          change_percent = 0;
         }
+      } catch (e) {
+        console.warn(`Standardized change baseline failed for ${ticker}:`, e);
       }
 
       let market_cap: number | undefined = undefined;
@@ -460,12 +519,20 @@ class PolygonApiService {
         } catch {}
       }
 
-      return { ticker, price, change, change_percent, volume, market_cap } as StockPrice;
+      return { 
+        ticker, 
+        price, 
+        change, 
+        change_percent, 
+        volume, 
+        market_cap,
+        has_change: typeof change === 'number' && typeof change_percent === 'number'
+      } as StockPrice;
     } catch (error) {
       console.error(`Error in getStockSnapshot for ${ticker}:`, error);
-      // Fallback to previous-close based calculation if snapshot fails
+      // Fallback to previous session data (will include proper change vs open)
       const prev = await this.getStockPrice(ticker, includeFinancials);
-      return { ...prev, change: 0, change_percent: 0 } as StockPrice;
+      return prev as StockPrice;
     }
   }
 
@@ -1095,22 +1162,37 @@ class PolygonApiService {
     ];
   }
 
-  // Helper method to check if market is currently open
-  private isMarketOpen(): boolean {
-    const now = new Date();
-    const utcHour = now.getUTCHours();
-    const utcMinute = now.getUTCMinutes();
-    const utcTime = utcHour * 100 + utcMinute;
-    
-    // US Market hours: 9:30 AM - 4:00 PM ET (14:30 - 21:00 UTC)
-    // Note: This is a simplified check, doesn't account for holidays
-    return utcTime >= 1430 && utcTime <= 2100;
+  // Helper method to check if US market is currently open using Polygon API
+  private async isUsMarketOpen(): Promise<boolean> {
+    try {
+      const resp = await axios.get(`${POLYGON_BASE_URL}/v1/marketstatus/now`, {
+        params: { apikey: this.apiKey },
+        timeout: 5000,
+      });
+      // Polygon returns market: 'open' | 'closed'
+      const market = resp?.data?.market;
+      return market === 'open';
+    } catch (e) {
+      // Fallback: conservative static window if status unavailable
+      const now = new Date();
+      const utcHour = now.getUTCHours();
+      const utcMinute = now.getUTCMinutes();
+      const utcTime = utcHour * 100 + utcMinute;
+      return utcTime >= 1430 && utcTime <= 2100;
+    }
   }
 
   // Helper method to get today's date in YYYY-MM-DD format
   private getTodayDateString(): string {
     const today = new Date();
     return today.toISOString().split('T')[0];
+  }
+
+  // Helper: get date string for N days ago (YYYY-MM-DD)
+  private getDateNDaysAgoString(days: number): string {
+    const d = new Date();
+    d.setDate(d.getDate() - days);
+    return d.toISOString().split('T')[0];
   }
 
   // Validate and clean stock data to ensure quality
@@ -1241,11 +1323,11 @@ export const fetchStockTickers = async (filters?: FilterCriteria, limit: number 
       return {
         ticker: ticker.ticker,
         name: ticker.name || `${ticker.ticker} Inc.`,
-        price: priceData?.price || 0,
-        change: priceData?.change || 0,
-        change_percent: priceData?.change_percent || 0,
-        volume: priceData?.volume || 0,
-        market_cap: priceData?.market_cap || 0,
+        price: priceData?.price ?? 0,
+        change: priceData?.change,
+        change_percent: priceData?.change_percent,
+        volume: priceData?.volume ?? 0,
+        market_cap: priceData?.market_cap,
         sector: enhancedSector,
         exchange: enhancedExchange,
       };
@@ -1311,11 +1393,11 @@ export const fetchAllUSStocks = async (
       return {
         ticker: ticker.ticker,
         name: ticker.name || `${ticker.ticker} Inc.`,
-        price: priceData?.price || 0,
-        change: priceData?.change || 0,
-        change_percent: priceData?.change_percent || 0,
-        volume: priceData?.volume || 0,
-        market_cap: priceData?.market_cap || 0,
+        price: priceData?.price ?? 0,
+        change: priceData?.change,
+        change_percent: priceData?.change_percent,
+        volume: priceData?.volume ?? 0,
+        market_cap: priceData?.market_cap,
         sector: enhancedSector,
         exchange: enhancedExchange,
       };
@@ -1381,11 +1463,11 @@ export const searchStocks = async (query: string, limit: number = 100): Promise<
         return {
           ticker: ticker.ticker,
           name: ticker.name || `${ticker.ticker} Inc.`,
-          price: priceData?.price || 0,
-          change: priceData?.change || 0,
-          change_percent: priceData?.change_percent || 0,
-          volume: priceData?.volume || 0,
-          market_cap: priceData?.market_cap || 0,
+          price: priceData?.price ?? 0,
+          change: priceData?.change ?? 0,
+          change_percent: priceData?.change_percent ?? 0,
+          volume: priceData?.volume ?? 0,
+          market_cap: priceData?.market_cap ?? 0,
           sector: enhancedSector,
           exchange: enhancedExchange,
         };
@@ -1446,11 +1528,11 @@ export const getPopularStocks = async (): Promise<ScreenerStock[]> => {
       return {
         ticker: ticker.ticker,
         name: ticker.name,
-        price: priceData?.price || 0,
-        change: priceData?.change || 0,
-        change_percent: priceData?.change_percent || 0,
-        volume: priceData?.volume || 0,
-        market_cap: priceData?.market_cap || 0,
+        price: priceData?.price ?? 0,
+        change: priceData?.change,
+        change_percent: priceData?.change_percent,
+        volume: priceData?.volume ?? 0,
+        market_cap: priceData?.market_cap,
         sector: enhancedSector,
         exchange: enhancedExchange,
       };

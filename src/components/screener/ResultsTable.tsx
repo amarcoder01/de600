@@ -48,13 +48,15 @@ const ResultsTable: React.FC<ResultsTableProps> = ({
 
   const formatPercentage = (value: number | undefined): string => {
     if (value === undefined || value === null) return 'N/A';
-    const formatted = `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
+    if (value === 0) return '0.00%';
+    const formatted = `${value > 0 ? '+' : ''}${value.toFixed(2)}%`;
     return formatted;
   };
 
   const getPercentageColor = (value: number | undefined): string => {
     if (value === undefined || value === null) return 'text-muted-foreground';
-    return value >= 0 ? 'text-green-600' : 'text-red-600';
+    if (value === 0) return 'text-muted-foreground';
+    return value > 0 ? 'text-green-600' : 'text-red-600';
   };
 
   const getSortIcon = (field: keyof ScreenerStock) => {
@@ -198,8 +200,8 @@ const ResultsTable: React.FC<ResultsTableProps> = ({
                     </td>
                     <td className="px-3 lg:px-6 py-3 lg:py-4 whitespace-nowrap">
                       <div className={`text-sm font-medium flex items-center gap-1 ${getPercentageColor(stock.change)}`}>
-                        {stock.change !== undefined && stock.change !== null && (
-                          stock.change >= 0 ? (
+                        {stock.change !== undefined && stock.change !== null && stock.change !== 0 && (
+                          stock.change > 0 ? (
                             <TrendingUp className="w-3 h-3" />
                           ) : (
                             <TrendingDown className="w-3 h-3" />

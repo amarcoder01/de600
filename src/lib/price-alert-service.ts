@@ -1,20 +1,20 @@
-import { PrismaClient } from '@prisma/client'
 import { EmailService } from './email-service'
 import { RealTimePriceService } from './real-time-price-service'
-
-const prisma = new PrismaClient()
+import { prisma, ensureDatabaseReady } from './db'
 
 export class PriceAlertService {
   // Check all active price alerts
-  static async checkAllAlerts(): Promise<void> {
+  static async checkAllAlerts(userId?: string): Promise<void> {
     try {
+      await ensureDatabaseReady()
       console.log('🔍 Checking all active price alerts...')
       
       // Get all active alerts
       const activeAlerts = await prisma.priceAlert.findMany({
         where: {
           status: 'active',
-          isActive: true
+          isActive: true,
+          ...(userId ? { userId } : {})
         }
       })
 
@@ -75,6 +75,7 @@ export class PriceAlertService {
   // Check a single alert
   private static async checkSingleAlert(alert: any, currentPrice: number): Promise<void> {
     try {
+      await ensureDatabaseReady()
       const shouldTrigger = this.shouldTriggerAlert(alert, currentPrice)
       
       if (shouldTrigger) {
@@ -105,6 +106,7 @@ export class PriceAlertService {
   // Trigger an alert and send notification
   private static async triggerAlert(alert: any, currentPrice: number): Promise<void> {
     try {
+      await ensureDatabaseReady()
       console.log(`🚨 Triggering alert for ${alert.symbol} (ID: ${alert.id})`)
       console.log(`📧 Sending email to: ${alert.userEmail}`)
       
@@ -202,6 +204,7 @@ export class PriceAlertService {
   // Manual trigger for testing
   static async manualTrigger(alertId: string): Promise<boolean> {
     try {
+      await ensureDatabaseReady()
       const alert = await prisma.priceAlert.findUnique({
         where: { id: alertId }
       })
@@ -226,18 +229,20 @@ export class PriceAlertService {
   }
 
   // Get alert statistics
-  static async getAlertStats(): Promise<{
+  static async getAlertStats(userId?: string): Promise<{
     total: number
     active: number
     triggered: number
     cancelled: number
   }> {
     try {
+      await ensureDatabaseReady()
+      const baseWhere = userId ? { userId } : {}
       const [total, active, triggered, cancelled] = await Promise.all([
-        prisma.priceAlert.count(),
-        prisma.priceAlert.count({ where: { status: 'active', isActive: true } }),
-        prisma.priceAlert.count({ where: { status: 'triggered' } }),
-        prisma.priceAlert.count({ where: { status: 'cancelled' } })
+        prisma.priceAlert.count({ where: { ...baseWhere } }),
+        prisma.priceAlert.count({ where: { ...baseWhere, status: 'active', isActive: true } }),
+        prisma.priceAlert.count({ where: { ...baseWhere, status: 'triggered' } }),
+        prisma.priceAlert.count({ where: { ...baseWhere, status: 'cancelled' } })
       ])
 
       return { total, active, triggered, cancelled }
@@ -250,6 +255,7 @@ export class PriceAlertService {
   // Get current prices for multiple symbols using real-time service
   static async getCurrentPrices(symbols: string[]): Promise<Record<string, { price: number; name?: string; change?: number; changePercent?: number }>> {
     try {
+      // No DB operations here, but keep interface consistent
       // Use real-time price service for fresh data
       const realTimePrices = await RealTimePriceService.getRealTimePrices(symbols)
       

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { PolygonApiService } from '@/lib/screener/polygonApi'
+import { ScreenerDataService } from '@/lib/screener/ScreenerDataService'
 import type { FilterCriteria } from '@/types/screener'
 
 // Simple in-memory cache for the current process
@@ -65,6 +66,35 @@ export async function POST(req: NextRequest) {
 		} catch (e) {
 			const uni = await service.getUniversalScreenerResults(filters, limit)
 			result = { stocks: uni.stocks, totalCount: uni.totalCount, hasMore: uni.hasMore }
+		}
+
+		// Production-grade enrichment: standardize price/change using ScreenerDataService
+		// Non-invasive: merge computed fields into existing results by ticker
+		try {
+			const tickers: string[] = (result.stocks || []).map((s: any) => s?.ticker).filter(Boolean)
+			if (tickers.length > 0) {
+				const sds = new ScreenerDataService()
+				const unified = await sds.getUnifiedSnapshots(tickers, true, 12, 400)
+				const byTicker = new Map(unified.map(u => [u.ticker, u]))
+				result.stocks = (result.stocks || []).map((s: any) => {
+					const u = byTicker.get(s?.ticker)
+					if (!u) return s
+					return {
+						...s,
+						price: typeof u.price === 'number' ? u.price : s.price,
+						change: u.change !== undefined ? u.change : s.change,
+						change_percent: u.change_percent !== undefined ? u.change_percent : s.change_percent,
+						volume: u.volume !== undefined ? u.volume : s.volume,
+						market_cap: u.market_cap !== undefined ? u.market_cap : s.market_cap,
+						has_change: u.has_change ?? s.has_change,
+						basis: (u as any).basis ?? (s as any).basis,
+						market_state: (u as any).market_state ?? (s as any).market_state,
+					}
+				})
+			}
+		} catch (e) {
+			// Best-effort enrichment; if it fails, proceed with original result
+			console.warn('Screener enrichment skipped due to error:', e)
 		}
 
 		// Sort the full set first

@@ -451,33 +451,35 @@ export async function detectSuspiciousActivity(userId: string, ipAddress: string
   
   try {
     // Check for multiple failed attempts from same IP
-    const { rows: failedRows } = await query<{ count: string }>(
+    const { rows: failedRows } = await query(
       'SELECT COUNT(*)::text as count FROM "LoginAttempt" WHERE "ipAddress" = $1 AND "success" = false AND "timestamp" >= $2',
       [ipAddress, new Date(Date.now() - 60 * 60 * 1000)]
     )
-    const recentFailedAttempts = parseInt(failedRows[0]?.count || '0', 10)
-    
-    if (recentFailedAttempts > 10) {
-      reasons.push('Multiple failed login attempts from this IP address')
+
+    const failedCount = parseInt(failedRows[0]?.count || '0')
+    if (failedCount >= SECURITY_CONFIG.MAX_LOGIN_ATTEMPTS) {
+      console.log(`🚫 IP ${ipAddress} blocked due to ${failedCount} failed attempts`)
+      reasons.push('Too many failed attempts from this IP address')
     }
-    
-    // Check for login from new device
-    const { rows: deviceRows } = await query<{ id: string }>(
-      'SELECT "id" FROM "DeviceTrust" WHERE "userId" = $1 AND "deviceFingerprint" = $2 LIMIT 1',
-      [userId, deviceFingerprint]
+
+    // Check for device fingerprint blocking
+    const { rows: deviceRows } = await query(
+      'SELECT "id" FROM "BlockedDevice" WHERE "fingerprint" = $1 AND "isActive" = true',
+      [deviceFingerprint]
+    )
+
+    if (deviceRows.length > 0) {
+      console.log(`🚫 Device ${deviceFingerprint} blocked`)
+      reasons.push('Device is blocked')
+    }
+
+    // Check for recent successful logins from same IP
+    const { rows: loginRows } = await query(
+      'SELECT COUNT(*)::text as count FROM "LoginAttempt" WHERE "ipAddress" = $1 AND "success" = true AND "timestamp" >= $2',
+      [ipAddress, new Date(Date.now() - 5 * 60 * 1000)]
     )
     
-    if (deviceRows.length === 0) {
-      reasons.push('Login attempt from new device')
-    }
-    
-    // Check for rapid successive logins
-    const { rows: loginRows } = await query<{ count: string }>(
-      'SELECT COUNT(*)::text as count FROM "LoginAttempt" WHERE "userId" = $1 AND "success" = true AND "timestamp" >= $2',
-      [userId, new Date(Date.now() - 5 * 60 * 1000)]
-    )
-    const recentLogins = parseInt(loginRows[0]?.count || '0', 10)
-    
+    const recentLogins = parseInt(loginRows[0]?.count || '0')
     if (recentLogins > 3) {
       reasons.push('Rapid successive login attempts')
     }

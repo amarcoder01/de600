@@ -25,8 +25,6 @@ import {
   Star
 } from 'lucide-react'
 import { PaperTradingAccount, PaperTradingStats, Stock } from '@/types'
-import { EnhancedStockChart } from '@/components/charts/EnhancedStockChart'
-import { PortfolioPerformanceChart } from '@/components/charts/PortfolioPerformanceChart'
 
 interface TradingAnalysisProps {
   account: PaperTradingAccount
@@ -37,7 +35,6 @@ interface TradingAnalysisProps {
 export function TradingAnalysis({ account, realTimeData, onRefresh }: TradingAnalysisProps) {
   const [stats, setStats] = useState<PaperTradingStats | null>(null)
   const [loading, setLoading] = useState(false)
-  const [timeframe, setTimeframe] = useState<'1D' | '1W' | '1M' | '3M' | '1Y'>('1M')
   const [showAdvancedMetrics, setShowAdvancedMetrics] = useState(false)
 
   useEffect(() => {
@@ -593,13 +590,6 @@ export function TradingAnalysis({ account, realTimeData, onRefresh }: TradingAna
           </CardContent>
         </Card>
       </div>
-
-      {/* Portfolio Performance Chart */}
-      <PortfolioPerformanceChart 
-        account={account}
-        realTimeData={realTimeData}
-        timeframe={timeframe}
-      />
     </div>
   )
 }

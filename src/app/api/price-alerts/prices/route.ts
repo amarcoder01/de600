@@ -1,20 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-import { DatabaseService } from '@/lib/db'
+import { prisma } from '@/lib/db'
 import { PriceAlertService } from '@/lib/price-alert-service'
-
-const prisma = new PrismaClient()
+import { withAuth } from '@/lib/auth-middleware'
+import type { AuthenticatedRequest } from '@/lib/auth-middleware'
 
 // GET /api/price-alerts/prices - Get current prices for all active alerts
-export async function GET(request: NextRequest) {
+export const GET = withAuth(async (request: AuthenticatedRequest) => {
   try {
-    // Get demo user (in production, this would be from authentication)
-    const user = await DatabaseService.getOrCreateDemoUser()
+    const userId = request.user!.id
     
-    // Get all active alerts for the user
+    // Get all active alerts for the authenticated user
     const activeAlerts = await prisma.priceAlert.findMany({
       where: {
-        userId: user.id,
+        userId,
         status: 'active',
         isActive: true
       },
@@ -59,4 +57,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
-}
+})

@@ -52,6 +52,98 @@ interface ApiResponse {
   count?: number
 }
 
+// Get market status (open/closed)
+async function fetchMarketStatus(): Promise<'open' | 'closed' | 'extended' | 'unknown'> {
+  try {
+    const data = await makePolygonRequest('/v1/marketstatus/now')
+    const market = data?.market
+    if (market === 'open') return 'open'
+    if (market === 'closed') return 'closed'
+    return 'unknown'
+  } catch {
+    return 'unknown'
+  }
+}
+
+// Fallback using grouped aggregates for a given date
+async function fetchGroupedMovers(type: 'gainers' | 'losers', dateISO: string): Promise<StockData[]> {
+  // Reference: https://polygon.io/docs/stocks/get_v2_aggs_grouped_locale_us_market_stocks__date
+  const endpoint = `/v2/aggs/grouped/locale/us/market/stocks/${dateISO}?adjusted=true`
+  const data = await makePolygonRequest(endpoint)
+  const results = Array.isArray(data?.results) ? data.results : []
+
+  const transformed: StockData[] = results
+    .map((r: any) => {
+      const ticker = r?.T
+      const c = r?.c
+      const o = r?.o
+      const v = r?.v
+      if (!ticker || typeof c !== 'number' || typeof o !== 'number' || typeof v !== 'number') return null
+      if (c <= 0 || o <= 0) return null
+      // Relaxed floor to $0.5 similar to snapshot transform
+      if (c < 0.5) return null
+      const change = c - o
+      const change_percent = o > 0 ? (change / o) * 100 : 0
+      if (!isFinite(change_percent) || Math.abs(change_percent) > 500) return null
+      if (v <= 0) return null
+      const estimatedShares = Math.max(v * 10, 1_000_000)
+      const market_cap = c * estimatedShares
+      const stock: StockData = {
+        ticker,
+        name: ticker,
+        market_cap,
+        value: c,
+        change,
+        change_percent,
+      }
+      return stock
+    })
+    .filter((s: StockData | null): s is StockData => s !== null)
+
+  // Sort by change_percent based on type
+  transformed.sort((a, b) => (type === 'gainers' ? b.change_percent - a.change_percent : a.change_percent - b.change_percent))
+
+  // Limit to top 20 similar to snapshot behavior
+  return transformed.slice(0, 20)
+}
+
+// Transform snapshot item from Polygon Snapshot Gainers/Losers into our StockData
+function transformSnapshotItem(item: any): StockData | null {
+  // Snapshot schema references:
+  // https://polygon.io/docs/stocks/get_v2_snapshot_locale_us_markets_stocks_gainers
+  // Common fields we use: ticker, todaysChange, todaysChangePerc, updated, day.{c,h,l,o,v,vw}
+  const ticker = item?.ticker
+  if (!ticker) return null
+
+  // Prefer day close as current price; fallback to lastTrade price if present
+  const currentPrice = item?.day?.c ?? item?.lastTrade?.p ?? 0
+  const change = item?.todaysChange ?? 0
+  const changePercent = item?.todaysChangePerc ?? 0
+  const volume = item?.day?.v ?? item?.lastQuote?.s ?? 0
+
+  // Basic validation similar to previous implementation
+  if (!currentPrice || currentPrice <= 0) return null
+  // Slightly relaxed to $0.5 to avoid empty datasets for low-priced movers
+  if (currentPrice < 0.5) return null
+  if (Math.abs(changePercent) > 500) return null
+  if (!volume || volume <= 0) return null
+
+  // Estimate market cap (Polygon snapshot does not return market cap directly here)
+  const estimatedShares = Math.max(volume * 10, 1_000_000)
+  const marketCap = currentPrice * estimatedShares
+
+  const stock: StockData = {
+    ticker,
+    name: ticker,
+    value: currentPrice,
+    change,
+    change_percent: changePercent,
+    market_cap: marketCap,
+  }
+
+  return stock
+}
+
 function transformPolygonData(ticker: PolygonTickerData): StockData | null {
   // Get current price from day data (most reliable)
   const currentPrice = ticker.day?.c || ticker.min?.c || 0
@@ -147,77 +239,13 @@ async function makePolygonRequest(endpoint: string): Promise<any> {
   }
 }
 
-// EXPERT SOLUTION: Use Polygon.io's Previous Close endpoint for last available data
-async function getStockData(stock: string): Promise<PolygonTickerData | null> {
-  try {
-    console.log(`🔍 Fetching data for ${stock} using Previous Close endpoint...`)
-    
-    // Use the Previous Close endpoint - this is the EXPERT approach
-    // It automatically returns the most recent available data regardless of market status
-    const endpoint = `/v2/aggs/ticker/${stock}/prev`
-    const data = await makePolygonRequest(endpoint)
-    
-    if (!data.results || data.results.length === 0) {
-      console.log(`No data available for ${stock} from Previous Close endpoint`)
-      return null
-    }
-    
-    const result = data.results[0]
-    console.log(`✅ Got Previous Close data for ${stock}: Close=${result.c}, Open=${result.o}, Volume=${result.v}`)
-    
-    // For Previous Close endpoint, we need to get the previous day's data for comparison
-    // Calculate the date for the previous trading day
-    const resultDate = new Date(result.t)
-    const previousDate = new Date(resultDate)
-    previousDate.setDate(previousDate.getDate() - 1)
-    
-    // Get the previous day's data for change calculation
-    const prevDateStr = previousDate.toISOString().split('T')[0]
-    const prevEndpoint = `/v2/aggs/ticker/${stock}/range/1/day/${prevDateStr}/${prevDateStr}`
-    
-    let previousClose = result.o // Use open as fallback
-    try {
-      const prevData = await makePolygonRequest(prevEndpoint)
-      if (prevData.results && prevData.results.length > 0) {
-        previousClose = prevData.results[0].c // Use previous day's close
-        console.log(`✅ Got previous day close for ${stock}: ${previousClose}`)
-      }
-    } catch (error) {
-      console.log(`⚠️ Could not fetch previous day data for ${stock}, using open price`)
-    }
-    
-    const currentPrice = result.c // Current close price
-    const change = currentPrice - previousClose
-    const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0
-    
-    const tickerData: PolygonTickerData = {
-      ticker: stock,
-      day: {
-        c: currentPrice,
-        h: result.h,
-        l: result.l,
-        o: result.o,
-        v: result.v,
-        vw: result.vw
-      },
-      prevDay: {
-        c: previousClose,
-        h: result.h,
-        l: result.l,
-        o: result.o,
-        v: result.v,
-        vw: result.vw
-      },
-      todaysChange: change,
-      todaysChangePerc: changePercent,
-      updated: result.t
-    }
-    
-    return tickerData
-  } catch (error) {
-    console.log(`Failed to fetch data for ${stock}:`, error)
-    return null
-  }
+// Fetch snapshot gainers/losers from Polygon
+async function fetchSnapshot(type: 'gainers' | 'losers'): Promise<any[]> {
+  const endpoint = `/v2/snapshot/locale/us/markets/stocks/${type}`
+  const data = await makePolygonRequest(endpoint)
+  // Polygon returns { tickers: [...] }
+  const items = data?.tickers ?? []
+  return Array.isArray(items) ? items : []
 }
 
 export async function GET(request: NextRequest) {
@@ -242,82 +270,56 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Enhanced list of major stocks with better coverage
-    const majorStocks = [
-      'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'NVDA', 'NFLX', 'AMD', 'INTC',
-      'CRM', 'ADBE', 'PYPL', 'UBER', 'SHOP', 'ZM', 'SQ', 'ROKU', 'SNAP', 'TWTR',
-      'JPM', 'JNJ', 'PG', 'UNH', 'HD', 'MA', 'V', 'DIS', 'BAC', 'KO', 'PFE', 'TMO',
-      'ABT', 'PEP', 'AVGO', 'COST', 'MRK', 'WMT', 'ACN', 'DHR', 'LLY', 'NEE'
-    ]
-    
-    console.log(`🔍 Fetching data for ${majorStocks.length} major stocks using EXPERT Previous Close method...`)
-    
-    let allTickers: PolygonTickerData[] = []
-    
-    // Fetch data for major stocks with enhanced error handling
-    for (const stock of majorStocks) {
+    // Fetch real market-wide snapshot top movers from Polygon
+    if (process.env.NODE_ENV !== 'production') console.log(`🔍 Fetching Polygon Snapshot ${type}...`)
+    const snapshotItems = await fetchSnapshot(type as 'gainers' | 'losers')
+    if (process.env.NODE_ENV !== 'production') console.log(`📊 Received ${snapshotItems.length} snapshot items from Polygon`)
+
+    // Transform and filter
+    const transformedResults = snapshotItems
+      .map((item) => transformSnapshotItem(item))
+      .filter((s): s is StockData => s !== null)
+
+    if (process.env.NODE_ENV !== 'production') console.log(`🔄 Transformed ${snapshotItems.length} snapshot items into ${transformedResults.length} valid stocks`)
+
+    let workingResults = transformedResults
+
+    // If snapshot is empty or transforms to zero, attempt grouped fallback
+    if (snapshotItems.length === 0 || transformedResults.length === 0) {
+      if (process.env.NODE_ENV !== 'production') console.warn('Snapshot data insufficient; attempting grouped aggregates fallback')
+      const marketState = await fetchMarketStatus()
+      // Choose date: if market open, use today; else use yesterday
+      const now = new Date()
+      const dateForGrouped = new Date(now)
+      if (marketState !== 'open') {
+        dateForGrouped.setDate(dateForGrouped.getDate() - 1)
+      }
+      const iso = dateForGrouped.toISOString().slice(0, 10)
       try {
-        const tickerData = await getStockData(stock)
-        if (tickerData) {
-          allTickers.push(tickerData)
-          console.log(`✅ Added ${stock} to tickers list`)
+        const grouped = await fetchGroupedMovers(type as 'gainers' | 'losers', iso)
+        if (grouped.length > 0) {
+          workingResults = grouped
+          if (process.env.NODE_ENV !== 'production') console.log(`✅ Fallback (grouped) produced ${grouped.length} results for ${type} on ${iso}`)
         }
-        
-        // Add small delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 200))
-      } catch (error) {
-        console.log(`Failed to fetch data for ${stock}:`, error)
-        continue
+      } catch (e) {
+        if (process.env.NODE_ENV !== 'production') console.error('Grouped fallback failed:', e)
       }
     }
-    
-    console.log(`📊 Total tickers collected: ${allTickers.length}`)
-    
-    if (allTickers.length === 0) {
-      console.warn('No ticker data available from Polygon API')
-      return NextResponse.json({
-        status: 'OK',
-        results: [],
-        count: 0,
-        message: 'No market data available. This could be due to market hours, API limits, or temporary data unavailability.'
-      })
-    }
-    
-    console.log(`✅ Successfully fetched data for ${allTickers.length} stocks`)
-    
-    // Transform and filter the data
-    const transformedResults = allTickers
-      .map(ticker => transformPolygonData(ticker))
-      .filter((stock): stock is StockData => stock !== null)
-    
-    console.log(`🔄 Transformed ${allTickers.length} tickers into ${transformedResults.length} valid stocks`)
-    
-    if (transformedResults.length === 0) {
-      console.warn('No valid stock data after transformation')
-      return NextResponse.json({
-        status: 'OK',
-        results: [],
-        count: 0,
-        message: 'Data transformation failed. Please try again later.'
-      })
-    }
-    
-    // Sort by percentage change (gainers: descending, losers: ascending)
-    const sortedResults = transformedResults.sort((a, b) => {
-      if (type === 'gainers') {
-        return b.change_percent - a.change_percent
-      } else {
-        return a.change_percent - b.change_percent
-      }
+
+    // Snapshot already returns sorted by todaysChangePerc, but we sort defensively
+    const sortedResults = workingResults.sort((a, b) => {
+      return type === 'gainers'
+        ? b.change_percent - a.change_percent
+        : a.change_percent - b.change_percent
     })
-    
-    // Take top 20 after sorting
+
+    // Limit to top 20 for consistency with UI pagination
     const finalResults = sortedResults.slice(0, 20)
-    
-    console.log(`✅ Successfully processed ${finalResults.length} ${type} from ${allTickers.length} raw tickers`)
+
+    if (process.env.NODE_ENV !== 'production') console.log(`✅ Successfully processed ${finalResults.length} ${type} from ${snapshotItems.length} snapshot items`)
     
     // Log sample data for verification
-    if (finalResults.length > 0) {
+    if (process.env.NODE_ENV !== 'production' && finalResults.length > 0) {
       console.log(`📊 Sample ${type} data:`, finalResults.slice(0, 3).map(stock => ({
         ticker: stock.ticker,
         price: stock.value.toFixed(2),

@@ -94,7 +94,12 @@ export default function PriceAlertsPage() {
   // Load statistics
   const loadStats = async () => {
     try {
-      const response = await fetch('/api/price-alerts/check')
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+      const response = await fetch('/api/price-alerts/check', {
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        }
+      })
       const data = await response.json()
       if (data.success) {
         setStats(data.data)
@@ -164,7 +169,13 @@ export default function PriceAlertsPage() {
   // Manual price check
   const handleManualCheck = async () => {
     try {
-      const response = await fetch('/api/price-alerts/check', { method: 'POST' })
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+      const response = await fetch('/api/price-alerts/check', { 
+        method: 'POST',
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        }
+      })
       const data = await response.json()
       
       if (data.success) {

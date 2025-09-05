@@ -10,7 +10,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, fallback }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading, checkAuth } = useAuthStore()
+  const { isAuthenticated, isLoading, checkAuth, authModalOpen } = useAuthStore()
   const router = useRouter()
 
   useEffect(() => {
@@ -31,6 +31,10 @@ export function ProtectedRoute({ children, fallback }: ProtectedRouteProps) {
 
   // Show fallback or redirect if not authenticated
   if (!isAuthenticated) {
+    // If an auth modal is open (login/register), avoid redirecting
+    if (authModalOpen) {
+      return fallback ? <>{fallback}</> : null
+    }
     if (fallback) {
       return <>{fallback}</>
     }
