@@ -2,10 +2,10 @@ import axios from 'axios';
 import { Stock, StockPrice, PolygonTickerResponse, PolygonPriceResponse, FilterCriteria, ScreenerStock } from '../types/stock';
 
 const POLYGON_BASE_URL = 'https://api.polygon.io';
-const API_KEY = process.env.POLYGON_API_KEY;
+const API_KEY = process.env.POLYGON_API_KEY || '';
 
 if (!API_KEY) {
-  console.warn('Polygon.io API key not found. Please set VITE_POLYGON_API_KEY in your environment variables.');
+  console.warn('POLYGON_API_KEY environment variable is not set');
 }
 
 // Market Cap Statistics Tracker
