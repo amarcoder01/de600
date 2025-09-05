@@ -48,6 +48,15 @@ function executePythonScript(command: string, args: string[]): Promise<any> {
 
 export async function GET(request: NextRequest) {
   try {
+    // Skip Python script execution during build time
+    if (process.env.NODE_ENV === 'production' && !process.env.POLYGON_API_KEY) {
+      return NextResponse.json({
+        success: false,
+        message: 'Python dependencies not available in production build',
+        error: 'yfinance module not installed'
+      }, { status: 503 })
+    }
+    
     console.log('🧪 Testing yfinance integration via Python...')
     
     // Execute Python script to test yfinance

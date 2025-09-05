@@ -3,7 +3,7 @@ import { PriceAlertService } from './price-alert-service'
 class PriceAlertScheduler {
   private intervalId: NodeJS.Timeout | null = null
   private isRunning = false
-  private checkInterval = 30000 // 30 seconds for more frequent checking
+  private checkInterval = 300000 // 5 minutes to reduce log spam
 
   // Start the automatic price checking scheduler
   start() {
@@ -12,7 +12,7 @@ class PriceAlertScheduler {
       return
     }
 
-    console.log('🚀 Starting automatic price alert scheduler (every 1 minute)')
+    console.log('🚀 Starting automatic price alert scheduler (every 5 minutes)')
     this.isRunning = true
 
     // Run initial check immediately

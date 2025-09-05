@@ -7,9 +7,7 @@ export class PriceAlertService {
   static async checkAllAlerts(userId?: string): Promise<void> {
     try {
       await ensureDatabaseReady()
-      console.log('🔍 Checking all active price alerts...')
-      
-      // Get all active alerts
+      // Only log if there are alerts to check
       const activeAlerts = await prisma.priceAlert.findMany({
         where: {
           status: 'active',
@@ -18,7 +16,9 @@ export class PriceAlertService {
         }
       })
 
-      console.log(`📊 Found ${activeAlerts.length} active alerts to check`)
+      if (activeAlerts.length > 0) {
+        console.log(`🔍 Checking ${activeAlerts.length} active price alerts...`)
+      }
 
       // Group alerts by symbol to minimize API calls
       const symbolGroups = this.groupAlertsBySymbol(activeAlerts)
@@ -27,7 +27,9 @@ export class PriceAlertService {
         await this.checkAlertsForSymbol(symbol, alerts)
       }
 
-      console.log('✅ Price alert check completed')
+      if (activeAlerts.length > 0) {
+        console.log('✅ Price alert check completed')
+      }
     } catch (error) {
       console.error('❌ Error checking price alerts:', error)
     }

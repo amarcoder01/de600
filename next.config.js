@@ -39,7 +39,8 @@ const nextConfig = {
   poweredByHeader: false,
   generateEtags: false,
   // Static export settings for Render
-  // trailingSlash: true, // Temporarily disabled for API testing
+  output: 'standalone', // Use standalone output for better deployment
+  trailingSlash: true, // Enable for better static export compatibility
   // Environment variables are handled by Next.js automatically
   // Headers for security
   async headers() {
