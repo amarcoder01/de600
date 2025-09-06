@@ -4,6 +4,10 @@ import { Stock } from '@/types'
 import { exec } from 'child_process'
 import { promisify } from 'util'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+export const runtime = 'nodejs'
+
 const execAsync = promisify(exec)
 
 export async function GET(request: NextRequest) {

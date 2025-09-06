@@ -4,6 +4,10 @@ import { PriceAlertService } from '@/lib/price-alert-service'
 import { withAuth } from '@/lib/auth-middleware'
 import type { AuthenticatedRequest } from '@/lib/auth-middleware'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+export const runtime = 'nodejs'
+
 // GET /api/price-alerts/prices - Get current prices for all active alerts
 export const GET = withAuth(async (request: AuthenticatedRequest) => {
   try {

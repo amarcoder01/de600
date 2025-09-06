@@ -3,6 +3,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Stock } from '@/types'
 import { polygonAPI } from '@/lib/polygon-api'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+export const runtime = 'nodejs'
+
 // Cache for search results to improve performance
 const searchCache = new Map<string, { results: Stock[], timestamp: number }>()
 const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes

@@ -3,6 +3,10 @@ import { Stock } from '@/types'
 import { spawn } from 'child_process'
 import path from 'path'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+export const runtime = 'nodejs'
+
 // Cache for search results to improve performance
 const searchCache = new Map<string, { results: Stock[], timestamp: number }>()
 const CACHE_DURATION = 2 * 60 * 1000 // 2 minutes (shorter cache for real-time data)

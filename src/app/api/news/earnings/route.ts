@@ -2,6 +2,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { NewsService } from '@/lib/news-api'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+export const runtime = 'nodejs'
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)

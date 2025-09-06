@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { AuthService } from '@/lib/auth-service'
 import { AuthError, AuthErrorType, verifyToken, SECURITY_CONFIG } from '@/lib/auth-security'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+export const runtime = 'nodejs'
+
 export async function GET(request: NextRequest) {
   try {
     // Get authorization header
