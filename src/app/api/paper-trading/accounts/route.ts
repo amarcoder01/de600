@@ -1,11 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PaperTradingService } from '@/lib/paper-trading'
-import { DatabaseService } from '@/lib/db'
+import { AuthService } from '@/lib/auth-service'
 
 export async function GET(request: NextRequest) {
   try {
-    // Get demo user for now (in production, use real authentication)
-    const user = await DatabaseService.getOrCreateDemoUser()
+    // Get user from authentication token
+    const authHeader = request.headers.get('authorization')
+    const token = authHeader?.replace('Bearer ', '')
+    
+    if (!token) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+
+    const user = await AuthService.getUserFromToken(token)
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid authentication token' },
+        { status: 401 }
+      )
+    }
     
     const accounts = await PaperTradingService.getAccounts(user.id)
     
@@ -34,8 +50,24 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get demo user for now (in production, use real authentication)
-    const user = await DatabaseService.getOrCreateDemoUser()
+    // Get user from authentication token
+    const authHeader = request.headers.get('authorization')
+    const token = authHeader?.replace('Bearer ', '')
+    
+    if (!token) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+
+    const user = await AuthService.getUserFromToken(token)
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid authentication token' },
+        { status: 401 }
+      )
+    }
     
     const account = await PaperTradingService.createAccount(user.id, name, initialBalance)
     

@@ -44,9 +44,15 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { PaperTradingAccount, PaperPosition, PaperOrder, PaperTransaction, Stock } from '@/types'
 import { TradingOrderForm } from '@/components/trading/TradingOrderForm'
+import { useAuthStore } from '@/store'
+import { useRouter } from 'next/navigation'
  
 
 export default function PaperTradingPage() {
+  // Authentication
+  const { user, isAuthenticated } = useAuthStore()
+  const router = useRouter()
+  
   // State
   const [accounts, setAccounts] = useState<PaperTradingAccount[]>([])
   const [selectedAccount, setSelectedAccount] = useState<PaperTradingAccount | null>(null)
@@ -64,10 +70,20 @@ export default function PaperTradingPage() {
   const [validatingSymbol, setValidatingSymbol] = useState(false)
   const [symbolValidationError, setSymbolValidationError] = useState<string | null>(null)
 
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated || !user) {
+      router.push('/login')
+      return
+    }
+  }, [isAuthenticated, user, router])
+
   // Fetch accounts on component mount
   useEffect(() => {
-    fetchAccounts()
-  }, [])
+    if (user) {
+      fetchAccounts()
+    }
+  }, [user])
 
   // Real-time data updates
   useEffect(() => {
@@ -79,9 +95,12 @@ export default function PaperTradingPage() {
   }, [selectedAccount])
 
   const fetchAccounts = async () => {
+    if (!user) return
+    
     try {
       setLoading(true)
-      const response = await fetch('/api/paper-trading/accounts')
+      // Use enhanced API with proper user authentication
+      const response = await fetch(`/api/paper-trading/enhanced?action=get-accounts&userId=${user.id}`)
       const data = await response.json()
       
       if (data.success) {
@@ -94,6 +113,7 @@ export default function PaperTradingPage() {
       }
     } catch (error) {
       setError('Failed to fetch accounts')
+      console.error('Error fetching accounts:', error)
     } finally {
       setLoading(false)
     }
@@ -156,13 +176,18 @@ export default function PaperTradingPage() {
 
 
   const createAccount = async () => {
-    if (!newAccountName.trim()) return
+    if (!newAccountName.trim() || !user) return
 
     try {
-      const response = await fetch('/api/paper-trading/accounts', {
+      const response = await fetch('/api/paper-trading/enhanced', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newAccountName, initialBalance: 100000 }),
+        body: JSON.stringify({ 
+          action: 'create-account',
+          userId: user.id,
+          name: newAccountName, 
+          initialBalance: 100000 
+        }),
       })
       
       const data = await response.json()
@@ -177,6 +202,7 @@ export default function PaperTradingPage() {
       }
     } catch (error) {
       setError('Failed to create account')
+      console.error('Error creating account:', error)
     }
   }
 
@@ -214,15 +240,17 @@ export default function PaperTradingPage() {
   }
 
   const handleOrderPlaced = async () => {
+    if (!user) return
+    
     setShowOrderForm(false)
     setSelectedSymbol('')
     setSymbolValidationError(null)
     setValidatingSymbol(false)
     
-    // Refresh accounts to get updated data
+    // Refresh accounts to get updated data using enhanced API
     try {
       console.log('🔄 Refreshing accounts after order placement...')
-      const response = await fetch('/api/paper-trading/accounts')
+      const response = await fetch(`/api/paper-trading/enhanced?action=get-accounts&userId=${user.id}`)
       const data = await response.json()
       
       if (data.success) {
@@ -250,14 +278,20 @@ export default function PaperTradingPage() {
   }
 
   const handleDeleteAccount = async () => {
-    if (!accountToDelete) return
+    if (!accountToDelete || !user) return
 
     try {
       setDeletingAccount(true)
       console.log(`🗑️ Deleting account: ${accountToDelete.name}`)
       
-      const response = await fetch(`/api/paper-trading/accounts/${accountToDelete.id}`, {
-        method: 'DELETE',
+      const response = await fetch('/api/paper-trading/enhanced', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'delete-account',
+          accountId: accountToDelete.id,
+          userId: user.id
+        }),
       })
       
       const data = await response.json()
