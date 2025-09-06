@@ -188,7 +188,19 @@ export class NewsService {
       // Try Finnhub sentiment if available
       if (FINNHUB_API_KEY) {
         try {
-          const response = await fetch(`https://finnhub.io/api/v1/stock/sentiment?symbol=${symbol}&from=2024-01-01&token=${FINNHUB_API_KEY}`)
+          // Add timeout and better error handling
+          const controller = new AbortController()
+          const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout
+          
+          const response = await fetch(`https://finnhub.io/api/v1/stock/sentiment?symbol=${symbol}&from=2024-01-01&token=${FINNHUB_API_KEY}`, {
+            signal: controller.signal,
+            headers: {
+              'User-Agent': 'TradingPlatform/1.0'
+            }
+          })
+          
+          clearTimeout(timeoutId)
+          
           if (response.ok) {
             const data = await response.json()
             if (data.reddit && data.twitter) {
@@ -203,7 +215,11 @@ export class NewsService {
             }
           }
         } catch (error) {
-          console.log('❌ Finnhub sentiment failed:', error)
+          if (error instanceof Error && error.name === 'AbortError') {
+            console.log('⏰ Finnhub sentiment timeout')
+          } else {
+            console.log('❌ Finnhub sentiment failed:', error instanceof Error ? error.message : 'Unknown error')
+          }
         }
       }
       
