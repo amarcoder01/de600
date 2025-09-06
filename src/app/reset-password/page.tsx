@@ -7,7 +7,7 @@ import { ResetPasswordModal } from '@/components/auth/ResetPasswordModal'
 function ResetPasswordContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const token = searchParams.get('token')
+  const token = searchParams?.get('token')
   const [showModal, setShowModal] = useState(false)
 
   useEffect(() => {
