@@ -7,7 +7,7 @@ import { webSearch } from '@/lib/web-search'
 import { NewsService } from '@/lib/news-api'
 import { memorySystem } from '@/lib/memory-system'
 import { guardrailsSystem } from '@/lib/guardrails-system'
-import { realTimeDataSystem } from '@/lib/real-time-data-system'
+import { getRealTimeDataSystem } from '@/lib/real-time-data-system'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -439,6 +439,7 @@ async function executeMarketData(indices: string[], memoryContext: any): Promise
         }
 
   // Add market context and insights
+  const realTimeDataSystem = getRealTimeDataSystem()
   const marketSnapshot = await realTimeDataSystem.getMarketSnapshot()
   const marketSentiment = await realTimeDataSystem.getMarketSentiment()
 
