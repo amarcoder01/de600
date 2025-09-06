@@ -519,7 +519,7 @@ export default function WatchlistPage() {
         if (results.length === 0) {
           setError(`No stocks found for "${searchQuery}". Try searching with a different term.`)
         } else {
-          console.log(`✅ Found ${results.length} stocks for "${searchQuery}" using ${data.source || 'multi-source'} data`)
+          console.log(`✅ Found ${results.length} stocks for "${searchQuery}" using ${data.source || 'enhanced-search'} data`)
         }
       } catch (error) {
         console.error('❌ Error searching stocks:', error)

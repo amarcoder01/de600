@@ -76,36 +76,36 @@ async function searchStocksWithFallbacks(query: string): Promise<Stock[]> {
 
   let results: Stock[] = []
 
-  // 1. Try yfinance first (if available and not rate limited)
+  // 1. Try MultiSourceAPI first (primary source - more reliable)
   try {
-    console.log(`📡 Trying yfinance for "${searchTerm}"...`)
-    const yfinanceResult = await executePythonScript('search', [searchTerm])
+    console.log(`📡 Trying MultiSourceAPI for "${searchTerm}"...`)
+    const multiSourceAPI = new MultiSourceAPI()
+    const multiSourceResults = await multiSourceAPI.searchStocks(searchTerm)
     
-    if (yfinanceResult.success && yfinanceResult.results && yfinanceResult.results.length > 0) {
-      results = yfinanceResult.results as Stock[]
-      console.log(`✅ yfinance found ${results.length} results`)
+    if (multiSourceResults && multiSourceResults.length > 0) {
+      results = multiSourceResults
+      console.log(`✅ MultiSourceAPI found ${results.length} results`)
     } else {
-      console.log(`⚠️ yfinance returned no results or failed`)
+      console.log(`⚠️ MultiSourceAPI returned no results`)
     }
   } catch (error) {
-    console.log(`❌ yfinance failed:`, error)
+    console.log(`❌ MultiSourceAPI failed:`, error)
   }
 
-  // 2. If yfinance failed or returned no results, try MultiSourceAPI
+  // 2. If MultiSourceAPI failed or returned no results, try yfinance as fallback
   if (results.length === 0) {
     try {
-      console.log(`📡 Trying MultiSourceAPI for "${searchTerm}"...`)
-      const multiSourceAPI = new MultiSourceAPI()
-      const multiSourceResults = await multiSourceAPI.searchStocks(searchTerm)
+      console.log(`📡 Trying yfinance for "${searchTerm}"...`)
+      const yfinanceResult = await executePythonScript('search', [searchTerm])
       
-      if (multiSourceResults && multiSourceResults.length > 0) {
-        results = multiSourceResults
-        console.log(`✅ MultiSourceAPI found ${results.length} results`)
+      if (yfinanceResult.success && yfinanceResult.results && yfinanceResult.results.length > 0) {
+        results = yfinanceResult.results as Stock[]
+        console.log(`✅ yfinance found ${results.length} results`)
       } else {
-        console.log(`⚠️ MultiSourceAPI returned no results`)
+        console.log(`⚠️ yfinance returned no results or failed`)
       }
     } catch (error) {
-      console.log(`❌ MultiSourceAPI failed:`, error)
+      console.log(`❌ yfinance failed:`, error)
     }
   }
 
@@ -171,8 +171,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ 
       success: true, 
       results: results,
-      message: `Found ${results.length} stocks using multi-source data`,
-      source: results.length > 0 ? 'multi-source' : 'fallback'
+      message: `Found ${results.length} stocks using enhanced search`,
+      source: results.length > 0 ? 'enhanced-search' : 'fallback'
     })
 
   } catch (error) {
