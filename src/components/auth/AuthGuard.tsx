@@ -62,7 +62,7 @@ export function AuthGuard({
         // Only check authentication if we're on a protected route or require auth
         // For public routes like landing page, skip the auth check to prevent interference
         // This prevents checkAuth from setting isAuthenticated: false and triggering redirects
-        if (requireAuth || PROTECTED_ROUTES.some(route => pathname.startsWith(route))) {
+        if (requireAuth || (pathname && PROTECTED_ROUTES.some(route => pathname.startsWith(route)))) {
           await checkAuth()
           // Add a small delay to ensure state is properly set
           await new Promise(resolve => setTimeout(resolve, 100))
@@ -118,14 +118,14 @@ export function AuthGuard({
     setLastPath(pathname)
 
     // Check if current route requires authentication
-    const isProtectedRoute = PROTECTED_ROUTES.some(route => 
+    const isProtectedRoute = pathname ? PROTECTED_ROUTES.some(route => 
       pathname.startsWith(route)
-    )
+    ) : false
 
     // Check if current route is public (should redirect authenticated users)
-    const isPublicRoute = PUBLIC_ROUTES.some(route => 
+    const isPublicRoute = pathname ? PUBLIC_ROUTES.some(route => 
       pathname === route
-    )
+    ) : false
 
     console.log('🔐 AuthGuard: Processing redirect logic:', {
       isAuthenticated,
