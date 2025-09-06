@@ -5,6 +5,12 @@ import '@/lib/startup' // Initialize price alert scheduler
 import { ThemeProvider } from '@/components/theme/ThemeProvider'
 import NoSSR from '@/components/NoSSR'
 
+// Force dynamic rendering and disable caching to prevent static prerender errors during build
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+export const fetchCache = 'force-no-store'
+export const runtime = 'nodejs'
+
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
