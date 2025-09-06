@@ -42,7 +42,20 @@ export const useUIStore = create<UIStore>()(
       notifications: [],
       
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
-      setTheme: (theme) => set({ theme }),
+      setTheme: (theme) => {
+        set({ theme })
+        // Apply theme immediately to DOM
+        if (typeof window !== 'undefined') {
+          const root = window.document.documentElement
+          root.classList.remove('light', 'dark')
+          if (theme === 'system') {
+            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+            root.classList.add(systemTheme)
+          } else {
+            root.classList.add(theme)
+          }
+        }
+      },
       setActiveTab: (tab) => set({ activeTab: tab }),
       addNotification: (notification) => set((state) => ({
         notifications: [
@@ -70,6 +83,19 @@ export const useUIStore = create<UIStore>()(
         theme: state.theme,
         activeTab: state.activeTab,
       }),
+      onRehydrateStorage: () => (state) => {
+        // Apply theme immediately after rehydration
+        if (state && typeof window !== 'undefined') {
+          const root = window.document.documentElement
+          root.classList.remove('light', 'dark')
+          if (state.theme === 'system') {
+            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+            root.classList.add(systemTheme)
+          } else {
+            root.classList.add(state.theme)
+          }
+        }
+      },
     }
   )
 )
