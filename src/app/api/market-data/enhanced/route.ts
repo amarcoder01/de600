@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { polygonAPI } from '@/lib/polygon-api'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -46,40 +47,34 @@ export async function GET(request: NextRequest) {
 
 async function getCurrentData(symbol: string) {
   try {
-    // Use existing stock quote API as base
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/stocks/quote?symbol=${symbol}`)
-    if (response.ok) {
-      const data = await response.json()
-      if (data.success && data.data) {
-        return {
-          price: data.data.price || 0,
-          change: data.data.change || 0,
-          changePercent: data.data.changePercent || 0,
-          volume: data.data.volume || 0,
-          marketCap: data.data.marketCap || 0,
-          pe: data.data.pe || null, // Use null instead of 0 for missing P/E
-          dividendYield: data.data.dividendYield || 0,
-          beta: data.data.beta || null, // Use null instead of 0 for missing Beta
-          high52Week: data.data.high52Week || 0,
-          low52Week: data.data.low52Week || 0,
-          sector: data.data.sector || 'Unknown',
-          industry: data.data.industry || 'Unknown',
-          name: data.data.name || symbol,
-          dataSource: 'polygon',
-          lastUpdated: new Date().toISOString()
-        }
-      } else {
-        console.warn(`Stock quote API returned unsuccessful response for ${symbol}:`, data)
-      }
-    } else {
-      console.warn(`Stock quote API returned ${response.status} for ${symbol}`)
+    // Use Polygon API directly instead of internal HTTP call
+    const stockData = await polygonAPI.getUSStockData(symbol)
+    
+    if (!stockData) {
+      throw new Error(`No data available for ${symbol}`)
+    }
+
+    return {
+      price: stockData.price || 0,
+      change: stockData.change || 0,
+      changePercent: stockData.changePercent || 0,
+      volume: stockData.volume || 0,
+      marketCap: stockData.marketCap || 0,
+      pe: stockData.pe || null, // Use null instead of 0 for missing P/E
+      dividendYield: stockData.dividendYield || 0,
+      beta: stockData.beta || null, // Use null instead of 0 for missing Beta
+      high52Week: stockData.high52Week || 0,
+      low52Week: stockData.low52Week || 0,
+      sector: stockData.sector || 'Unknown',
+      industry: stockData.industry || 'Unknown',
+      name: stockData.name || symbol,
+      dataSource: 'polygon',
+      lastUpdated: new Date().toISOString()
     }
   } catch (error) {
     console.error(`Error fetching current data for ${symbol}:`, error)
+    throw new Error(`Real-time market data unavailable for ${symbol} - no fallback data allowed`)
   }
-
-  // No fallback data - throw error for real-time data requirement
-  throw new Error(`Real-time market data unavailable for ${symbol} - no fallback data allowed`)
 }
 
 async function getHistoricalData(symbol: string, period: string, interval: string) {
