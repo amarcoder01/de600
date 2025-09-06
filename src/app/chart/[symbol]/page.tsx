@@ -16,9 +16,9 @@ function ChartPageContent({ symbol }: { symbol: string }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   
-  const timeframe = searchParams.get('timeframe') || '1mo'
-  const chartType = searchParams.get('chartType') || 'candlestick'
-  const indicators = searchParams.get('indicators')?.split(',') || ['sma20', 'volume']
+  const timeframe = searchParams?.get('timeframe') || '1mo'
+  const chartType = searchParams?.get('chartType') || 'candlestick'
+  const indicators = searchParams?.get('indicators')?.split(',') || ['sma20', 'volume']
 
   const handleTimeframeChange = (newTimeframe: string) => {
     const newUrl = `/chart/${symbol}?timeframe=${newTimeframe}&chartType=${chartType}&indicators=${indicators.join(',')}`
