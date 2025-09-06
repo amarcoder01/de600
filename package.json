@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "NODE_ENV=production npm run install-python-deps && NODE_ENV=production next build",
-    "start": "next start",
+    "start": "PORT=10000 next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "prisma:generate": "prisma generate",
