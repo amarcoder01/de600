@@ -5,7 +5,7 @@ export class YFinanceAPI {
   private static cache = new Map<string, { data: Stock; timestamp: number }>()
   private static CACHE_DURATION = 60000 // 1 minute cache
 
-  // Get stock data from yfinance via API route
+  // Get stock data from yfinance via direct Python script execution
   async getStockData(symbol: string): Promise<Stock | null> {
     try {
       // Check cache first
@@ -16,23 +16,55 @@ export class YFinanceAPI {
 
       console.log(`📡 Fetching data for ${symbol} from yfinance...`)
 
-      // Use our yfinance API route
-      const baseUrl = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000')
-      const response = await fetch(`${baseUrl}/api/yfinance/quote?symbol=${encodeURIComponent(symbol)}`)
-
-      if (!response.ok) {
-        console.log(`❌ yfinance failed for ${symbol}:`, response.status)
-        return null
-      }
-
-      const data = await response.json()
+      // Use direct Python script execution instead of internal HTTP calls
+      const { spawn } = await import('child_process')
+      const path = await import('path')
       
-      if (!data.success || !data.stock) {
+      const scriptPath = path.join(process.cwd(), 'scripts', 'yfinance_api.py')
+      
+      const result = await new Promise<any>((resolve, reject) => {
+        const pythonProcess = spawn('python3', [scriptPath, 'quote', symbol])
+        
+        let stdout = ''
+        let stderr = ''
+        
+        pythonProcess.stdout.on('data', (data) => {
+          stdout += data.toString()
+        })
+        
+        pythonProcess.stderr.on('data', (data) => {
+          stderr += data.toString()
+          console.log(`🐍 Python stderr: ${data.toString()}`)
+        })
+        
+        pythonProcess.on('close', (code) => {
+          if (code === 0) {
+            try {
+              const result = JSON.parse(stdout)
+              resolve(result)
+            } catch (error) {
+              console.error('❌ Error parsing Python output:', error)
+              reject(new Error('Failed to parse Python script output'))
+            }
+          } else {
+            console.error(`❌ Python script failed with code ${code}`)
+            console.error('Python stderr:', stderr)
+            reject(new Error(`Python script failed with code ${code}`))
+          }
+        })
+        
+        pythonProcess.on('error', (error) => {
+          console.error('❌ Error executing Python script:', error)
+          reject(error)
+        })
+      })
+
+      if (!result.success || !result.stock) {
         console.log(`❌ No yfinance data for ${symbol}`)
         return null
       }
 
-      const stock = data.stock
+      const stock = result.stock
 
       // Cache the result
       YFinanceAPI.cache.set(symbol, { data: stock, timestamp: Date.now() })
@@ -46,28 +78,61 @@ export class YFinanceAPI {
     }
   }
 
-  // Search stocks using yfinance
+  // Search stocks using yfinance via direct Python script execution
   async searchStocks(query: string): Promise<Stock[]> {
     try {
       console.log(`🔍 Searching stocks for "${query}" via yfinance...`)
       
-      const baseUrl = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000')
-      const response = await fetch(`${baseUrl}/api/yfinance/search?q=${encodeURIComponent(query)}`)
-
-      if (!response.ok) {
-        console.log(`❌ yfinance search failed:`, response.status)
-        return []
-      }
-
-      const data = await response.json()
+      // Use direct Python script execution instead of internal HTTP calls
+      const { spawn } = await import('child_process')
+      const path = await import('path')
       
-      if (!data.success || !data.stocks) {
+      const scriptPath = path.join(process.cwd(), 'scripts', 'yfinance_api.py')
+      
+      const result = await new Promise<any>((resolve, reject) => {
+        const pythonProcess = spawn('python3', [scriptPath, 'search', query])
+        
+        let stdout = ''
+        let stderr = ''
+        
+        pythonProcess.stdout.on('data', (data) => {
+          stdout += data.toString()
+        })
+        
+        pythonProcess.stderr.on('data', (data) => {
+          stderr += data.toString()
+          console.log(`🐍 Python stderr: ${data.toString()}`)
+        })
+        
+        pythonProcess.on('close', (code) => {
+          if (code === 0) {
+            try {
+              const result = JSON.parse(stdout)
+              resolve(result)
+            } catch (error) {
+              console.error('❌ Error parsing Python output:', error)
+              reject(new Error('Failed to parse Python script output'))
+            }
+          } else {
+            console.error(`❌ Python script failed with code ${code}`)
+            console.error('Python stderr:', stderr)
+            reject(new Error(`Python script failed with code ${code}`))
+          }
+        })
+        
+        pythonProcess.on('error', (error) => {
+          console.error('❌ Error executing Python script:', error)
+          reject(error)
+        })
+      })
+
+      if (!result.success || !result.results) {
         console.log(`❌ No yfinance search results for "${query}"`)
         return []
       }
 
-      console.log(`✅ yfinance search found ${data.stocks.length} stocks`)
-      return data.stocks
+      console.log(`✅ yfinance search found ${result.results.length} stocks`)
+      return result.results
 
     } catch (error) {
       console.error(`❌ Error searching stocks via yfinance:`, error)
