@@ -34,6 +34,7 @@ export default function WatchlistPage() {
     watchlists, 
     addToWatchlist, 
     removeFromWatchlist, 
+    removeFromWatchlistBySymbol,
     createWatchlist,
     loadWatchlists,
     refreshWatchlistData,
@@ -682,7 +683,7 @@ export default function WatchlistPage() {
       }
   }
 
-  const handleRemoveFromWatchlist = async (itemId: string) => {
+  const handleRemoveFromWatchlist = async (itemId: string, symbol?: string) => {
     try {
       setError(null)
       setRemovingItemId(itemId)
@@ -694,9 +695,15 @@ export default function WatchlistPage() {
         throw new Error('No watchlist selected')
       }
       
-      console.log(`🗑️ UI: Removing item ${itemId} from watchlist ${targetWatchlistId}...`)
+      console.log(`🗑️ UI: Removing item ${itemId} (${symbol}) from watchlist ${targetWatchlistId}...`)
       
-      await removeFromWatchlist(targetWatchlistId, itemId)
+      // If we have the symbol, use the direct API approach
+      if (symbol) {
+        await removeFromWatchlistBySymbol(targetWatchlistId, symbol, itemId)
+      } else {
+        // Fallback to the original method
+        await removeFromWatchlist(targetWatchlistId, itemId)
+      }
       
       console.log(`✅ UI: Successfully removed item ${itemId} from watchlist`)
       
@@ -1707,7 +1714,7 @@ export default function WatchlistPage() {
                       <Button
                         size="sm"
                               variant="outline"
-                        onClick={() => handleRemoveFromWatchlist(item.id)}
+                        onClick={() => handleRemoveFromWatchlist(item.id, item.symbol)}
                         disabled={removingItemId === item.id}
                               className="h-8 w-8 p-0"
                       >

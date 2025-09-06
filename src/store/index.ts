@@ -124,6 +124,7 @@ interface WatchlistStore {
   removeWatchlist: (id: string) => Promise<void>
   addToWatchlist: (watchlistId: string, item: WatchlistItem) => Promise<void>
   removeFromWatchlist: (watchlistId: string, itemId: string) => Promise<void>
+  removeFromWatchlistBySymbol: (watchlistId: string, symbol: string, itemId: string) => Promise<void>
   updateWatchlistItem: (watchlistId: string, itemId: string, updates: Partial<WatchlistItem>) => void
   updateWatchlistItemPrice: (watchlistId: string, itemId: string, price: number, change: number, changePercent: number) => void
   setActiveWatchlist: (id: string | null) => void
@@ -655,6 +656,50 @@ export const useWatchlistStore = create<WatchlistStore>()(
           
           if (response.ok) {
             console.log(`✅ Successfully removed ${item.symbol} from watchlist`)
+            set((state) => ({
+              watchlists: state.watchlists.map(w =>
+                w.id === watchlistId
+                  ? {
+                      ...w,
+                      items: w.items.filter(i => i.id !== itemId),
+                      updatedAt: new Date()
+                    }
+                  : w
+              ),
+              isLoading: false
+            }))
+          } else {
+            const errorData = await response.json().catch(() => ({}))
+            console.error('❌ Failed to remove item from watchlist:', {
+              status: response.status,
+              statusText: response.statusText,
+              error: errorData
+            })
+            set({ isLoading: false })
+            throw new Error(`Failed to remove item: ${errorData.message || response.statusText}`)
+          }
+        } catch (error) {
+          console.error('❌ Error removing item from watchlist:', error)
+          set({ isLoading: false })
+          throw error
+        }
+      },
+
+      // Remove from watchlist by symbol (more reliable approach)
+      removeFromWatchlistBySymbol: async (watchlistId: string, symbol: string, itemId: string) => {
+        set({ isLoading: true })
+        try {
+          console.log(`🗑️ Removing ${symbol} from watchlist ${watchlistId} by symbol...`)
+          
+          const response = await fetch(`/api/watchlist/${watchlistId}/items?symbol=${encodeURIComponent(symbol)}`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          })
+          
+          if (response.ok) {
+            console.log(`✅ Successfully removed ${symbol} from watchlist`)
             set((state) => ({
               watchlists: state.watchlists.map(w =>
                 w.id === watchlistId
