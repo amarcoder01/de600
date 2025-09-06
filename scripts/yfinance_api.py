@@ -15,9 +15,11 @@ import contextlib
 try:
     import yfinance as yf
     YFINANCE_AVAILABLE = True
-except ImportError:
+    print("✅ yfinance imported successfully", file=sys.stderr)
+except ImportError as e:
     YFINANCE_AVAILABLE = False
-    print("⚠️ yfinance not available, using fallback data", file=sys.stderr)
+    print(f"⚠️ yfinance not available: {e}", file=sys.stderr)
+    print("⚠️ Using fallback data", file=sys.stderr)
 
 def get_stock_data(symbol):
     """Fetch stock data for a given symbol using yfinance"""
