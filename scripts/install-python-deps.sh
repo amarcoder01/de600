@@ -19,16 +19,16 @@ if [ "$RENDER" = "true" ] || [ -f "requirements-python.txt" ]; then
     
     # Install dependencies from requirements file
     echo "📦 Installing dependencies from requirements-python.txt..."
-    if pip install --user --no-cache-dir -r requirements-python.txt; then
+    if pip install --no-cache-dir -r requirements-python.txt; then
         echo "✅ Python dependencies installed successfully"
     else
         echo "⚠️ Failed to install from requirements file, trying individual packages..."
         
         # Fallback: install core packages individually
-        pip install --user --no-cache-dir yfinance==0.2.28 || echo "⚠️ yfinance installation failed"
-        pip install --user --no-cache-dir requests==2.31.0 || echo "⚠️ requests installation failed"
-        pip install --user --no-cache-dir pandas==2.1.4 || echo "⚠️ pandas installation failed"
-        pip install --user --no-cache-dir numpy==1.24.3 || echo "⚠️ numpy installation failed"
+        pip install --no-cache-dir yfinance==0.2.28 || echo "⚠️ yfinance installation failed"
+        pip install --no-cache-dir requests==2.31.0 || echo "⚠️ requests installation failed"
+        pip install --no-cache-dir pandas==2.1.4 || echo "⚠️ pandas installation failed"
+        pip install --no-cache-dir numpy==1.24.3 || echo "⚠️ numpy installation failed"
     fi
     
     # Test yfinance installation
@@ -39,7 +39,7 @@ if [ "$RENDER" = "true" ] || [ -f "requirements-python.txt" ]; then
         echo "⚠️ yfinance import failed, but continuing with fallback"
         # Try alternative installation method
         echo "🔄 Trying alternative installation..."
-        pip install --user --no-cache-dir --force-reinstall yfinance==0.2.28 || echo "⚠️ Alternative yfinance installation failed"
+        pip install --no-cache-dir --force-reinstall yfinance==0.2.28 || echo "⚠️ Alternative yfinance installation failed"
     fi
 else
     echo "⏭️ Skipping Python dependency installation (not in Render environment and no requirements file)"

@@ -4,6 +4,11 @@ const nextConfig = {
   output: 'standalone', // Use standalone output for better deployment
   trailingSlash: true, // Enable for better compatibility
   
+  // Completely disable static generation to prevent Html import issues
+  generateBuildId: async () => {
+    return 'build-' + Date.now()
+  },
+  
   // Images configuration
   images: {
     domains: ['localhost', 'render.com'],
@@ -51,6 +56,12 @@ const nextConfig = {
     config.externals.push({
       'pdf-parse': 'commonjs pdf-parse',
     });
+    
+    // Disable static generation completely
+    if (isServer) {
+      config.optimization = config.optimization || {}
+      config.optimization.splitChunks = false
+    }
     
     return config;
   },
