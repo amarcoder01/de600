@@ -30,7 +30,7 @@ export async function GET() {
       // If watchlist already exists, try to get it
       if (error instanceof Error && error.message.includes('already exists')) {
         console.log('📋 Test watchlist already exists, fetching existing one...')
-        const existingWatchlists = await DatabaseService.getUserWatchlists(user.id)
+        const existingWatchlists = await DatabaseService.getWatchlists(user.id)
         watchlist = existingWatchlists.find(w => w.name === 'Test Watchlist')
         if (!watchlist) {
           // If we can't find it, create with a unique name
