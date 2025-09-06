@@ -8,13 +8,14 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npm run install-python-deps && next build",
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "prisma:generate": "prisma generate",
     "prisma:migrate:deploy": "prisma migrate deploy",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "install-python-deps": "bash scripts/install-python-deps.sh"
   },
   "dependencies": {
     "@azure/cognitiveservices-computervision": "^8.2.0",
