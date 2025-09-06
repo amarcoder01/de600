@@ -63,8 +63,8 @@ async function getCurrentData(symbol: string) {
       pe: stockData.pe || null, // Use null instead of 0 for missing P/E
       dividendYield: stockData.dividendYield || 0,
       beta: stockData.beta || null, // Use null instead of 0 for missing Beta
-      high52Week: stockData.high52Week || 0,
-      low52Week: stockData.low52Week || 0,
+      high52Week: stockData.fiftyTwoWeekHigh || 0,
+      low52Week: stockData.fiftyTwoWeekLow || 0,
       sector: stockData.sector || 'Unknown',
       industry: stockData.industry || 'Unknown',
       name: stockData.name || symbol,
