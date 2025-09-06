@@ -361,16 +361,28 @@ export default function WatchlistPage() {
 
 
   // Handle clear all
-  const handleClearAll = async () => {
+  const handleClearAll = async (targetWatchlistId?: string) => {
     try {
       setError(null)
-      if (defaultWatchlist?.id && defaultWatchlist.id !== 'default') {
-        if (confirm('Are you sure you want to remove all stocks from your watchlist? This action cannot be undone.')) {
+      const watchlistId = targetWatchlistId || activeWatchlistId || defaultWatchlist?.id
+      
+      if (!watchlistId || watchlistId === 'default') {
+        setError('Cannot clear default watchlist. Please select a specific watchlist.')
+        return
+      }
 
-          await clearWatchlist(defaultWatchlist.id)
-          setRefreshSuccess('cleared')
-          setTimeout(() => setRefreshSuccess(false), 3000)
-        }
+      const watchlist = watchlists.find(w => w.id === watchlistId)
+      if (!watchlist || !watchlist.items || watchlist.items.length === 0) {
+        setError('No items to clear in this watchlist.')
+        return
+      }
+
+      if (confirm(`Are you sure you want to remove all ${watchlist.items.length} stocks from "${watchlist.name}"? This action cannot be undone.`)) {
+        console.log(`🗑️ UI: Clearing all items from watchlist ${watchlistId}...`)
+        await clearWatchlist(watchlistId)
+        setRefreshSuccess('cleared')
+        setTimeout(() => setRefreshSuccess(false), 3000)
+        console.log(`✅ UI: Successfully cleared watchlist ${watchlistId}`)
       }
     } catch (error) {
       console.error('❌ Error clearing watchlist:', error)
@@ -675,9 +687,16 @@ export default function WatchlistPage() {
       setError(null)
       setRemovingItemId(itemId)
       
-      console.log(`🗑️ UI: Removing item ${itemId} from watchlist...`)
+      // Determine which watchlist to remove from
+      const targetWatchlistId = activeWatchlistId || defaultWatchlist?.id
       
-      await removeFromWatchlist(defaultWatchlist?.id || 'default', itemId)
+      if (!targetWatchlistId) {
+        throw new Error('No watchlist selected')
+      }
+      
+      console.log(`🗑️ UI: Removing item ${itemId} from watchlist ${targetWatchlistId}...`)
+      
+      await removeFromWatchlist(targetWatchlistId, itemId)
       
       console.log(`✅ UI: Successfully removed item ${itemId} from watchlist`)
       
@@ -699,6 +718,10 @@ export default function WatchlistPage() {
           errorMessage = 'Network error. Please check your connection and try again.'
         } else if (error.message.includes('Failed to remove item')) {
           errorMessage = error.message
+        } else if (error.message.includes('No watchlist selected')) {
+          errorMessage = 'Please select a watchlist first.'
+        } else if (error.message.includes('access denied') || error.message.includes('unauthorized')) {
+          errorMessage = 'You do not have permission to modify this watchlist.'
         }
       }
       
@@ -1605,10 +1628,11 @@ export default function WatchlistPage() {
                 onClick={() => {
                   const watchlist = watchlists.find(w => w.id === activeWatchlistId)
                   if (watchlist && watchlist.items && watchlist.items.length > 0) {
-                    handleClearAll()
+                    handleClearAll(activeWatchlistId)
                   }
                 }}
                 className="text-red-600 border-red-300 hover:bg-red-100"
+                disabled={!activeWatchlistId || !watchlists.find(w => w.id === activeWatchlistId)?.items?.length}
               >
                 <X className="w-4 h-4 mr-2" />
                 Clear All

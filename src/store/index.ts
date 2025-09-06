@@ -290,17 +290,37 @@ export const useWatchlistStore = create<WatchlistStore>()(
             throw new Error('Watchlist not found')
           }
           
-          // Remove all items one by one
+          if (!watchlist.items || watchlist.items.length === 0) {
+            console.log('⚠️ Watchlist is already empty')
+            set({ isLoading: false })
+            return
+          }
+          
+          // Remove all items one by one with better error handling
           const removePromises = watchlist.items.map(async (item) => {
             try {
+              console.log(`🗑️ Removing ${item.symbol} from watchlist...`)
               const response = await fetch(`/api/watchlist/${watchlistId}/items?symbol=${encodeURIComponent(item.symbol)}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: {
+                  'Content-Type': 'application/json',
+                }
               })
+              
               if (!response.ok) {
-                console.warn(`⚠️ Failed to remove item ${item.symbol}`)
+                const errorData = await response.json().catch(() => ({}))
+                console.warn(`⚠️ Failed to remove item ${item.symbol}:`, {
+                  status: response.status,
+                  statusText: response.statusText,
+                  error: errorData
+                })
+                throw new Error(`Failed to remove ${item.symbol}: ${errorData.message || response.statusText}`)
               }
+              
+              console.log(`✅ Successfully removed ${item.symbol}`)
             } catch (error) {
               console.error(`❌ Error removing item ${item.symbol}:`, error)
+              throw error // Re-throw to stop the process if any item fails
             }
           })
           
@@ -627,7 +647,10 @@ export const useWatchlistStore = create<WatchlistStore>()(
           console.log(`🗑️ Removing ${item.symbol} from watchlist ${watchlistId}...`)
           
           const response = await fetch(`/api/watchlist/${watchlistId}/items?symbol=${encodeURIComponent(item.symbol)}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            }
           })
           
           if (response.ok) {
