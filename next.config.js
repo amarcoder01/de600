@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Server-side rendering settings for Render
-  output: 'standalone', // Use standalone output for better deployment
+  // output: 'standalone', // Temporarily disabled to fix routing issues
   trailingSlash: true, // Enable for better compatibility
   
   // Build configuration

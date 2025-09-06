@@ -287,6 +287,8 @@ function ResetPasswordContent() {
 
 export default function ResetPasswordPage() {
   console.log('🔧 ResetPasswordPage: Component rendered')
+  console.log('🔧 ResetPasswordPage: Current URL:', typeof window !== 'undefined' ? window.location.href : 'SSR')
+  console.log('🔧 ResetPasswordPage: User Agent:', typeof window !== 'undefined' ? window.navigator.userAgent : 'SSR')
   
   return (
     <Suspense fallback={
