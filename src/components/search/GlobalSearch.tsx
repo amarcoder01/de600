@@ -66,26 +66,19 @@ export function GlobalSearch({ placeholder = "Search symbols, news, or analysis.
     setShowResults(false)
 
     try {
-      // Try multiple search endpoints for better results
-      const endpoints = [
-        `/api/stocks/yfinance-search?q=${encodeURIComponent(query)}`,
-        `/api/stocks/search?q=${encodeURIComponent(query)}`
-      ]
-
+      // Use the enhanced search API with fallbacks
+      const searchUrl = `/api/stocks/search?q=${encodeURIComponent(query)}`
+      
       let results: Stock[] = []
 
-      for (const endpoint of endpoints) {
-        try {
-          const response = await fetch(endpoint)
-          if (response.ok) {
-            const data = await response.json()
-            const endpointResults = data.results || data.data || []
-            results = [...results, ...endpointResults]
-            break // Use first successful endpoint
-          }
-        } catch (error) {
-          console.log(`Search endpoint ${endpoint} failed:`, error)
+      try {
+        const response = await fetch(searchUrl)
+        if (response.ok) {
+          const data = await response.json()
+          results = data.results || []
         }
+      } catch (error) {
+        console.log(`Search API failed:`, error)
       }
 
       // If no API results, use local search

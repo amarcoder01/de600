@@ -499,8 +499,8 @@ export default function WatchlistPage() {
       setError(null)
       
       try {
-        // Use the yfinance API route for real-time data
-        const searchUrl = `/api/stocks/yfinance-search?q=${encodeURIComponent(searchQuery)}`
+        // Use the enhanced search API with fallbacks
+        const searchUrl = `/api/stocks/search?q=${encodeURIComponent(searchQuery)}`
         
         const response = await fetch(searchUrl)
         
@@ -511,7 +511,7 @@ export default function WatchlistPage() {
         }
         
         const data = await response.json()
-        console.log(`📊 yfinance Search API response:`, data)
+        console.log(`📊 Enhanced Search API response:`, data)
         
         const results = data.results || []
         setSearchResults(results)
@@ -519,7 +519,7 @@ export default function WatchlistPage() {
         if (results.length === 0) {
           setError(`No stocks found for "${searchQuery}". Try searching with a different term.`)
         } else {
-          console.log(`✅ Found ${results.length} stocks for "${searchQuery}" using real-time data`)
+          console.log(`✅ Found ${results.length} stocks for "${searchQuery}" using ${data.source || 'multi-source'} data`)
         }
       } catch (error) {
         console.error('❌ Error searching stocks:', error)
