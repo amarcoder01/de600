@@ -522,22 +522,49 @@ async function executeGenerateChart(args: any, memoryContext: any): Promise<stri
     
     console.log(`📊 Generating chart for ${symbol} (${timeframe}, ${chartType})`)
     
-    // Fetch chart data
+    // Import the chart API logic directly instead of making HTTP fetch
+    const { YahooFinanceChartAPI } = await import('@/lib/yahoo-finance-chart-api')
+    const { DataSourceService } = await import('@/lib/data-source-service')
+    
+    // Get interval from timeframe
     const interval = getIntervalFromTimeframe(timeframe)
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/chart/${symbol}?range=${timeframe}&interval=${interval}`)
     
-    if (!response.ok) {
-      throw new Error(`Failed to fetch chart data for ${symbol}`)
+    // Try to fetch chart data directly from Yahoo Finance
+    let chartData: any = null
+    let dataSource = 'fallback'
+    
+    try {
+      const result = await YahooFinanceChartAPI.fetchChartData({
+        symbol,
+        interval,
+        range: timeframe
+      })
+      
+      if (result.success && result.data) {
+        // Convert Yahoo Finance data to chart format
+        chartData = convertYahooFinanceToChartData(result.data, symbol)
+        dataSource = 'yahoo_finance'
+        console.log(`✅ Successfully fetched ${chartData.length} real data points for ${symbol}`)
+      } else {
+        throw new Error('Yahoo Finance API returned no data')
+      }
+    } catch (yahooError) {
+      console.warn(`⚠️ Yahoo Finance failed for ${symbol}, using fallback:`, yahooError)
+      // Use fallback data
+      chartData = DataSourceService.generateChartFallbackData({
+        symbol,
+        timeframe: timeframe,
+        dataType: 'chart'
+      })
+      dataSource = 'fallback'
     }
-
-    const chartData = await response.json()
     
-    if (!chartData.success || !chartData.data || chartData.data.length === 0) {
+    if (!chartData || chartData.length === 0) {
       throw new Error(`No chart data available for ${symbol}`)
     }
 
     // Calculate basic metrics
-    const data = chartData.data
+    const data = chartData
     const latestPrice = data[data.length - 1]?.close || 0
     const previousPrice = data[data.length - 2]?.close || latestPrice
     const priceChange = latestPrice - previousPrice
@@ -554,6 +581,8 @@ async function executeGenerateChart(args: any, memoryContext: any): Promise<stri
       priceChange,
       priceChangePercent,
       dataPoints: data.length,
+      dataSource,
+      isRealData: dataSource === 'yahoo_finance',
       chartUrl: `/chart/${symbol}?timeframe=${timeframe}&chartType=${chartType}&indicators=${indicators.join(',')}`,
       analysis: await generateChartAnalysis(symbol, data, timeframe, memoryContext)
     }
@@ -567,6 +596,56 @@ async function executeGenerateChart(args: any, memoryContext: any): Promise<stri
       symbol: args.symbol,
       suggestion: 'Try a different symbol or timeframe'
     })
+  }
+}
+
+// Helper function to convert Yahoo Finance data to chart format
+function convertYahooFinanceToChartData(yahooData: any, symbol: string): any[] {
+  try {
+    const chartData = yahooData.chart
+    if (!chartData || !chartData.result || !chartData.result[0]) {
+      console.warn('Invalid Yahoo Finance data structure')
+      return []
+    }
+
+    const result = chartData.result[0]
+    const timestamps = result.timestamp
+    const quotes = result.indicators.quote[0]
+    
+    if (!timestamps || !quotes) {
+      console.warn('Missing timestamp or quote data')
+      return []
+    }
+
+    const chartPoints: any[] = []
+    
+    for (let i = 0; i < timestamps.length; i++) {
+      const timestamp = timestamps[i]
+      const open = quotes.open[i] || 0
+      const high = quotes.high[i] || 0
+      const low = quotes.low[i] || 0
+      const close = quotes.close[i] || 0
+      const volume = quotes.volume[i] || 0
+
+      if (open > 0 && high > 0 && low > 0 && close > 0) {
+        chartPoints.push({
+          time: timestamp * 1000, // Convert to milliseconds
+          open,
+          high,
+          low,
+          close,
+          volume,
+          change: close - open,
+          changePercent: ((close - open) / open) * 100
+        })
+      }
+    }
+
+    console.log(`Converted ${chartPoints.length} data points from Yahoo Finance`)
+    return chartPoints
+  } catch (error) {
+    console.error('Error converting Yahoo Finance data:', error)
+    return []
   }
 }
 
