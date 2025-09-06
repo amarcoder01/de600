@@ -19,10 +19,27 @@ function ChartPageContent({ symbol }: { symbol: string }) {
   const timeframe = searchParams?.get('timeframe') || '1mo'
   const chartType = searchParams?.get('chartType') || 'candlestick'
   const indicators = searchParams?.get('indicators')?.split(',') || ['sma20', 'volume']
+  const returnUrl = searchParams?.get('returnUrl')
 
   const handleTimeframeChange = (newTimeframe: string) => {
-    const newUrl = `/chart/${symbol}?timeframe=${newTimeframe}&chartType=${chartType}&indicators=${indicators.join(',')}`
+    const params = new URLSearchParams()
+    params.set('timeframe', newTimeframe)
+    params.set('chartType', chartType)
+    params.set('indicators', indicators.join(','))
+    if (returnUrl) params.set('returnUrl', returnUrl)
+    
+    const newUrl = `/chart/${symbol}?${params.toString()}`
     router.push(newUrl)
+  }
+
+  const handleBackToChat = () => {
+    if (returnUrl) {
+      // Navigate back to the specific chat page with preserved state
+      window.location.href = decodeURIComponent(returnUrl)
+    } else {
+      // Fallback to TradeGPT page
+      router.push('/treadgpt')
+    }
   }
 
   return (
@@ -34,7 +51,7 @@ function ChartPageContent({ symbol }: { symbol: string }) {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => window.history.back()}
+              onClick={handleBackToChat}
               className="flex items-center space-x-2"
             >
               <ArrowLeft className="w-4 h-4" />

@@ -53,9 +53,10 @@ export function ChartMessage({ chartData }: ChartMessageProps) {
   }
 
   const openFullChart = () => {
-    // Open chart in new tab/window
-    const url = `/chart/${symbol}?timeframe=${selectedTimeframe}&chartType=${chartType}&indicators=${indicators.join(',')}`
-    window.open(url, '_blank')
+    // Open chart in same tab with return URL
+    const returnUrl = encodeURIComponent(window.location.pathname + window.location.search)
+    const url = `/chart/${symbol}?timeframe=${selectedTimeframe}&chartType=${chartType}&indicators=${indicators.join(',')}&returnUrl=${returnUrl}`
+    window.location.href = url
   }
 
   return (

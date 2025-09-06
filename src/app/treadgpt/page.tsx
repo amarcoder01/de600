@@ -28,17 +28,37 @@ interface FileUpload {
 
 
 export default function TradeGPTPage() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      role: 'assistant',
-      content: 'Hello! I\'m your AI trading assistant. I can help you analyze stocks, create strategies, explain concepts, and more. I can also analyze uploaded images, PDFs, and documents for financial insights.\n\nWhat would you like to know?',
-      timestamp: new Date(),
-      metadata: {
-        responseType: 'welcome'
+  // Initialize messages from localStorage or default
+  const [messages, setMessages] = useState<Message[]>(() => {
+    if (typeof window !== 'undefined') {
+      const savedMessages = localStorage.getItem('treadgpt-messages')
+      if (savedMessages) {
+        try {
+          const parsed = JSON.parse(savedMessages)
+          // Convert timestamp strings back to Date objects
+          return parsed.map((msg: any) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp)
+          }))
+        } catch (error) {
+          console.warn('Failed to parse saved messages:', error)
+        }
       }
     }
-  ])
+    
+    // Default welcome message
+    return [
+      {
+        id: '1',
+        role: 'assistant',
+        content: 'Hello! I\'m your AI trading assistant. I can help you analyze stocks, create strategies, explain concepts, and more. I can also analyze uploaded images, PDFs, and documents for financial insights.\n\nWhat would you like to know?',
+        timestamp: new Date(),
+        metadata: {
+          responseType: 'welcome'
+        }
+      }
+    ]
+  })
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [fileUpload, setFileUpload] = useState<FileUpload | null>(null)
@@ -50,8 +70,29 @@ export default function TradeGPTPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
+  const clearChatHistory = () => {
+    const defaultMessage: Message = {
+      id: '1',
+      role: 'assistant',
+      content: 'Hello! I\'m your AI trading assistant. I can help you analyze stocks, create strategies, explain concepts, and more. I can also analyze uploaded images, PDFs, and documents for financial insights.\n\nWhat would you like to know?',
+      timestamp: new Date(),
+      metadata: {
+        responseType: 'welcome'
+      }
+    }
+    setMessages([defaultMessage])
+    localStorage.removeItem('treadgpt-messages')
+  }
+
   useEffect(() => {
     scrollToBottom()
+  }, [messages])
+
+  // Save messages to localStorage whenever they change
+  useEffect(() => {
+    if (typeof window !== 'undefined' && messages.length > 0) {
+      localStorage.setItem('treadgpt-messages', JSON.stringify(messages))
+    }
   }, [messages])
 
   const handleSendMessage = async () => {
@@ -323,18 +364,18 @@ export default function TradeGPTPage() {
 
 
   const startNewConversation = () => {
-    setMessages([
-      {
-        id: '1',
-        role: 'assistant',
-        content: 'Hello! I\'m your AI trading assistant. I can help you analyze stocks, create strategies, explain concepts, and more.\n\nWhat would you like to know?',
-        timestamp: new Date(),
-        metadata: {
-          responseType: 'welcome'
-        }
+    const defaultMessage: Message = {
+      id: '1',
+      role: 'assistant',
+      content: 'Hello! I\'m your AI trading assistant. I can help you analyze stocks, create strategies, explain concepts, and more. I can also analyze uploaded images, PDFs, and documents for financial insights.\n\nWhat would you like to know?',
+      timestamp: new Date(),
+      metadata: {
+        responseType: 'welcome'
       }
-    ])
+    }
+    setMessages([defaultMessage])
     setInputValue('')
+    localStorage.removeItem('treadgpt-messages')
   }
 
   const quickActions = [
