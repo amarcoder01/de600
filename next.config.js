@@ -14,6 +14,11 @@ const nextConfig = {
     esmExternals: false,
   },
   
+  // Ensure proper environment handling
+  env: {
+    NODE_ENV: process.env.NODE_ENV || 'production',
+  },
+  
   // Images configuration
   images: {
     domains: ['localhost', 'render.com'],

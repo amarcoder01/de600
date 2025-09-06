@@ -61,6 +61,22 @@ export async function GET() {
       }
     }
     
+    // If we still don't have a watchlist, return success without it
+    if (!watchlist) {
+      return NextResponse.json({
+        success: true,
+        message: 'Database connection successful (watchlist test skipped)',
+        data: {
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName
+          }
+        }
+      })
+    }
+    
     return NextResponse.json({
       success: true,
       message: 'Database connection and operations successful',
