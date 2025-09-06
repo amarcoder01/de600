@@ -31,15 +31,31 @@ if [ "$RENDER" = "true" ] || [ -f "requirements-python.txt" ]; then
         pip install --no-cache-dir "numpy>=1.24.0" || echo "⚠️ numpy installation failed"
     fi
     
-    # Test yfinance installation
-    echo "🧪 Testing yfinance installation..."
+    # Test key dependencies installation
+    echo "🧪 Testing key dependencies..."
+    
+    # Test yfinance
     if python3 -c "import yfinance; print('✅ yfinance import successful')" 2>/dev/null; then
         echo "✅ yfinance is working correctly"
     else
-        echo "⚠️ yfinance import failed, but continuing with fallback"
-        # Try alternative installation method
-        echo "🔄 Trying alternative installation..."
+        echo "⚠️ yfinance import failed, trying alternative installation..."
         pip install --no-cache-dir --force-reinstall yfinance==0.2.28 || echo "⚠️ Alternative yfinance installation failed"
+    fi
+    
+    # Test aiohttp (critical for backtesting)
+    if python3 -c "import aiohttp; print('✅ aiohttp import successful')" 2>/dev/null; then
+        echo "✅ aiohttp is working correctly"
+    else
+        echo "⚠️ aiohttp import failed, trying alternative installation..."
+        pip install --no-cache-dir --force-reinstall aiohttp>=3.8.0 || echo "⚠️ Alternative aiohttp installation failed"
+    fi
+    
+    # Test python-dotenv
+    if python3 -c "import dotenv; print('✅ python-dotenv import successful')" 2>/dev/null; then
+        echo "✅ python-dotenv is working correctly"
+    else
+        echo "⚠️ python-dotenv import failed, trying alternative installation..."
+        pip install --no-cache-dir --force-reinstall python-dotenv>=1.0.0 || echo "⚠️ Alternative python-dotenv installation failed"
     fi
 else
     echo "⏭️ Skipping Python dependency installation (not in Render environment and no requirements file)"

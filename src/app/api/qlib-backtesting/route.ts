@@ -27,12 +27,18 @@ export async function POST(request: NextRequest) {
     ];
 
     console.log('Running Polygon.io backtesting with:', { strategy_name, symbols, start_date, end_date, parameters });
+    console.log('Script path:', scriptPath);
+    console.log('Command args:', args);
 
     // Execute the backtesting script
     const result = await new Promise((resolve, reject) => {
-      const child = spawn('python', [scriptPath, ...args], {
+      const child = spawn('python3', [scriptPath, ...args], {
         cwd: process.cwd(),
-        stdio: ['pipe', 'pipe', 'pipe']
+        stdio: ['pipe', 'pipe', 'pipe'],
+        env: {
+          ...process.env,
+          PYTHONPATH: process.cwd() + ':' + (process.env.PYTHONPATH || '')
+        }
       });
 
       let stdout = '';
