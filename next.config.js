@@ -4,16 +4,14 @@ const nextConfig = {
   output: 'standalone', // Use standalone output for better deployment
   trailingSlash: true, // Enable for better compatibility
   
-  // Completely disable static generation to prevent Html import issues
+  // Build configuration
   generateBuildId: async () => {
     return 'build-' + Date.now()
   },
   
-  // Disable static optimization completely
+  // Experimental features
   experimental: {
     esmExternals: false,
-    // Force all pages to be dynamic
-    staticPageGenerationTimeout: 0,
   },
   
   // Images configuration
@@ -49,30 +47,10 @@ const nextConfig = {
       use: 'raw-loader',
     });
     
-    // Ignore test files from pdf-parse
-    config.resolve.alias = {
-      ...config.resolve.alias,
-    };
-    
     config.externals = config.externals || [];
     config.externals.push({
       'pdf-parse': 'commonjs pdf-parse',
     });
-    
-    // Aggressively disable static generation
-    if (isServer) {
-      config.optimization = config.optimization || {}
-      config.optimization.splitChunks = false
-      config.optimization.minimize = false
-      
-      // Remove static generation plugins
-      config.plugins = config.plugins || []
-      config.plugins = config.plugins.filter(plugin => {
-        return !plugin.constructor.name.includes('Static') && 
-               !plugin.constructor.name.includes('StaticGeneration') &&
-               !plugin.constructor.name.includes('StaticOptimization')
-      })
-    }
     
     return config;
   },
