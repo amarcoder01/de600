@@ -76,10 +76,5 @@ class PriceAlertScheduler {
   }
 }
 
-// Create singleton instance
+// Create singleton instance (do not auto-start on import)
 export const priceAlertScheduler = new PriceAlertScheduler()
-
-// Auto-start scheduler when this module is imported (only in production)
-if (typeof window === 'undefined' && process.env.NODE_ENV === 'production') {
-  priceAlertScheduler.start()
-}

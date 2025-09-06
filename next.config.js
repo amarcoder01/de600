@@ -1,5 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Ensure Node server runtime and prevent static export on Render
+  output: 'standalone',
+  // Default to fully dynamic to avoid build-time prerender of API routes/pages
+  experimental: {
+    // keep other experimental defaults if any in Next
+  },
   images: {
     domains: ['localhost', 'render.com'],
     remotePatterns: [

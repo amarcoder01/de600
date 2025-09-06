@@ -121,7 +121,14 @@ export class RealTimeDataSystem {
 
   constructor() {
     this.config = this.getDefaultConfig()
-    this.initializeSystem()
+    // Skip any initialization during Next.js production build
+    if (process.env.NEXT_PHASE === 'phase-production-build') {
+      return
+    }
+    // Only initialize timers/sockets in Node.js runtime (not edge) and not during build
+    if (typeof window === 'undefined' && (process.env.NEXT_RUNTIME || 'nodejs') !== 'edge') {
+      this.initializeSystem()
+    }
   }
 
   // Initialize the real-time data system
@@ -658,5 +665,7 @@ export class RealTimeDataSystem {
   }
 }
 
-// Export singleton instance
-export const realTimeDataSystem = RealTimeDataSystem.getInstance()
+// Export a safe getter to avoid instantiation at import time
+export function getRealTimeDataSystem() {
+  return RealTimeDataSystem.getInstance()
+}

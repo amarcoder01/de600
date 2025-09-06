@@ -1,12 +1,7 @@
 import fs from 'fs/promises'
 
-// Dynamic import for pdf-parse to avoid build issues
+// Lazy reference to pdf-parse to avoid loading during build
 let pdf: any
-try {
-  pdf = require('pdf-parse')
-} catch (error) {
-  console.warn('pdf-parse not available:', error)
-}
 
 export interface PDFContent {
   text: string
@@ -35,7 +30,13 @@ export class PDFProcessor {
   static async processPDF(filePath: string): Promise<PDFContent> {
     try {
       if (!pdf) {
-        throw new Error('PDF processing not available - pdf-parse package not loaded')
+        try {
+          // Load only at runtime
+          // eslint-disable-next-line @typescript-eslint/no-var-requires
+          pdf = require('pdf-parse')
+        } catch (e) {
+          throw new Error('PDF processing not available - pdf-parse package not loaded')
+        }
       }
       
       console.log(`📄 Processing PDF: ${filePath}`)
@@ -104,7 +105,12 @@ export class PDFProcessor {
   static async extractTextFromPage(filePath: string, pageNumber: number): Promise<string> {
     try {
       if (!pdf) {
-        throw new Error('PDF processing not available - pdf-parse package not loaded')
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-var-requires
+          pdf = require('pdf-parse')
+        } catch (e) {
+          throw new Error('PDF processing not available - pdf-parse package not loaded')
+        }
       }
       
       const dataBuffer = await fs.readFile(filePath)
@@ -122,7 +128,12 @@ export class PDFProcessor {
   static async getPDFInfo(filePath: string): Promise<PDFMetadata> {
     try {
       if (!pdf) {
-        throw new Error('PDF processing not available - pdf-parse package not loaded')
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-var-requires
+          pdf = require('pdf-parse')
+        } catch (e) {
+          throw new Error('PDF processing not available - pdf-parse package not loaded')
+        }
       }
       
       const dataBuffer = await fs.readFile(filePath)
