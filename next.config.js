@@ -47,6 +47,17 @@ const nextConfig = {
   },
   // Disable static optimization completely
   distDir: '.next',
+  // Disable all static optimization
+  swcMinify: true,
+  // Custom webpack configuration to disable static generation
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      // Disable static generation on server side
+      config.optimization = config.optimization || {}
+      config.optimization.splitChunks = false
+    }
+    return config
+  },
   // Environment variables are handled by Next.js automatically
   // Headers for security
   async headers() {

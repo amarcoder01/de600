@@ -33,7 +33,9 @@ def get_stock_data(symbol):
         print(f"🔍 Fetching data for {symbol} using yfinance...", file=sys.stderr)
         
         # Suppress stdout output from yfinance to prevent JSON parsing issues
-        with contextlib.redirect_stdout(io.StringIO()):
+        # Create a null output stream to completely suppress stdout
+        null_stream = io.StringIO()
+        with contextlib.redirect_stdout(null_stream):
             # Get ticker info
             ticker = yf.Ticker(symbol)
             info = ticker.info

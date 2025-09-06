@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import '@/lib/startup' // Initialize price alert scheduler
 import { ThemeProvider } from '@/components/theme/ThemeProvider'
+import NoSSR from '@/components/NoSSR'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -38,9 +39,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <ThemeProvider>
-          {children}
-        </ThemeProvider>
+        <NoSSR>
+          <ThemeProvider>
+            {children}
+          </ThemeProvider>
+        </NoSSR>
       </body>
     </html>
   )

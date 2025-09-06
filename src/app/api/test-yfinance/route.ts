@@ -26,10 +26,22 @@ function executePythonScript(command: string, args: string[]): Promise<any> {
     pythonProcess.on('close', (code) => {
       if (code === 0) {
         try {
-          const result = JSON.parse(stdout)
-          resolve(result)
+          // Clean stdout to remove any non-JSON content
+          const cleanStdout = stdout.trim()
+          // Find the last JSON object in the output
+          const jsonStart = cleanStdout.lastIndexOf('{')
+          const jsonEnd = cleanStdout.lastIndexOf('}') + 1
+          
+          if (jsonStart !== -1 && jsonEnd > jsonStart) {
+            const jsonString = cleanStdout.substring(jsonStart, jsonEnd)
+            const result = JSON.parse(jsonString)
+            resolve(result)
+          } else {
+            throw new Error('No valid JSON found in output')
+          }
         } catch (error) {
           console.error('❌ Error parsing Python output:', error)
+          console.error('Raw stdout:', stdout)
           reject(new Error('Failed to parse Python script output'))
         }
       } else {
