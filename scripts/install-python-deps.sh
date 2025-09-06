@@ -24,11 +24,11 @@ if [ "$RENDER" = "true" ] || [ -f "requirements-python.txt" ]; then
     else
         echo "⚠️ Failed to install from requirements file, trying individual packages..."
         
-        # Fallback: install core packages individually
+        # Fallback: install core packages individually with flexible versions
         pip install --no-cache-dir yfinance==0.2.28 || echo "⚠️ yfinance installation failed"
-        pip install --no-cache-dir requests==2.31.0 || echo "⚠️ requests installation failed"
-        pip install --no-cache-dir pandas==2.1.4 || echo "⚠️ pandas installation failed"
-        pip install --no-cache-dir numpy==1.24.3 || echo "⚠️ numpy installation failed"
+        pip install --no-cache-dir "requests>=2.31.0" || echo "⚠️ requests installation failed"
+        pip install --no-cache-dir "pandas>=2.0.0" || echo "⚠️ pandas installation failed"
+        pip install --no-cache-dir "numpy>=1.24.0" || echo "⚠️ numpy installation failed"
     fi
     
     # Test yfinance installation

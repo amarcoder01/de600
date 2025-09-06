@@ -9,6 +9,13 @@ const nextConfig = {
     return 'build-' + Date.now()
   },
   
+  // Disable static optimization completely
+  experimental: {
+    esmExternals: false,
+    // Force all pages to be dynamic
+    staticPageGenerationTimeout: 0,
+  },
+  
   // Images configuration
   images: {
     domains: ['localhost', 'render.com'],
@@ -19,11 +26,6 @@ const nextConfig = {
       },
     ],
     unoptimized: true, // For static export compatibility
-  },
-  
-  // Experimental features
-  experimental: {
-    esmExternals: false,
   },
   
   // Production optimizations
@@ -57,10 +59,19 @@ const nextConfig = {
       'pdf-parse': 'commonjs pdf-parse',
     });
     
-    // Disable static generation completely
+    // Aggressively disable static generation
     if (isServer) {
       config.optimization = config.optimization || {}
       config.optimization.splitChunks = false
+      config.optimization.minimize = false
+      
+      // Remove static generation plugins
+      config.plugins = config.plugins || []
+      config.plugins = config.plugins.filter(plugin => {
+        return !plugin.constructor.name.includes('Static') && 
+               !plugin.constructor.name.includes('StaticGeneration') &&
+               !plugin.constructor.name.includes('StaticOptimization')
+      })
     }
     
     return config;

@@ -8,11 +8,6 @@ export const runtime = 'nodejs'
 export const fetchCache = 'force-no-store'
 
 export default function NotFound() {
-  // Force this to be rendered on the client side only
-  if (typeof window === 'undefined') {
-    return null
-  }
-
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a', color: 'white', padding: '2rem' }}>
       <div style={{ maxWidth: 680, width: '100%', textAlign: 'center' }}>
