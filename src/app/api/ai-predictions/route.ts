@@ -348,7 +348,6 @@ class PredictionEngine {
         mfi: (mfi || 0).toFixed(2),
         parabolic_sar: (sar || 0).toFixed(2)
       },
-      sentiment_analysis: sentimentData,
       reasoning: includeReasoning ? this.generateReasoning({
         signal, rsi, macd, sma20, sma50, bb, stoch, volume, volumeSMA, priceTarget, sentiment: sentimentData
       }) : undefined
@@ -1174,10 +1173,6 @@ async function generateMultiDayPrediction(symbol: string, stockData: any, foreca
         williams_r: williamsR.toFixed(1),
         cci: cci.toFixed(1),
         atr: atr.toFixed(4)
-      },
-      sentiment_analysis: {
-        news_sentiment: newsSentiment.toFixed(3),
-        overall_sentiment: sentimentScore.toFixed(3)
       },
       ml_integration: {
         models_used: mlPredictions.length > 0 ? ['LSTM', 'XGBoost', 'Random Forest'] : [],

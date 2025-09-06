@@ -518,7 +518,12 @@ Please provide a comprehensive market analysis in the following JSON format, usi
   }
 }
 
-IMPORTANT: Base your analysis on the actual market data provided above. Use realistic values and provide actionable insights.`
+IMPORTANT: Base your analysis on the actual market data provided above. Use realistic values and provide actionable insights.
+
+CRITICAL JSON REQUIREMENTS:
+- NEVER use "N/A" in any JSON field - use null for missing values or provide realistic estimates
+- All arrays must contain valid JSON values (numbers, strings, or null) - never "N/A"
+- If you don't have specific data, use null or provide reasonable estimates based on the market data provided`
   }
 
   private async callOpenAI(prompt: string, config: GPTStrategyConfig): Promise<any> {
@@ -721,7 +726,9 @@ CRITICAL REQUIREMENTS:
 3. Entry/exit criteria must be precise and actionable
 4. Performance metrics must be achievable given current market conditions
 5. Strategy must adapt to provided market context
-6. All calculations must consider current volatility and trend strength`
+6. All calculations must consider current volatility and trend strength
+7. NEVER use "N/A" in JSON responses - use null for missing values or provide realistic estimates
+8. All arrays must contain valid JSON values (numbers, strings, or null) - never "N/A"`
             },
             {
               role: 'user',
@@ -753,7 +760,27 @@ CRITICAL REQUIREMENTS:
 
       // Parse JSON response with enhanced error handling
       try {
-        const parsed = JSON.parse(content)
+        // Clean the content to handle N/A values and other JSON issues
+        let cleanedContent = content
+        
+        // Replace N/A values in arrays with null
+        cleanedContent = cleanedContent.replace(/\[N\/A\]/g, '[null]')
+        cleanedContent = cleanedContent.replace(/\["N\/A"\]/g, '[null]')
+        cleanedContent = cleanedContent.replace(/\[N\/A,/g, '[null,')
+        cleanedContent = cleanedContent.replace(/,N\/A\]/g, ',null]')
+        cleanedContent = cleanedContent.replace(/,N\/A,/g, ',null,')
+        
+        // Replace standalone N/A values with null
+        cleanedContent = cleanedContent.replace(/:\s*N\/A\s*([,}])/g, ': null$1')
+        cleanedContent = cleanedContent.replace(/:\s*"N\/A"\s*([,}])/g, ': null$1')
+        
+        // Replace N/A in string arrays
+        cleanedContent = cleanedContent.replace(/\["N\/A"\]/g, '[null]')
+        cleanedContent = cleanedContent.replace(/\["N\/A",/g, '[null,')
+        cleanedContent = cleanedContent.replace(/,"N\/A"\]/g, ',null]')
+        cleanedContent = cleanedContent.replace(/,"N\/A",/g, ',null,')
+        
+        const parsed = JSON.parse(cleanedContent)
         
         // Validate the response structure
         if (!parsed.strategy || !parsed.strategy.parameters) {
@@ -769,7 +796,22 @@ CRITICAL REQUIREMENTS:
         const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) || content.match(/\{[\s\S]*\}/)
         if (jsonMatch) {
           try {
-            return JSON.parse(jsonMatch[1] || jsonMatch[0])
+            let extractedJson = jsonMatch[1] || jsonMatch[0]
+            
+            // Clean the extracted JSON as well
+            extractedJson = extractedJson.replace(/\[N\/A\]/g, '[null]')
+            extractedJson = extractedJson.replace(/\["N\/A"\]/g, '[null]')
+            extractedJson = extractedJson.replace(/\[N\/A,/g, '[null,')
+            extractedJson = extractedJson.replace(/,N\/A\]/g, ',null]')
+            extractedJson = extractedJson.replace(/,N\/A,/g, ',null,')
+            extractedJson = extractedJson.replace(/:\s*N\/A\s*([,}])/g, ': null$1')
+            extractedJson = extractedJson.replace(/:\s*"N\/A"\s*([,}])/g, ': null$1')
+            extractedJson = extractedJson.replace(/\["N\/A"\]/g, '[null]')
+            extractedJson = extractedJson.replace(/\["N\/A",/g, '[null,')
+            extractedJson = extractedJson.replace(/,"N\/A"\]/g, ',null]')
+            extractedJson = extractedJson.replace(/,"N\/A",/g, ',null,')
+            
+            return JSON.parse(extractedJson)
           } catch (secondParseError) {
             console.error('Failed to parse extracted JSON:', secondParseError)
           }
