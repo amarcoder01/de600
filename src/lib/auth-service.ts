@@ -464,9 +464,19 @@ export class AuthService {
   // Logout user
   static async logoutUser(refreshToken: string): Promise<void> {
     try {
-      await prisma.userSession.delete({
+      // First check if the session exists before trying to delete it
+      const existingSession = await prisma.userSession.findUnique({
         where: { refreshToken }
       })
+
+      if (existingSession) {
+        await prisma.userSession.delete({
+          where: { refreshToken }
+        })
+        console.log('✅ User session deleted successfully')
+      } else {
+        console.log('ℹ️ No active session found for logout (token may have already expired)')
+      }
     } catch (error) {
       console.error('Logout error:', error)
       // Don't throw error for logout failures

@@ -80,8 +80,23 @@ export async function POST(request: NextRequest) {
 
     console.log('💾 Reset token saved to database')
 
-    // Create reset URL
-    const resetUrl = `${process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`
+    // Create reset URL - debug environment variables
+    console.log('🔧 Environment Variables Debug:')
+    console.log(`   NEXT_PUBLIC_BASE_URL: ${process.env.NEXT_PUBLIC_BASE_URL}`)
+    console.log(`   NODE_ENV: ${process.env.NODE_ENV}`)
+    console.log(`   RENDER: ${process.env.RENDER}`)
+    
+    // Determine the base URL
+    let baseUrl = 'http://localhost:3000' // default fallback
+    
+    if (process.env.NEXT_PUBLIC_BASE_URL) {
+      baseUrl = process.env.NEXT_PUBLIC_BASE_URL
+    } else if (process.env.RENDER) {
+      // If we're on Render but NEXT_PUBLIC_BASE_URL is not set, construct it
+      baseUrl = 'https://tradingpro-platform.onrender.com'
+    }
+    
+    const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`
     console.log(`🔗 Reset URL: ${resetUrl}`)
 
     // Check SendGrid configuration
