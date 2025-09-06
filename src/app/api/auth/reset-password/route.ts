@@ -3,8 +3,10 @@ import { prisma } from '@/lib/db'
 import bcrypt from 'bcryptjs'
 
 export async function POST(request: NextRequest) {
+  console.log('🔧 Reset Password API: POST request received')
   try {
     const { token, password } = await request.json()
+    console.log('🔧 Reset Password API: Token and password received')
 
     if (!token || !password) {
       return NextResponse.json(
@@ -71,9 +73,11 @@ export async function POST(request: NextRequest) {
 
 // Verify reset token endpoint
 export async function GET(request: NextRequest) {
+  console.log('🔧 Reset Password API: GET request received')
   try {
     const { searchParams } = new URL(request.url)
     const token = searchParams.get('token')
+    console.log('🔧 Reset Password API: Token from URL:', token)
 
     if (!token) {
       return NextResponse.json(
