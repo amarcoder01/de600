@@ -147,7 +147,7 @@ export class EmailService {
             </div>
             
             <div style="text-align: center; margin: 30px 0;">
-              <a href="http://localhost:3000/price-alerts" class="button">
+              <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/price-alerts" class="button">
                 View Price Alerts
               </a>
             </div>
@@ -182,7 +182,7 @@ The price has ${condition} your target of $${data.targetPrice.toFixed(2)}.
 
 ⚠️ Alert Status: This alert has been triggered and is now inactive. You can create a new alert if needed.
 
-View your price alerts: http://localhost:3000/price-alerts
+View your price alerts: ${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/price-alerts
 
 ---
 This is an automated notification from Vidality Trading Platform

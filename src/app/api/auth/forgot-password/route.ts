@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     console.log('💾 Reset token saved to database')
 
     // Create reset URL
-    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`
+    const resetUrl = `${process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`
     console.log(`🔗 Reset URL: ${resetUrl}`)
 
     // Check SendGrid configuration
