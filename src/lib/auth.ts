@@ -165,6 +165,13 @@ export const authOptions: NextAuthOptions = {
       return session
     },
     async redirect({ url, baseUrl }) {
+      console.log('🔀 NextAuth redirect callback:', { url, baseUrl })
+      
+      // If redirecting to dashboard, redirect to our custom callback first
+      if (url === `${baseUrl}/dashboard` || url === '/dashboard') {
+        return `${baseUrl}/api/auth/callback/google`
+      }
+      
       // Allows relative callback URLs
       if (url.startsWith("/")) return `${baseUrl}${url}`
       // Allows callback URLs on the same origin
@@ -186,6 +193,13 @@ export const authOptions: NextAuthOptions = {
     },
     async signOut({ token }) {
       console.log('👋 NextAuth SignOut event:', { email: token?.email })
+    },
+    async session({ session, token }) {
+      console.log('🔐 NextAuth Session event:', { 
+        hasSession: !!session,
+        hasToken: !!token,
+        email: session?.user?.email 
+      })
     }
   },
   debug: process.env.NODE_ENV === 'development',

@@ -1,81 +1,96 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { getToken } from 'next-auth/jwt'
+import jwt from 'jsonwebtoken'
 
-export function middleware(request: NextRequest) {
-  const response = NextResponse.next()
+const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production'
 
-  // Security headers
-  response.headers.set('X-Frame-Options', 'DENY')
-  response.headers.set('X-Content-Type-Options', 'nosniff')
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
-  response.headers.set('X-XSS-Protection', '1; mode=block')
-  
-  // Content Security Policy
-  const csp = [
-    "default-src 'self'",
-    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
-    "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' data: https: blob:",
-    "connect-src 'self' https://api.polygon.io https://api.twilio.com https://api.sendgrid.com",
-    "frame-ancestors 'none'"
-  ].join('; ')
-  
-  response.headers.set('Content-Security-Policy', csp)
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
 
-  // Prevent caching for sensitive routes
-  if (request.nextUrl.pathname.startsWith('/api/auth/') || 
-      request.nextUrl.pathname.startsWith('/api/user/')) {
-    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
-    response.headers.set('Pragma', 'no-cache')
-    response.headers.set('Expires', '0')
-  }
-
-  // Authentication check for protected API routes
-  const protectedRoutes = [
-    '/api/user/',
-    '/api/watchlist/',
-    '/api/paper-trading/',
-    '/api/price-alerts/',
-    '/api/portfolio/'
-  ]
-
-  const isProtectedRoute = protectedRoutes.some(route => 
-    request.nextUrl.pathname.startsWith(route)
-  )
-
-  if (isProtectedRoute) {
-    const token = request.cookies.get('token')?.value
-    const refreshToken = request.cookies.get('refreshToken')?.value
-
-    // Allow requests with valid tokens or refresh tokens
-    if (!token && !refreshToken) {
-      // For watchlist routes, allow demo access
-      if (request.nextUrl.pathname.startsWith('/api/watchlist/')) {
-        // Continue with demo user access
-        return response
-      }
+  // Handle Google OAuth callback to set JWT tokens
+  if (pathname === '/api/auth/callback/google') {
+    try {
+      console.log('🔐 Middleware: Google OAuth callback detected')
       
-      // For other protected routes, return 401
-      return NextResponse.json(
-        { success: false, message: 'Authentication required' },
-        { status: 401 }
-      )
+      // Get the NextAuth token
+      const token = await getToken({ 
+        req: request, 
+        secret: process.env.NEXTAUTH_SECRET 
+      })
+      
+      console.log('🔍 Middleware: NextAuth token check:', {
+        hasToken: !!token,
+        email: token?.email,
+        userId: token?.userId
+      })
+      
+      if (token?.email && token?.userId) {
+        console.log('✅ Middleware: NextAuth token found, generating JWT tokens')
+        
+        // Generate JWT tokens compatible with our existing auth system
+        const accessToken = jwt.sign(
+          { 
+            userId: token.userId, 
+            email: token.email,
+            provider: 'google'
+          },
+          JWT_SECRET,
+          { expiresIn: '24h' }
+        )
+
+        const refreshToken = jwt.sign(
+          { 
+            userId: token.userId, 
+            type: 'refresh',
+            provider: 'google'
+          },
+          JWT_SECRET,
+          { expiresIn: '30d' }
+        )
+
+        console.log('✅ Middleware: JWT tokens generated')
+
+        // Create response with redirect to dashboard
+        const response = NextResponse.redirect(new URL('/dashboard', request.url))
+        
+        // Set cookies compatible with our existing auth system
+        response.cookies.set('token', accessToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 24 * 60 * 60, // 24 hours
+          path: '/'
+        })
+        
+        response.cookies.set('refreshToken', refreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 30 * 24 * 60 * 60, // 30 days
+          path: '/'
+        })
+
+        console.log('✅ Middleware: JWT cookies set, redirecting to dashboard')
+        return response
+      } else {
+        console.log('❌ Middleware: No NextAuth token found')
+        return NextResponse.redirect(new URL('/login?error=NoSession', request.url))
+      }
+    } catch (error) {
+      console.error('❌ Middleware: Error in Google OAuth callback:', error)
+      return NextResponse.redirect(new URL('/login?error=CallbackError', request.url))
     }
   }
 
-  return response
+  return NextResponse.next()
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public files
-     */
-    '/((?!_next/static|_next/image|favicon.ico|public).*)',
-  ],
+    '/api/auth/callback/google',
+    '/dashboard/:path*',
+    '/login',
+    '/register'
+  ]
 }

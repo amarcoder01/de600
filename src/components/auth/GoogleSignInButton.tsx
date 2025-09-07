@@ -26,19 +26,9 @@ export function GoogleSignInButton({
       console.log('🔐 Initiating Google Sign-in...')
       
       const result = await signIn('google', { 
-        callbackUrl: '/api/auth/callback/google',
-        redirect: false // Don't redirect automatically, we'll handle it
+        callbackUrl: '/dashboard',
+        redirect: true // Let NextAuth handle the redirect
       })
-
-      if (result?.error) {
-        console.error('❌ Google Sign-in error:', result.error)
-        // Redirect to error page with specific error
-        window.location.href = `/auth/error?error=${result.error}`
-      } else if (result?.ok) {
-        console.log('✅ Google Sign-in successful, redirecting to callback...')
-        // Redirect to our custom callback
-        window.location.href = '/api/auth/callback/google'
-      }
     } catch (error) {
       console.error('❌ Google Sign-in error:', error)
       window.location.href = '/auth/error?error=OAuthSignin'
