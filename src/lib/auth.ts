@@ -166,17 +166,21 @@ export const authOptions: NextAuthOptions = {
     },
     async redirect({ url, baseUrl }) {
       console.log('🔀 NextAuth redirect callback:', { url, baseUrl })
-      
-      // Allow NextAuth to complete its session creation first
-      // Then redirect to dashboard where we'll handle JWT token creation
-      if (url === `${baseUrl}/dashboard` || url === '/dashboard') {
-        return `${baseUrl}/dashboard`
+
+      // If NextAuth is attempting to send the user to the dashboard (or root),
+      // first route through our post-login endpoint which converts the
+      // NextAuth session into our app's JWT cookies/localStorage expectations.
+      const target = typeof url === 'string' ? url : ''
+      const isDash = target === '/dashboard' || target === `${baseUrl}/dashboard`
+      const isRoot = target === '/' || target === `${baseUrl}`
+      if (isDash || isRoot) {
+        return `${baseUrl}/api/auth/google-callback`
       }
-      
+
       // Allows relative callback URLs
-      if (url.startsWith("/")) return `${baseUrl}${url}`
+      if (target.startsWith('/')) return `${baseUrl}${target}`
       // Allows callback URLs on the same origin
-      else if (new URL(url).origin === baseUrl) return url
+      else if (new URL(target).origin === baseUrl) return target
       return baseUrl
     }
   },
