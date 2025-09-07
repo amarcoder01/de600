@@ -1,5 +1,4 @@
 import { NextAuthOptions } from 'next-auth'
-import GoogleProvider from 'next-auth/providers/google'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import { prisma } from './db'
 import { AuthService } from './auth-service'
@@ -37,19 +36,8 @@ declare module 'next-auth/jwt' {
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
-  providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      authorization: {
-        params: {
-          prompt: "consent",
-          access_type: "offline",
-          response_type: "code"
-        }
-      }
-    })
-  ],
+  // Google provider removed intentionally. We are not using OAuth providers.
+  providers: [],
   session: {
     strategy: 'jwt',
     maxAge: 7 * 24 * 60 * 60, // 7 days
@@ -65,63 +53,6 @@ export const authOptions: NextAuthOptions = {
           provider: account?.provider,
           profileId: (profile as any)?.id 
         })
-
-        // For Google OAuth, ensure user exists in our database
-        if (account?.provider === 'google' && user.email) {
-          // Check if user exists in our custom User table
-          const existingUser = await prisma.user.findUnique({
-            where: { email: user.email }
-          })
-
-          if (!existingUser) {
-            // Create user in our custom User table
-            console.log('👤 Creating new user from Google OAuth:', user.email)
-            
-            const newUser = await prisma.user.create({
-              data: {
-                email: user.email,
-                firstName: user.name?.split(' ')[0] || 'User',
-                lastName: user.name?.split(' ').slice(1).join(' ') || '',
-                password: '$2a$10$google.oauth.user.no.password.required',
-                isEmailVerified: true, // Google emails are pre-verified
-                isAccountLocked: false,
-                isAccountDisabled: false,
-                failedLoginAttempts: 0,
-                privacyPolicyAccepted: true,
-                privacyPolicyAcceptedAt: new Date(),
-                preferences: JSON.stringify({
-                  theme: 'system',
-                  currency: 'USD',
-                  timezone: 'UTC',
-                  notifications: {
-                    email: true,
-                    push: true,
-                    sms: false
-                  },
-                  security: {
-                    mfaEnabled: false,
-                    trustedDevices: [],
-                    lastPasswordChange: new Date().toISOString()
-                  }
-                })
-              }
-            })
-            
-            console.log('✅ User created successfully:', newUser.id)
-            // Set the user ID for the session
-            user.id = newUser.id
-          } else {
-            console.log('✅ Existing user found:', existingUser.id)
-            // Set the user ID for the session
-            user.id = existingUser.id
-            
-            // Check if account is locked or disabled
-            if (existingUser.isAccountLocked || existingUser.isAccountDisabled) {
-              console.log('❌ Account is locked or disabled:', existingUser.id)
-              return false
-            }
-          }
-        }
 
         return true
       } catch (error) {
@@ -166,23 +97,11 @@ export const authOptions: NextAuthOptions = {
     },
     async redirect({ url, baseUrl }) {
       console.log('🔀 NextAuth redirect callback:', { url, baseUrl })
-
-      // If NextAuth is attempting to send the user to the dashboard (or root),
-      // first route through our post-login endpoint which converts the
-      // NextAuth session into our app's JWT cookies/localStorage expectations.
       const target = typeof url === 'string' ? url : ''
-      const isDash = target === '/dashboard' || target === `${baseUrl}/dashboard`
-      const isRoot = target === '/' || target === `${baseUrl}`
-      if (isDash || isRoot) {
-        // Send users to a client page that performs a server exchange
-        // to mint app-specific JWT cookies, then navigates to /dashboard.
-        return `${baseUrl}/auth/post-login`
-      }
-
-      // Allows relative callback URLs
       if (target.startsWith('/')) return `${baseUrl}${target}`
-      // Allows callback URLs on the same origin
-      else if (new URL(target).origin === baseUrl) return target
+      try {
+        if (new URL(target).origin === baseUrl) return target
+      } catch {}
       return baseUrl
     }
   },
