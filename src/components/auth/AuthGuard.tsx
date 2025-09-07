@@ -166,7 +166,7 @@ export function AuthGuard({
             console.log('🔐 AuthGuard: Detected token_client cookie, delaying redirect and re-checking auth')
             setTimeout(() => {
               checkAuth()
-            }, 300)
+            }, 800)
             return
           }
         } catch (e) {}
