@@ -85,6 +85,17 @@ export async function GET(request: NextRequest) {
       path: '/'
     })
     
+    // Also set a short-lived, non-HTTP-only cookie so the client can populate
+    // localStorage for the Zustand-based auth store. This will be cleared by
+    // the client after it is read.
+    response.cookies.set('token_client', accessToken, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 5 * 60, // 5 minutes is enough for hydration
+      path: '/'
+    })
+    
     response.cookies.set('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',

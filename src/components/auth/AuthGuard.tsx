@@ -155,8 +155,22 @@ export function AuthGuard({
         return
       }
     } else {
-      // If user is not authenticated and on protected route, redirect to landing
+      // If user is not authenticated and on protected route, add a short grace
+      // period if we detect an OAuth bridge cookie that will be migrated into
+      // localStorage by the store. This avoids redirecting too early right
+      // after Google OAuth completes.
       if (isProtectedRoute || requireAuth) {
+        try {
+          const hasBridgeCookie = typeof document !== 'undefined' && document.cookie.split('; ').some(r => r.startsWith('token_client='))
+          if (hasBridgeCookie) {
+            console.log('🔐 AuthGuard: Detected token_client cookie, delaying redirect and re-checking auth')
+            setTimeout(() => {
+              checkAuth()
+            }, 300)
+            return
+          }
+        } catch (e) {}
+
         console.log('🔐 AuthGuard: Unauthenticated user accessing protected route, redirecting to landing')
         setRedirectCount(prev => prev + 1)
         router.replace('/')

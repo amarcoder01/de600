@@ -1842,8 +1842,25 @@ export const useAuthStore = create<AuthStore>()(
           ?.split('=')[1]
         console.log('🔐 Auth Store: Cookie token exists:', !!cookieToken)
         
+        // Also check for a short-lived client-readable cookie set by OAuth bridge
+        const cookieTokenClient = document.cookie
+          .split('; ')
+          .find(row => row.startsWith('token_client='))
+          ?.split('=')[1]
+        if (cookieTokenClient && !localToken) {
+          // Migrate to localStorage for persistence and clear the helper cookie
+          try {
+            localStorage.setItem('token', cookieTokenClient)
+            // Expire the helper cookie
+            document.cookie = 'token_client=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+            console.log('🔐 Auth Store: Migrated token_client cookie to localStorage')
+          } catch (e) {
+            console.warn('🔐 Auth Store: Failed to migrate token_client to localStorage')
+          }
+        }
+        
         // Use cookie token as the source of truth (since middleware uses it)
-        const validToken = cookieToken || localToken
+        const validToken = cookieToken || localToken || cookieTokenClient
         
         // If we have a token, validate it with the server before setting authenticated state
         const currentState = useAuthStore.getState()
