@@ -108,8 +108,18 @@ export const authOptions: NextAuthOptions = {
             })
             
             console.log('✅ User created successfully:', newUser.id)
+            // Set the user ID for the session
+            user.id = newUser.id
           } else {
             console.log('✅ Existing user found:', existingUser.id)
+            // Set the user ID for the session
+            user.id = existingUser.id
+            
+            // Check if account is locked or disabled
+            if (existingUser.isAccountLocked || existingUser.isAccountDisabled) {
+              console.log('❌ Account is locked or disabled:', existingUser.id)
+              return false
+            }
           }
         }
 

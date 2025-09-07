@@ -22,8 +22,28 @@ export default function AuthErrorPage() {
         return 'The verification token has expired or has already been used.'
       case 'Default':
         return 'An error occurred during authentication.'
+      case 'NoSession':
+        return 'No session found. Please try signing in again.'
+      case 'UserNotFound':
+        return 'User account not found. Please contact support.'
+      case 'CallbackError':
+        return 'An error occurred during the sign-in process. Please try again.'
+      case 'OAuthAccountNotLinked':
+        return 'This email is already registered with a different sign-in method. Please use your existing sign-in method or contact support.'
+      case 'OAuthSignin':
+        return 'Error occurred during Google sign-in. Please try again.'
+      case 'OAuthCallback':
+        return 'Error occurred during Google authentication callback. Please try again.'
+      case 'OAuthCreateAccount':
+        return 'Error occurred while creating your account. Please try again.'
+      case 'EmailCreateAccount':
+        return 'Error occurred while creating your account. Please try again.'
+      case 'Callback':
+        return 'Error occurred during authentication. Please try again.'
+      case 'OAuthAccountNotLinked':
+        return 'This email is already registered with another account. Please use your existing sign-in method.'
       default:
-        return 'An unexpected error occurred. Please try again.'
+        return `Authentication error: ${error || 'Unknown error'}. Please try again.`
     }
   }
 
