@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import '@/lib/startup' // Initialize price alert scheduler
 import { ThemeProvider } from '@/components/theme/ThemeProvider'
+import { NextAuthProvider } from '@/components/auth/NextAuthProvider'
 import NoSSR from '@/components/NoSSR'
 
 // Force dynamic rendering and disable caching to prevent static prerender errors during build
@@ -46,9 +47,11 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <NoSSR>
-          <ThemeProvider>
-            {children}
-          </ThemeProvider>
+          <NextAuthProvider>
+            <ThemeProvider>
+              {children}
+            </ThemeProvider>
+          </NextAuthProvider>
         </NoSSR>
       </body>
     </html>
