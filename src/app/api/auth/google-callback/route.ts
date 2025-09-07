@@ -5,6 +5,9 @@ import jwt from 'jsonwebtoken'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production'
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     console.log('🔐 Google OAuth callback received')
@@ -25,7 +28,7 @@ export async function GET(request: NextRequest) {
     // Generate JWT tokens compatible with our existing auth system
     const accessToken = jwt.sign(
       { 
-        userId: session.user.id, 
+        userId: (session.user as any).id, 
         email: session.user.email,
         provider: 'google'
       },
@@ -35,7 +38,7 @@ export async function GET(request: NextRequest) {
 
     const refreshToken = jwt.sign(
       { 
-        userId: session.user.id, 
+        userId: (session.user as any).id, 
         type: 'refresh',
         provider: 'google'
       },

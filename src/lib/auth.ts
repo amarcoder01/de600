@@ -4,6 +4,37 @@ import { PrismaAdapter } from '@auth/prisma-adapter'
 import { prisma } from './db'
 import { AuthService } from './auth-service'
 
+// Extend NextAuth types
+declare module 'next-auth' {
+  interface Session {
+    user: {
+      id: string
+      email: string
+      name?: string | null
+      image?: string | null
+      firstName?: string
+      lastName?: string
+    }
+  }
+
+  interface User {
+    id: string
+    email: string
+    name?: string | null
+    image?: string | null
+    firstName?: string
+    lastName?: string
+  }
+}
+
+declare module 'next-auth/jwt' {
+  interface JWT {
+    userId?: string
+    firstName?: string
+    lastName?: string
+  }
+}
+
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
@@ -32,7 +63,7 @@ export const authOptions: NextAuthOptions = {
         console.log('🔐 NextAuth SignIn callback:', { 
           email: user.email, 
           provider: account?.provider,
-          profileId: profile?.id 
+          profileId: (profile as any)?.id 
         })
 
         // For Google OAuth, ensure user exists in our database
@@ -115,7 +146,7 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       // Send properties to the client
-      if (token.userId) {
+      if (token.userId && session.user) {
         session.user.id = token.userId as string
         session.user.firstName = token.firstName as string
         session.user.lastName = token.lastName as string
