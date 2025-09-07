@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label'
 import { motion } from 'framer-motion'
 import { VidalityLogo } from '@/components/ui/VidalityLogo'
 import { ForgotPasswordModal } from '@/components/auth/ForgotPasswordModal'
+import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton'
 import { Mail, Lock } from 'lucide-react'
 
 export default function LoginPage() {
@@ -126,7 +127,22 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          {/* 3rd party sign-in removed */}
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-600" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-transparent text-gray-400">Or continue with</span>
+            </div>
+          </div>
+
+          {/* Google Sign In Button */}
+          <GoogleSignInButton 
+            mode="signin" 
+            fullWidth={true}
+            className="w-full"
+          />
 
           <div className="text-sm text-gray-300 mt-4 text-center">
             Don&apos;t have an account?{' '}

@@ -1,4 +1,5 @@
 import { NextAuthOptions } from 'next-auth'
+import GoogleProvider from 'next-auth/providers/google'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import { prisma } from './db'
 import { AuthService } from './auth-service'
@@ -36,8 +37,19 @@ declare module 'next-auth/jwt' {
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
-  // Google provider removed intentionally. We are not using OAuth providers.
-  providers: [],
+  providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID || '',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+      authorization: {
+        params: {
+          prompt: 'consent',
+          access_type: 'offline',
+          response_type: 'code',
+        },
+      },
+    })
+  ],
   session: {
     strategy: 'jwt',
     maxAge: 7 * 24 * 60 * 60, // 7 days
@@ -53,7 +65,32 @@ export const authOptions: NextAuthOptions = {
           provider: account?.provider,
           profileId: (profile as any)?.id 
         })
-
+        // Ensure user exists in our app DB when coming via OAuth
+        if (user?.email) {
+          let dbUser = await prisma.user.findUnique({ where: { email: user.email } })
+          if (!dbUser) {
+            dbUser = await prisma.user.create({
+              data: {
+                email: user.email,
+                firstName: user.name?.split(' ')[0] || 'User',
+                lastName: user.name?.split(' ').slice(1).join(' ') || '',
+                password: '$2a$10$oauth-user-no-password',
+                isEmailVerified: true,
+                isAccountLocked: false,
+                isAccountDisabled: false,
+                failedLoginAttempts: 0,
+                privacyPolicyAccepted: true,
+                privacyPolicyAcceptedAt: new Date(),
+                preferences: JSON.stringify({ theme: 'system' })
+              }
+            })
+          }
+          // Block locked/disabled
+          if (dbUser.isAccountDisabled || dbUser.isAccountLocked) {
+            return false
+          }
+          ;(user as any).id = dbUser.id
+        }
         return true
       } catch (error) {
         console.error('❌ NextAuth SignIn callback error:', error)
@@ -98,10 +135,13 @@ export const authOptions: NextAuthOptions = {
     async redirect({ url, baseUrl }) {
       console.log('🔀 NextAuth redirect callback:', { url, baseUrl })
       const target = typeof url === 'string' ? url : ''
+      const isDash = target === '/dashboard' || target === `${baseUrl}/dashboard`
+      const isRoot = target === '/' || target === `${baseUrl}`
+      if (isDash || isRoot) {
+        return `${baseUrl}/auth/post-login`
+      }
       if (target.startsWith('/')) return `${baseUrl}${target}`
-      try {
-        if (new URL(target).origin === baseUrl) return target
-      } catch {}
+      try { if (new URL(target).origin === baseUrl) return target } catch {}
       return baseUrl
     }
   },
