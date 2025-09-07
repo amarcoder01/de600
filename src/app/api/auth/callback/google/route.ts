@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getToken } from 'next-auth/jwt'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import jwt from 'jsonwebtoken'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production'
@@ -11,26 +12,23 @@ export async function GET(request: NextRequest) {
   try {
     console.log('🔐 Google OAuth callback route - processing request')
     
-    // Get the NextAuth token
-    const token = await getToken({ 
-      req: request, 
-      secret: process.env.NEXTAUTH_SECRET 
+    // Get the NextAuth session
+    const session = await getServerSession(authOptions)
+    
+    console.log('🔍 Callback route: NextAuth session check:', {
+      hasSession: !!session,
+      email: session?.user?.email,
+      userId: session?.user?.id
     })
     
-    console.log('🔍 Callback route: NextAuth token check:', {
-      hasToken: !!token,
-      email: token?.email,
-      userId: token?.userId
-    })
-    
-    if (token?.email && token?.userId) {
-      console.log('✅ Callback route: NextAuth token found, generating JWT tokens')
+    if (session?.user?.email && session?.user?.id) {
+      console.log('✅ Callback route: NextAuth session found, generating JWT tokens')
       
       // Generate JWT tokens compatible with our existing auth system
       const accessToken = jwt.sign(
         { 
-          userId: token.userId, 
-          email: token.email,
+          userId: session.user.id, 
+          email: session.user.email,
           provider: 'google'
         },
         JWT_SECRET,
@@ -39,7 +37,7 @@ export async function GET(request: NextRequest) {
 
       const refreshToken = jwt.sign(
         { 
-          userId: token.userId, 
+          userId: session.user.id, 
           type: 'refresh',
           provider: 'google'
         },
@@ -72,7 +70,7 @@ export async function GET(request: NextRequest) {
       console.log('✅ Callback route: JWT cookies set, redirecting to dashboard')
       return response
     } else {
-      console.log('❌ Callback route: No NextAuth token found')
+      console.log('❌ Callback route: No NextAuth session found')
       return NextResponse.redirect(new URL('/login?error=NoSession', request.url))
     }
   } catch (error) {

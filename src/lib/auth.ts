@@ -167,9 +167,10 @@ export const authOptions: NextAuthOptions = {
     async redirect({ url, baseUrl }) {
       console.log('🔀 NextAuth redirect callback:', { url, baseUrl })
       
-      // If redirecting to dashboard, redirect to our custom callback first
+      // Allow NextAuth to complete its session creation first
+      // Then redirect to dashboard where we'll handle JWT token creation
       if (url === `${baseUrl}/dashboard` || url === '/dashboard') {
-        return `${baseUrl}/api/auth/callback/google`
+        return `${baseUrl}/dashboard`
       }
       
       // Allows relative callback URLs
