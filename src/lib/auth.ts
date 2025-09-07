@@ -174,7 +174,9 @@ export const authOptions: NextAuthOptions = {
       const isDash = target === '/dashboard' || target === `${baseUrl}/dashboard`
       const isRoot = target === '/' || target === `${baseUrl}`
       if (isDash || isRoot) {
-        return `${baseUrl}/api/auth/google-callback`
+        // Send users to a client page that performs a server exchange
+        // to mint app-specific JWT cookies, then navigates to /dashboard.
+        return `${baseUrl}/auth/post-login`
       }
 
       // Allows relative callback URLs
