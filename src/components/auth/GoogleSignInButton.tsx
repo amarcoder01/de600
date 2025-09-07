@@ -26,7 +26,7 @@ export function GoogleSignInButton({
       console.log('🔐 Initiating Google Sign-in...')
       
       const result = await signIn('google', { 
-        callbackUrl: '/api/auth/google-callback',
+        callbackUrl: '/api/auth/callback/google',
         redirect: false // Don't redirect automatically, we'll handle it
       })
 
@@ -35,9 +35,9 @@ export function GoogleSignInButton({
         // Redirect to error page with specific error
         window.location.href = `/auth/error?error=${result.error}`
       } else if (result?.ok) {
-        console.log('✅ Google Sign-in successful, redirecting...')
-        // Redirect to our callback URL
-        window.location.href = '/api/auth/google-callback'
+        console.log('✅ Google Sign-in successful, redirecting to callback...')
+        // Redirect to our custom callback
+        window.location.href = '/api/auth/callback/google'
       }
     } catch (error) {
       console.error('❌ Google Sign-in error:', error)
