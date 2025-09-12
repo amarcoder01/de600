@@ -1,11 +1,21 @@
 import React from 'react'
 import { MarketStatusProps } from '@/types/top-movers'
-import { TopMoversApiService } from '@/lib/top-movers-api'
 import { LoadingSpinner } from './LoadingSpinner'
+import { useMarketStatus } from '@/hooks/useMarketStatus'
 
 export const MarketStatus: React.FC<MarketStatusProps> = ({ marketStatus, loading }) => {
-  const isOpen = TopMoversApiService.isMarketOpen(marketStatus)
-  const message = TopMoversApiService.formatMarketStatusMessage(marketStatus)
+  const { 
+    isOpen, 
+    tradingSession, 
+    currentTimeLocal, 
+    currentTimeET, 
+    nextOpenET,
+    timezoneInfo 
+  } = useMarketStatus()
+
+  const message = loading 
+    ? 'Loading...' 
+    : `${tradingSession} • Local: ${currentTimeLocal} • ET: ${currentTimeET}${!isOpen && nextOpenET ? ` • Next Open: ${nextOpenET} ET` : ''}`
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-4 mb-8">
@@ -17,8 +27,13 @@ export const MarketStatus: React.FC<MarketStatusProps> = ({ marketStatus, loadin
               Market Status
             </h2>
             <p className="text-sm text-gray-600">
-              {loading ? 'Loading...' : message}
+              {message}
             </p>
+            {timezoneInfo && (
+              <p className="text-xs text-gray-500 mt-1">
+                Your timezone: {timezoneInfo.userTimezone} • Market timezone: {timezoneInfo.marketTimezone}
+              </p>
+            )}
           </div>
         </div>
         {loading && <LoadingSpinner size="small" />}

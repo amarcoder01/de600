@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { TrendingUp, TrendingDown, BarChart3, Activity } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { useMarketStatus } from '@/hooks/useMarketStatus'
 
 interface MarketData {
   name: string
@@ -189,24 +190,14 @@ export function MarketOverview() {
   // Using static market data since Market Overview API has been removed
   const marketData: MarketData[] = defaultMarketData
   
-  // Market status based on US/Eastern time including pre-market and after-hours
-  const now = new Date()
-  const etTime = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }))
-  const day = etTime.getDay()
-  const hour = etTime.getHours()
-  const minute = etTime.getMinutes()
-  const isWeekday = day >= 1 && day <= 5
-  const minutes = hour * 60 + minute
-  
-  // Trading hours: Pre-market (4:00 AM), Regular (9:30 AM - 4:00 PM), After-hours (until 8:00 PM)
-  const preMarketOpen = 4 * 60      // 4:00 AM
-  const regularOpen = 9 * 60 + 30   // 9:30 AM
-  const regularClose = 16 * 60      // 4:00 PM
-  const afterHoursClose = 20 * 60   // 8:00 PM
-  
-  const isMarketHours = minutes >= preMarketOpen && minutes < afterHoursClose
-  const isRegularHours = minutes >= regularOpen && minutes < regularClose
-  const isOpen = isWeekday && isMarketHours
+  // Use timezone-aware market status hook
+  const { 
+    isOpen, 
+    tradingSession, 
+    currentTimeLocal, 
+    currentTimeET, 
+    nextOpenET 
+  } = useMarketStatus()
 
   return (
     <div className="space-y-4">
@@ -225,15 +216,19 @@ export function MarketOverview() {
               Market {isOpen ? 'Open' : 'Closed'}
             </span>
             <span className="text-sm opacity-75">
-              ({isOpen ? (isRegularHours ? 'REGULAR TRADING' : 'EXTENDED HOURS') : 'MARKET CLOSED'})
+              ({tradingSession.toUpperCase()})
             </span>
           </div>
           <div className="text-sm opacity-75">
             {isOpen ? 'Trading in progress' : 'Market closed'}
           </div>
         </div>
-        <div className="mt-2 text-sm opacity-75">
-          Last Updated: {etTime.toLocaleString()} ET • Static Data
+        <div className="mt-2 text-sm opacity-75 space-y-1">
+          <div>Local Time: {currentTimeLocal}</div>
+          <div>ET Time: {currentTimeET}</div>
+          {nextOpenET && !isOpen && (
+            <div>Next Open: {nextOpenET} ET</div>
+          )}
         </div>
       </div>
       
