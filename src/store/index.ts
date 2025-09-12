@@ -1577,6 +1577,29 @@ export const useAuthStore = create<AuthStore>()(
               errorMessage = 'This account has been disabled. Please contact support.'
             } else if (data.type === 'INVALID_CREDENTIALS') {
               errorMessage = 'Invalid email or password'
+            } else if (data.requiresEmailVerification) {
+              // Handle email verification requirement
+              errorMessage = data.error || 'Please verify your email address before signing in'
+              
+              console.error('🔐 Auth Store: Email verification required:', errorMessage)
+              set({
+                error: errorMessage,
+                isLoading: false
+              })
+              
+              // Track email verification requirement
+              trackAuthEvent('email_verification_required', false, {
+                email: credentials.email,
+                userId: data.userId,
+                timestamp: new Date().toISOString()
+              })
+              
+              // Throw error with additional data for the UI to handle
+              const emailVerificationError = new Error(errorMessage)
+              ;(emailVerificationError as any).requiresEmailVerification = true
+              ;(emailVerificationError as any).userId = data.userId
+              ;(emailVerificationError as any).email = data.email
+              throw emailVerificationError
             }
             
             console.error('🔐 Auth Store: Login failed:', errorMessage)
@@ -1596,6 +1619,12 @@ export const useAuthStore = create<AuthStore>()(
           }
         } catch (error) {
           console.error('🔐 Auth Store: Login error:', error)
+          
+          // Check if this is an email verification error that should be re-thrown with additional data
+          if (error instanceof Error && (error as any).requiresEmailVerification) {
+            throw error // Re-throw with the additional data intact
+          }
+          
           set({
             error: error instanceof Error ? error.message : 'Login failed',
             isLoading: false

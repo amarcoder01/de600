@@ -145,6 +145,21 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Check if email is verified
+    if (!user.isEmailVerified) {
+      console.log('❌ Login API - Email not verified:', email)
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Please verify your email address before signing in',
+          requiresEmailVerification: true,
+          userId: user.id,
+          email: user.email
+        },
+        { status: 403 }
+      )
+    }
+
     // Verify password
     let isValidPassword
     try {

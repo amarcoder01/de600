@@ -198,6 +198,17 @@ export class AuthService {
         )
       }
 
+      // Check if email is verified
+      if (!user.isEmailVerified) {
+        await this.handleFailedLogin(sanitizedEmail, ipAddress, userAgent, deviceFingerprint, 'Email not verified')
+        throw new AuthError(
+          AuthErrorType.EMAIL_NOT_VERIFIED,
+          'Please verify your email address before signing in',
+          403,
+          { userId: user.id, email: user.email }
+        )
+      }
+
       // Verify password
       const isValidPassword = await verifyPassword(password, user.password)
       if (!isValidPassword) {

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ForgotPasswordModal } from './ForgotPasswordModal'
+import { EmailVerificationModal } from './EmailVerificationModal'
 
 interface LoginModalProps {
   isOpen: boolean
@@ -23,6 +24,14 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalPr
   const [isLoading, setIsLoading] = useState(false)
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const [showForgotPassword, setShowForgotPassword] = useState(false)
+  
+  // Email verification state
+  const [showEmailVerification, setShowEmailVerification] = useState(false)
+  const [verificationUserData, setVerificationUserData] = useState<{
+    userId: string
+    email: string
+    name: string
+  } | null>(null)
   
   const { login, error, clearError, setAuthModalOpen } = useAuthStore()
   const router = useRouter()
@@ -80,10 +89,26 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalPr
     } catch (error: any) {
       console.error('🔐 LoginModal: Login failed:', error)
       
-      // The auth store will handle setting the error state
-      // We don't need to set validation errors here as the auth store error will be displayed
-      // Just clear any existing validation errors
-      setValidationErrors({})
+      // Check if the error is due to email verification requirement
+      if (error?.requiresEmailVerification && error?.userId && error?.email) {
+        console.log('🔐 LoginModal: Email verification required, showing verification modal')
+        
+        // Show email verification modal
+        setVerificationUserData({
+          userId: error.userId,
+          email: error.email,
+          name: email.trim() // We don't have the full name here, just use email
+        })
+        setShowEmailVerification(true)
+        
+        // Clear the error since we're handling it with the verification modal
+        clearError()
+      } else {
+        // The auth store will handle setting the error state
+        // We don't need to set validation errors here as the auth store error will be displayed
+        // Just clear any existing validation errors
+        setValidationErrors({})
+      }
     } finally {
       setIsLoading(false)
     }
@@ -109,6 +134,18 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalPr
     setValidationErrors({})
     onClose()
     onSwitchToRegister()
+  }
+
+  const handleEmailVerificationComplete = () => {
+    // Close email verification modal
+    setShowEmailVerification(false)
+    setVerificationUserData(null)
+    
+    // Close login modal
+    onClose()
+    
+    // Redirect to dashboard
+    router.push('/dashboard')
   }
 
   return (
@@ -278,6 +315,21 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalPr
         onClose={() => setShowForgotPassword(false)}
         onSwitchToLogin={() => setShowForgotPassword(false)}
       />
+
+      {/* Email Verification Modal */}
+      {verificationUserData && (
+        <EmailVerificationModal
+          isOpen={showEmailVerification}
+          onClose={() => {
+            setShowEmailVerification(false)
+            setVerificationUserData(null)
+          }}
+          onVerificationComplete={handleEmailVerificationComplete}
+          userEmail={verificationUserData.email}
+          userId={verificationUserData.userId}
+          userName={verificationUserData.name}
+        />
+      )}
     </AnimatePresence>
   )
 }

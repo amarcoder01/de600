@@ -1,113 +1,73 @@
-/**
- * Email Verification API Endpoint
- * Handles email verification code validation
- */
-
 import { NextRequest, NextResponse } from 'next/server'
-import { createSecureApi } from '@/lib/secure-api-wrapper'
 import { EmailVerificationService } from '@/lib/email-verification-service'
 import { logSecurityEvent, SecurityEventType, SecuritySeverity } from '@/lib/security-monitoring'
-import { validateRequestBody } from '@/lib/input-validator'
 
-/**
- * Verify email with verification code
- */
-export const POST = createSecureApi(
-  async (request: NextRequest, context) => {
-    try {
-      const body = await request.json()
-      const { userId, email, code } = body
-      
-      // Validate input
-      const validation = validateRequestBody(body, {
-        userId: { required: true, sanitize: true },
-        email: { required: true, pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, sanitize: true },
-        code: { required: true, pattern: /^\d{6}$/, sanitize: true }
-      })
-      
-      if (!validation.isValid) {
-        await logSecurityEvent(
-          SecurityEventType.UNAUTHORIZED_ACCESS,
-          SecuritySeverity.MEDIUM,
-          request,
-          { reason: 'Invalid verification input', errors: validation.errors },
-          userId
-        )
-        
-        return NextResponse.json(
-          { success: false, error: 'Invalid input', details: validation.errors },
-          { status: 400 }
-        )
-      }
-      
-      const sanitizedData = validation.sanitizedValue
-      
-      // Verify the code
-      const verificationResult = await EmailVerificationService.verifyCode(
-        sanitizedData.userId,
-        sanitizedData.email,
-        sanitizedData.code
+export async function POST(request: NextRequest) {
+  try {
+    const { userId, email, code } = await request.json()
+
+    // Validate input
+    if (!userId || !email || !code) {
+      return NextResponse.json(
+        { success: false, error: 'Missing required fields' },
+        { status: 400 }
       )
-      
-      if (!verificationResult.success) {
-        await logSecurityEvent(
-          SecurityEventType.UNAUTHORIZED_ACCESS,
-          SecuritySeverity.MEDIUM,
-          request,
-          { 
-            reason: 'Email verification failed', 
-            error: verificationResult.error,
-            userId,
-            email: sanitizedData.email
-          },
-          userId
-        )
-        
-        return NextResponse.json(
-          { 
-            success: false, 
-            error: verificationResult.error,
-            remainingAttempts: verificationResult.remainingAttempts
-          },
-          { status: 400 }
-        )
-      }
-      
+    }
+
+    // Validate code format
+    if (!/^\d{6}$/.test(code)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid code format' },
+        { status: 400 }
+      )
+    }
+
+    console.log(`📧 Email verification attempt for user ${userId}`)
+
+    // Verify the code
+    const result = await EmailVerificationService.verifyCode(userId, email, code)
+
+    if (result.success) {
       // Log successful verification
       await logSecurityEvent(
-        SecurityEventType.LOGIN_SUCCESS,
+        SecurityEventType.EMAIL_VERIFIED,
         SecuritySeverity.LOW,
         request,
-        { reason: 'Email verification successful', userId, email: sanitizedData.email },
+        { userId, email },
         userId
       )
+
+      console.log(`✅ Email verified successfully for user ${userId}`)
       
       return NextResponse.json({
         success: true,
         message: 'Email verified successfully'
       })
-      
-    } catch (error) {
-      console.error('Email verification error:', error)
-      
+    } else {
+      // Log failed verification attempt
       await logSecurityEvent(
-        SecurityEventType.ERROR,
+        SecurityEventType.EMAIL_VERIFICATION_FAILED,
         SecuritySeverity.MEDIUM,
         request,
-        { reason: 'Email verification internal error', error: error instanceof Error ? error.message : 'Unknown error' },
-        context.userId
+        { userId, email, error: result.error },
+        userId
       )
+
+      console.log(`❌ Email verification failed for user ${userId}: ${result.error}`)
       
-      return NextResponse.json(
-        { success: false, error: 'Internal server error' },
-        { status: 500 }
-      )
+      return NextResponse.json({
+        success: false,
+        error: result.error,
+        remainingAttempts: result.remainingAttempts
+      }, { status: 400 })
     }
-  },
-  {
-    requireAuth: false, // User might not be fully authenticated yet
-    rateLimit: true,
-    validateInput: true,
-    allowedMethods: ['POST']
+
+  } catch (error) {
+    console.error('Email verification error:', error)
+    
+    return NextResponse.json(
+      { success: false, error: 'Internal server error' },
+      { status: 500 }
+    )
   }
-)
+}
