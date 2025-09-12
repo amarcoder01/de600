@@ -183,38 +183,20 @@ export class SecurityMonitor {
   private async bulkInsertEvents(events: SecurityEvent[]): Promise<void> {
     if (events.length === 0) return
     
-    const values = events.map((event, index) => {
-      const offset = index * 13
-      return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10}, $${offset + 11}, $${offset + 12}, $${offset + 13})`
-    }).join(', ')
-    
-    const params = events.flatMap(event => [
-      event.id,
-      event.timestamp,
-      event.eventType,
-      event.severity,
-      event.userId || null,
-      event.ipAddress,
-      event.userAgent,
-      event.requestId,
-      event.endpoint || null,
-      event.method || null,
-      JSON.stringify(event.details),
-      event.riskScore,
-      event.blocked
-    ])
-    
-    const result = await secureQuery(
-      `INSERT INTO "SecurityEvent" (
-        "id", "timestamp", "eventType", "severity", "userId", "ipAddress", 
-        "userAgent", "requestId", "endpoint", "method", "details", 
-        "riskScore", "blocked"
-      ) VALUES ${values}`,
-      params
-    )
-    
-    if (!result.success) {
-      throw new Error(`Failed to bulk insert security events: ${result.error}`)
+    // Process events in batches to avoid overwhelming the database
+    const batchSize = 10
+    for (let i = 0; i < events.length; i += batchSize) {
+      const batch = events.slice(i, i + batchSize)
+      
+      // Insert each event individually to avoid complex parameterized queries
+      const insertPromises = batch.map(event => this.insertEvent(event))
+      
+      try {
+        await Promise.all(insertPromises)
+      } catch (error) {
+        console.error('Failed to insert security event batch:', error)
+        // Continue with next batch even if one fails
+      }
     }
   }
   

@@ -210,7 +210,7 @@ function isQuerySafe(query: string): boolean {
   }
   
   // Check for parameterized queries (should use $1, $2, etc.)
-  if (query.includes('$') && !/$\d+/.test(query)) {
+  if (query.includes('$') && !/\$\d+/.test(query)) {
     console.error('🚫 Invalid parameter placeholder format')
     return false
   }
