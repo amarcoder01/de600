@@ -684,8 +684,12 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalPr
                         onChange={(e) => handleCodeChange(e.target.value)}
                         placeholder="000000"
                         maxLength={6}
-                        className="w-full px-4 py-3 text-center text-2xl font-mono tracking-widest border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        className="w-full px-4 py-4 text-center text-3xl font-mono tracking-widest border-2 border-blue-300 bg-blue-50 text-blue-900 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all shadow-sm"
                         disabled={isVerifying}
+                        style={{
+                          letterSpacing: '0.5em',
+                          fontWeight: 'bold'
+                        }}
                       />
                     </div>
 
