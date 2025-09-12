@@ -39,7 +39,7 @@ interface SidebarItem {
 }
 
 export function Sidebar() {
-  const { sidebarCollapsed, setSidebarCollapsed } = useUIStore()
+  const { sidebarCollapsed, setSidebarCollapsed, sidebarOpenMobile, setSidebarOpenMobile } = useUIStore()
   const router = useRouter()
   const pathname = usePathname()
 
@@ -153,14 +153,27 @@ export function Sidebar() {
 
   const handleItemClick = (href: string) => {
     router.push(href)
+    // Close mobile sidebar after navigation
+    setSidebarOpenMobile(false)
   }
 
   return (
-    <motion.div
-      initial={false}
-      animate={{ width: sidebarCollapsed ? 70 : 280 }}
-      className="sidebar-container bg-card border-r border-border"
-    >
+    <>
+      {/* Mobile backdrop */}
+      <div
+        className={cn(
+          'fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity',
+          sidebarOpenMobile ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        )}
+        onClick={() => setSidebarOpenMobile(false)}
+        aria-hidden="true"
+      />
+      {/* Desktop sidebar */}
+      <motion.div
+        initial={false}
+        animate={{ width: sidebarCollapsed ? 70 : 280 }}
+        className="hidden md:flex sidebar-container bg-card border-r border-border"
+      >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-border flex-shrink-0">
         <AnimatePresence mode="wait">
@@ -268,6 +281,53 @@ export function Sidebar() {
           )}
         </AnimatePresence>
       </div>
-    </motion.div>
+      </motion.div>
+      {/* Mobile drawer */}
+      <div
+        className={cn(
+          'md:hidden fixed top-0 left-0 h-full w-72 bg-card border-r border-border z-50 transform transition-transform duration-300 ease-in-out',
+          sidebarOpenMobile ? 'translate-x-0' : '-translate-x-full'
+        )}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Navigation menu"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-border flex-shrink-0">
+          <VidalityLogo size="md" />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSidebarOpenMobile(false)}
+            className="ml-auto"
+            aria-label="Close menu"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+        </div>
+        {/* Navigation Items (mobile) */}
+        <nav className="py-4 overflow-y-auto h-[calc(100%-64px)]">
+          <div className="space-y-1 px-3">
+            {sidebarItems.map((item) => {
+              const Icon = item.icon
+              const isActive = pathname === item.href
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleItemClick(item.href)}
+                  className={cn(
+                    'w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200',
+                    isActive ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                  )}
+                >
+                  <Icon className={cn('w-5 h-5', isActive ? 'text-primary-foreground' : 'text-muted-foreground')} />
+                  <span className="font-medium">{item.label}</span>
+                </button>
+              )
+            })}
+          </div>
+        </nav>
+      </div>
+    </>
   )
-} 
+}

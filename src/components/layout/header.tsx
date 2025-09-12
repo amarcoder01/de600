@@ -6,17 +6,20 @@ import {
   Settings, 
   Sun, 
   Moon, 
-  Monitor
+  Monitor,
+  Menu
 } from 'lucide-react'
+
 import { cn } from '@/lib/utils'
 import { useUIStore, useSettingsStore } from '@/store'
+
 import { Button } from '@/components/ui/button'
 import { AuthProvider } from '@/components/auth/AuthProvider'
 import { VidalityLogo } from '@/components/ui/VidalityLogo'
 import { useRouter } from 'next/navigation'
 
 export function Header() {
-  const { theme, setTheme } = useUIStore()
+  const { theme, setTheme, setSidebarOpenMobile } = useUIStore()
   const { settings } = useSettingsStore()
   const router = useRouter()
 
@@ -48,8 +51,18 @@ export function Header() {
       animate={{ y: 0, opacity: 1 }}
       className="h-16 bg-card border-b border-border flex items-center justify-between px-6"
     >
-      {/* Left Section - Logo */}
-      <div className="flex items-center space-x-6">
+      {/* Left Section - Mobile menu + Logo */}
+      <div className="flex items-center space-x-3">
+        {/* Mobile hamburger */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden mr-1"
+          aria-label="Open menu"
+          onClick={() => setSidebarOpenMobile(true)}
+        >
+          <Menu className="w-5 h-5" />
+        </Button>
         {/* Logo */}
         <VidalityLogo size="lg" className="cursor-pointer" />
       </div>

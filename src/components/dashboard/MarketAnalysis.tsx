@@ -189,7 +189,7 @@ export function MarketOverview() {
   // Using static market data since Market Overview API has been removed
   const marketData: MarketData[] = defaultMarketData
   
-  // Market status based on US/Eastern time with precise 9:30–16:00 window
+  // Market status based on US/Eastern time including pre-market and after-hours
   const now = new Date()
   const etTime = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }))
   const day = etTime.getDay()
@@ -197,7 +197,15 @@ export function MarketOverview() {
   const minute = etTime.getMinutes()
   const isWeekday = day >= 1 && day <= 5
   const minutes = hour * 60 + minute
-  const isMarketHours = minutes >= (9 * 60 + 30) && minutes < (16 * 60)
+  
+  // Trading hours: Pre-market (4:00 AM), Regular (9:30 AM - 4:00 PM), After-hours (until 8:00 PM)
+  const preMarketOpen = 4 * 60      // 4:00 AM
+  const regularOpen = 9 * 60 + 30   // 9:30 AM
+  const regularClose = 16 * 60      // 4:00 PM
+  const afterHoursClose = 20 * 60   // 8:00 PM
+  
+  const isMarketHours = minutes >= preMarketOpen && minutes < afterHoursClose
+  const isRegularHours = minutes >= regularOpen && minutes < regularClose
   const isOpen = isWeekday && isMarketHours
 
   return (
@@ -217,7 +225,7 @@ export function MarketOverview() {
               Market {isOpen ? 'Open' : 'Closed'}
             </span>
             <span className="text-sm opacity-75">
-              ({isOpen ? 'REGULAR TRADING' : 'AFTER HOURS'})
+              ({isOpen ? (isRegularHours ? 'REGULAR TRADING' : 'EXTENDED HOURS') : 'MARKET CLOSED'})
             </span>
           </div>
           <div className="text-sm opacity-75">

@@ -31,6 +31,9 @@ interface UIStore extends UIState {
   addNotification: (notification: Omit<UIState['notifications'][0], 'id' | 'timestamp'>) => void
   removeNotification: (id: string) => void
   markNotificationAsRead: (id: string) => void
+  // Mobile-only UI state
+  sidebarOpenMobile: boolean
+  setSidebarOpenMobile: (open: boolean) => void
 }
 
 export const useUIStore = create<UIStore>()(
@@ -40,8 +43,11 @@ export const useUIStore = create<UIStore>()(
       theme: 'system',
       activeTab: 'dashboard',
       notifications: [],
+      // Mobile sidebar
+      sidebarOpenMobile: false,
       
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
+      setSidebarOpenMobile: (open) => set({ sidebarOpenMobile: open }),
       setTheme: (theme) => {
         set({ theme })
         // Apply theme immediately to DOM

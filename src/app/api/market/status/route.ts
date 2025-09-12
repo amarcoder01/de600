@@ -45,10 +45,29 @@ async function makePolygonRequest(endpoint: string): Promise<any> {
 export async function GET(request: NextRequest) {
   try {
     if (!POLYGON_API_KEY) {
-      return NextResponse.json(
-        { error: 'Polygon API key is not configured' },
-        { status: 500 }
-      )
+      // Fallback when API key is not available
+      const now = new Date()
+      const etTime = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }))
+      const day = etTime.getDay()
+      const minutes = etTime.getHours() * 60 + etTime.getMinutes()
+      
+      // Market is closed on weekends
+      if (day === 0 || day === 6) {
+        return NextResponse.json({
+          market: 'closed',
+          serverTime: etTime.toISOString()
+        })
+      }
+      
+      // Extended trading hours: 4:00 AM - 8:00 PM ET (Monday-Friday)
+      const preMarketOpen = 4 * 60      // 4:00 AM
+      const afterHoursClose = 20 * 60   // 8:00 PM
+      const isOpen = minutes >= preMarketOpen && minutes < afterHoursClose
+      
+      return NextResponse.json({
+        market: isOpen ? 'open' : 'closed',
+        serverTime: etTime.toISOString()
+      })
     }
 
     // Get market status from Polygon API
@@ -64,10 +83,28 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error fetching market status:', error)
     
-    // Return error response instead of fallback
-    return NextResponse.json(
-      { error: 'Failed to fetch market status' },
-      { status: 500 }
-    )
+    // Fallback when API fails
+    const now = new Date()
+    const etTime = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }))
+    const day = etTime.getDay()
+    const minutes = etTime.getHours() * 60 + etTime.getMinutes()
+    
+    // Market is closed on weekends
+    if (day === 0 || day === 6) {
+      return NextResponse.json({
+        market: 'closed',
+        serverTime: etTime.toISOString()
+      })
+    }
+    
+    // Extended trading hours: 4:00 AM - 8:00 PM ET (Monday-Friday)
+    const preMarketOpen = 4 * 60      // 4:00 AM
+    const afterHoursClose = 20 * 60   // 8:00 PM
+    const isOpen = minutes >= preMarketOpen && minutes < afterHoursClose
+    
+    return NextResponse.json({
+      market: isOpen ? 'open' : 'closed',
+      serverTime: etTime.toISOString()
+    })
   }
 }
