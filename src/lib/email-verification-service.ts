@@ -59,10 +59,11 @@ export class EmailVerificationService {
         `INSERT INTO "EmailVerificationCode" (
           "id", "userId", "email", "code", "expiresAt", "attempts", "isUsed", "createdAt"
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING "id"`,
-        [codeId, userId, email.toLowerCase().trim(), code, expiresAt, 0, false, new Date()]
+        [codeId, userId, email.toLowerCase().trim(), code, expiresAt.toISOString(), 0, false, new Date().toISOString()]
       )
       
       if (!result.success) {
+        console.error('❌ Failed to create verification code:', result.error)
         return {
           success: false,
           error: 'Failed to create verification code'
@@ -266,6 +267,7 @@ export class EmailVerificationService {
       // Create new verification code
       const codeResult = await this.createVerificationCode(userId, email)
       if (!codeResult.success || !codeResult.code) {
+        console.error('❌ Failed to create verification code for resend:', codeResult.error)
         return {
           success: false,
           error: 'Failed to create verification code'

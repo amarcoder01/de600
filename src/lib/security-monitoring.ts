@@ -157,7 +157,7 @@ export class SecurityMonitor {
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
       [
         event.id,
-        event.timestamp,
+        event.timestamp.toISOString(),
         event.eventType,
         event.severity,
         event.userId || null,

@@ -41,6 +41,8 @@ model User {
   sessions                Session[]
   // Email verification
   emailVerificationCodes  EmailVerificationCode[]
+  // Security events
+  securityEvents          SecurityEvent[]
 }
 
 // NextAuth.js required models
@@ -344,4 +346,28 @@ model TelemetryEvent {
   @@index([category])
   @@index([timestamp])
   @@index([event])
+}
+
+model SecurityEvent {
+  id        String   @id @default(cuid())
+  timestamp DateTime @default(now())
+  eventType String
+  severity  String
+  userId    String?
+  ipAddress String
+  userAgent String
+  requestId String
+  endpoint  String?
+  method    String?
+  details   String   @default("{}")
+  riskScore Int      @default(0)
+  blocked   Boolean  @default(false)
+  
+  user      User?    @relation(fields: [userId], references: [id])
+  
+  @@index([eventType])
+  @@index([severity])
+  @@index([userId])
+  @@index([timestamp])
+  @@index([ipAddress])
 }
