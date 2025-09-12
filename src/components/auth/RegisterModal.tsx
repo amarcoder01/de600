@@ -8,7 +8,6 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { EmailVerificationModal } from './EmailVerificationModal'
 
 interface RegisterModalProps {
   isOpen: boolean
@@ -36,6 +35,14 @@ export function RegisterModal({ isOpen, onClose, onSwitchToLogin }: RegisterModa
     name: string
   } | null>(null)
   
+  // Inline email verification state
+  const [verificationCode, setVerificationCode] = useState('')
+  const [isVerifying, setIsVerifying] = useState(false)
+  const [verificationError, setVerificationError] = useState('')
+  const [verificationSuccess, setVerificationSuccess] = useState(false)
+  const [timeLeft, setTimeLeft] = useState(15 * 60) // 15 minutes in seconds
+  const [isResending, setIsResending] = useState(false)
+  
   const { register, error, clearError, setAuthModalOpen } = useAuthStore()
   const router = useRouter()
 
@@ -50,6 +57,23 @@ export function RegisterModal({ isOpen, onClose, onSwitchToLogin }: RegisterModa
       setAuthModalOpen(false)
     }
   }, [isOpen, clearError])
+
+  // Timer countdown for verification code
+  useEffect(() => {
+    if (!showEmailVerification || timeLeft <= 0) return
+
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timer)
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [showEmailVerification, timeLeft])
 
   // Clear any authentication state when modal opens to ensure clean state
   React.useEffect(() => {
@@ -179,13 +203,19 @@ export function RegisterModal({ isOpen, onClose, onSwitchToLogin }: RegisterModa
       const userData = useAuthStore.getState().user
       
       if (userData) {
-        // Show email verification modal
+        // Show inline email verification instead of modal
         setVerificationUserData({
           userId: userData.id,
           email: userData.email,
           name: `${firstName.trim()} ${lastName.trim()}`
         })
         setShowEmailVerification(true)
+        
+        // Reset verification state
+        setVerificationCode('')
+        setVerificationError('')
+        setVerificationSuccess(false)
+        setTimeLeft(15 * 60)
         
         // Clear form data but keep modal open for verification
         setFirstName('')
@@ -214,6 +244,104 @@ export function RegisterModal({ isOpen, onClose, onSwitchToLogin }: RegisterModa
     router.push('/dashboard')
   }
 
+  // Format time for display
+  const formatTime = (seconds: number): string => {
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = seconds % 60
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
+  }
+
+  // Handle verification code input
+  const handleCodeChange = (value: string) => {
+    // Only allow numbers and limit to 6 digits
+    const sanitized = value.replace(/\D/g, '').slice(0, 6)
+    setVerificationCode(sanitized)
+    setVerificationError('')
+  }
+
+  // Verify email code
+  const handleVerifyCode = async () => {
+    if (!verificationCode || verificationCode.length !== 6) {
+      setVerificationError('Please enter a valid 6-digit verification code')
+      return
+    }
+
+    if (!verificationUserData) {
+      setVerificationError('Verification data not found. Please try registering again.')
+      return
+    }
+
+    setIsVerifying(true)
+    setVerificationError('')
+
+    try {
+      const response = await fetch('/api/auth/verify-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: verificationUserData.userId,
+          email: verificationUserData.email,
+          code: verificationCode
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setVerificationSuccess(true)
+        setTimeout(() => {
+          onClose()
+          router.push('/dashboard')
+        }, 2000)
+      } else {
+        setVerificationError(data.error || 'Verification failed')
+      }
+    } catch (error) {
+      console.error('Verification error:', error)
+      setVerificationError('Network error. Please try again.')
+    } finally {
+      setIsVerifying(false)
+    }
+  }
+
+  // Resend verification code
+  const handleResendCode = async () => {
+    if (!verificationUserData) return
+
+    setIsResending(true)
+    setVerificationError('')
+
+    try {
+      const response = await fetch('/api/auth/resend-verification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: verificationUserData.userId,
+          email: verificationUserData.email
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        // Reset timer
+        setTimeLeft(15 * 60)
+        setVerificationError('')
+      } else {
+        setVerificationError(data.error || 'Failed to resend code')
+      }
+    } catch (error) {
+      console.error('Resend error:', error)
+      setVerificationError('Network error. Please try again.')
+    } finally {
+      setIsResending(false)
+    }
+  }
+
   const handleClose = () => {
     clearError()
     setValidationErrors({})
@@ -223,9 +351,16 @@ export function RegisterModal({ isOpen, onClose, onSwitchToLogin }: RegisterModa
     setPassword('')
     setConfirmPassword('')
     setPrivacyPolicyAccepted(false)
+    setAuthModalOpen(false)
+    
+    // Reset verification state
     setShowEmailVerification(false)
     setVerificationUserData(null)
-    setAuthModalOpen(false)
+    setVerificationCode('')
+    setVerificationError('')
+    setVerificationSuccess(false)
+    setTimeLeft(15 * 60)
+    
     onClose()
   }
 
@@ -271,7 +406,8 @@ export function RegisterModal({ isOpen, onClose, onSwitchToLogin }: RegisterModa
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            {!showEmailVerification ? (
+              <form onSubmit={handleSubmit} className="p-6 space-y-4">
               {/* Name Fields */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -505,24 +641,133 @@ export function RegisterModal({ isOpen, onClose, onSwitchToLogin }: RegisterModa
                 </p>
               </div>
             </form>
+            ) : (
+              /* Email Verification Section */
+              <div className="p-6 space-y-6">
+                {/* Success State */}
+                {verificationSuccess ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="text-center py-8"
+                  >
+                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Email Verified!</h2>
+                    <p className="text-gray-600">Your account has been successfully created and verified.</p>
+                  </motion.div>
+                ) : (
+                  <>
+                    {/* Header */}
+                    <div className="text-center mb-6">
+                      <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Mail className="w-8 h-8 text-blue-600" />
+                      </div>
+                      <h2 className="text-2xl font-bold text-gray-900 mb-2">Verify Your Email</h2>
+                      <p className="text-gray-600">
+                        We've sent a 6-digit verification code to<br />
+                        <span className="font-semibold text-gray-900">{verificationUserData?.email}</span>
+                      </p>
+                    </div>
+
+                    {/* Timer */}
+                    <div className="flex items-center justify-center mb-6">
+                      <svg className="w-4 h-4 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span className={`text-sm ${timeLeft < 300 ? 'text-red-600' : 'text-gray-600'}`}>
+                        Code expires in {formatTime(timeLeft)}
+                      </span>
+                    </div>
+
+                    {/* Verification Code Input */}
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Enter verification code
+                      </label>
+                      <input
+                        type="text"
+                        value={verificationCode}
+                        onChange={(e) => handleCodeChange(e.target.value)}
+                        placeholder="000000"
+                        maxLength={6}
+                        className="w-full px-4 py-3 text-center text-2xl font-mono tracking-widest border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        disabled={isVerifying}
+                      />
+                    </div>
+
+                    {/* Error Message */}
+                    {verificationError && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex items-center mb-4 p-3 bg-red-50 border border-red-200 rounded-lg"
+                      >
+                        <svg className="w-5 h-5 text-red-600 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div className="text-sm text-red-700">
+                          <p>{verificationError}</p>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {/* Verify Button */}
+                    <button
+                      onClick={handleVerifyCode}
+                      disabled={isVerifying || verificationCode.length !== 6}
+                      className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    >
+                      {isVerifying ? (
+                        <div className="flex items-center justify-center">
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                          Verifying...
+                        </div>
+                      ) : (
+                        'Verify Email'
+                      )}
+                    </button>
+
+                    {/* Resend Code */}
+                    <div className="mt-4 text-center">
+                      <p className="text-sm text-gray-600 mb-2">Didn't receive the code?</p>
+                      <button
+                        onClick={handleResendCode}
+                        disabled={isResending}
+                        className="text-blue-600 hover:text-blue-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {isResending ? (
+                          <div className="flex items-center justify-center">
+                            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-1" />
+                            Sending...
+                          </div>
+                        ) : (
+                          'Resend verification code'
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Help Text */}
+                    <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                      <h4 className="text-sm font-medium text-gray-900 mb-2">Need help?</h4>
+                      <ul className="text-xs text-gray-600 space-y-1">
+                        <li>• Check your spam/junk folder</li>
+                        <li>• Make sure you entered the correct email address</li>
+                        <li>• The code expires in 15 minutes</li>
+                        <li>• You have 5 attempts to enter the correct code</li>
+                      </ul>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </motion.div>
         </div>
       )}
 
-      {/* Email Verification Modal */}
-      {verificationUserData && (
-        <EmailVerificationModal
-          isOpen={showEmailVerification}
-          onClose={() => {
-            setShowEmailVerification(false)
-            setVerificationUserData(null)
-          }}
-          onVerificationComplete={handleEmailVerificationComplete}
-          userEmail={verificationUserData.email}
-          userId={verificationUserData.userId}
-          userName={verificationUserData.name}
-        />
-      )}
     </AnimatePresence>
   )
 }
