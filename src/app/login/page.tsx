@@ -20,10 +20,46 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const [showForgot, setShowForgot] = useState(false)
+  // Verify email request state (for users who need verification before sign-in)
+  const [isRequestingVerification, setIsRequestingVerification] = useState(false)
+  const [verificationRequestError, setVerificationRequestError] = useState('')
+  const [verificationRequestSuccess, setVerificationRequestSuccess] = useState(false)
 
   useEffect(() => {
     clearError()
   }, [clearError])
+
+  // Request verification email for an existing account
+  const handleRequestVerification = async () => {
+    setVerificationRequestError('')
+    setVerificationRequestSuccess(false)
+
+    const normalizedEmail = email.trim().toLowerCase()
+    if (!normalizedEmail) {
+      setVerificationRequestError('Please enter your email address first')
+      return
+    }
+
+    setIsRequestingVerification(true)
+    try {
+      const res = await fetch('/api/auth/request-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: normalizedEmail })
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        setVerificationRequestSuccess(true)
+        setVerificationRequestError('')
+      } else {
+        setVerificationRequestError(data.error || 'Failed to send verification email')
+      }
+    } catch (err) {
+      setVerificationRequestError('Network error. Please try again.')
+    } finally {
+      setIsRequestingVerification(false)
+    }
+  }
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -115,7 +151,16 @@ export default function LoginPage() {
             </div>
 
             <div className="flex items-center justify-between text-sm">
-              <div />
+              <button
+                type="button"
+                onClick={handleRequestVerification}
+                disabled={isRequestingVerification}
+                className="text-green-300 hover:text-green-200 disabled:opacity-60"
+                aria-label="Request email verification"
+                title="Request a verification email"
+              >
+                {isRequestingVerification ? 'Sending verification…' : 'Verify email'}
+              </button>
               <button type="button" onClick={() => setShowForgot(true)} className="text-blue-300 hover:text-blue-200">
                 Forgot password?
               </button>
@@ -125,6 +170,22 @@ export default function LoginPage() {
               {isLoading ? 'Signing in...' : 'Sign in'}
             </Button>
           </form>
+
+          {/* Verify email request feedback */}
+          {(verificationRequestError || verificationRequestSuccess) && (
+            <div className="mt-4">
+              {verificationRequestError && (
+                <div className="mb-2 p-3 rounded-xl border border-red-300/30 bg-red-500/10 text-red-300 text-sm">
+                  {verificationRequestError}
+                </div>
+              )}
+              {verificationRequestSuccess && (
+                <div className="p-3 rounded-xl border border-emerald-300/30 bg-emerald-500/10 text-emerald-300 text-sm">
+                  Verification email sent. Please check your inbox and enter the 6-digit code when logging in.
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Third-party sign-in disabled */}
 
