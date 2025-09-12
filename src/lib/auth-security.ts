@@ -3,46 +3,9 @@ import jwt from 'jsonwebtoken'
 import crypto from 'crypto'
 import { NextRequest } from 'next/server'
 import { query } from '@/lib/pg'
+import { SECURITY_CONFIG } from './security-config'
 
 // Using direct PostgreSQL client from src/lib/pg
-
-// Security configuration
-const SECURITY_CONFIG = {
-  // Password requirements
-  PASSWORD_MIN_LENGTH: 5,
-  PASSWORD_REQUIRE_UPPERCASE: true,
-  PASSWORD_REQUIRE_LOWERCASE: true,
-  PASSWORD_REQUIRE_NUMBERS: true,
-  PASSWORD_REQUIRE_SYMBOLS: true,
-  
-  // Rate limiting
-  MAX_LOGIN_ATTEMPTS: 5,
-  LOCKOUT_DURATION: 15 * 60 * 1000, // 15 minutes
-  PROGRESSIVE_DELAY: true,
-  
-  // Session management
-  SESSION_DURATION: 7 * 24 * 60 * 60 * 1000, // 7 days
-  REFRESH_TOKEN_DURATION: 30 * 24 * 60 * 60 * 1000, // 30 days
-  MAX_CONCURRENT_SESSIONS: 5,
-  
-  // Security
-  BCRYPT_ROUNDS: 12,
-  JWT_SECRET: process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production',
-  REFRESH_TOKEN_SECRET: process.env.REFRESH_TOKEN_SECRET || 'your-refresh-token-secret',
-  
-  // Account recovery
-  RECOVERY_CODE_LENGTH: 8,
-  RECOVERY_CODE_EXPIRY: 10 * 60 * 1000, // 10 minutes
-  
-  // Device fingerprinting
-  DEVICE_FINGERPRINT_FIELDS: [
-    'userAgent',
-    'acceptLanguage',
-    'screenResolution',
-    'timezone',
-    'platform'
-  ]
-}
 
 // Error types for better error handling
 export enum AuthErrorType {
@@ -142,23 +105,23 @@ export interface DeviceTrust {
 export function validatePassword(password: string): { isValid: boolean; errors: string[] } {
   const errors: string[] = []
   
-  if (password.length < SECURITY_CONFIG.PASSWORD_MIN_LENGTH) {
-    errors.push(`Password must be at least ${SECURITY_CONFIG.PASSWORD_MIN_LENGTH} characters long`)
+  if (password.length < SECURITY_CONFIG.auth.passwordMinLength) {
+    errors.push(`Password must be at least ${SECURITY_CONFIG.auth.passwordMinLength} characters long`)
   }
   
-  if (SECURITY_CONFIG.PASSWORD_REQUIRE_UPPERCASE && !/[A-Z]/.test(password)) {
+  if (SECURITY_CONFIG.auth.passwordRequireUppercase && !/[A-Z]/.test(password)) {
     errors.push('Password must contain at least one uppercase letter')
   }
   
-  if (SECURITY_CONFIG.PASSWORD_REQUIRE_LOWERCASE && !/[a-z]/.test(password)) {
+  if (SECURITY_CONFIG.auth.passwordRequireLowercase && !/[a-z]/.test(password)) {
     errors.push('Password must contain at least one lowercase letter')
   }
   
-  if (SECURITY_CONFIG.PASSWORD_REQUIRE_NUMBERS && !/\d/.test(password)) {
+  if (SECURITY_CONFIG.auth.passwordRequireNumbers && !/\d/.test(password)) {
     errors.push('Password must contain at least one number')
   }
   
-  if (SECURITY_CONFIG.PASSWORD_REQUIRE_SYMBOLS && !/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+  if (SECURITY_CONFIG.auth.passwordRequireSymbols && !/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
     errors.push('Password must contain at least one special character')
   }
   
@@ -229,12 +192,12 @@ export class RateLimiter {
     
     if (!attempt) {
       this.attempts.set(identifier, { count: 1, firstAttempt: now, lastAttempt: now })
-      return { allowed: true, remainingAttempts: SECURITY_CONFIG.MAX_LOGIN_ATTEMPTS - 1 }
+      return { allowed: true, remainingAttempts: SECURITY_CONFIG.auth.maxLoginAttempts - 1 }
     }
     
     // Check if lockout period has passed
-    if (attempt.count >= SECURITY_CONFIG.MAX_LOGIN_ATTEMPTS) {
-      const lockoutEnd = attempt.lastAttempt + SECURITY_CONFIG.LOCKOUT_DURATION
+    if (attempt.count >= SECURITY_CONFIG.auth.maxLoginAttempts) {
+      const lockoutEnd = attempt.lastAttempt + SECURITY_CONFIG.auth.lockoutDuration
       if (now < lockoutEnd) {
         return { 
           allowed: false, 
@@ -245,19 +208,19 @@ export class RateLimiter {
         // Reset after lockout period
         this.attempts.delete(identifier)
         this.attempts.set(identifier, { count: 1, firstAttempt: now, lastAttempt: now })
-        return { allowed: true, remainingAttempts: SECURITY_CONFIG.MAX_LOGIN_ATTEMPTS - 1 }
+        return { allowed: true, remainingAttempts: SECURITY_CONFIG.auth.maxLoginAttempts - 1 }
       }
     }
     
     // Apply progressive delay if enabled
-    if (SECURITY_CONFIG.PROGRESSIVE_DELAY && attempt.count > 1) {
+    if (attempt.count > 1) {
       const delay = Math.min(Math.pow(2, attempt.count - 1) * 1000, 30000) // Max 30 seconds
       const timeSinceLastAttempt = now - attempt.lastAttempt
       if (timeSinceLastAttempt < delay) {
         return { 
           allowed: false, 
           retryAfter: Math.ceil((delay - timeSinceLastAttempt) / 1000),
-          remainingAttempts: SECURITY_CONFIG.MAX_LOGIN_ATTEMPTS - attempt.count
+          remainingAttempts: SECURITY_CONFIG.auth.maxLoginAttempts - attempt.count
         }
       }
     }
@@ -269,7 +232,7 @@ export class RateLimiter {
     
     return { 
       allowed: true, 
-      remainingAttempts: SECURITY_CONFIG.MAX_LOGIN_ATTEMPTS - attempt.count
+      remainingAttempts: SECURITY_CONFIG.auth.maxLoginAttempts - attempt.count
     }
   }
   
@@ -288,7 +251,7 @@ export const authRateLimiter = new RateLimiter()
 // Password hashing with error handling
 export async function hashPassword(password: string): Promise<string> {
   try {
-    return await bcrypt.hash(password, SECURITY_CONFIG.BCRYPT_ROUNDS)
+    return await bcrypt.hash(password, SECURITY_CONFIG.auth.bcryptRounds)
   } catch (error) {
     throw new AuthError(
       AuthErrorType.DATABASE_ERROR,
@@ -318,14 +281,14 @@ export function generateTokens(userId: string, email: string): { accessToken: st
   try {
     const accessToken = jwt.sign(
       { userId, email, type: 'access' },
-      SECURITY_CONFIG.JWT_SECRET,
-      { expiresIn: SECURITY_CONFIG.SESSION_DURATION / 1000 }
+      SECURITY_CONFIG.auth.jwtSecret,
+      { expiresIn: SECURITY_CONFIG.auth.sessionDuration / 1000 }
     )
     
     const refreshToken = jwt.sign(
       { userId, email, type: 'refresh' },
-      SECURITY_CONFIG.REFRESH_TOKEN_SECRET,
-      { expiresIn: SECURITY_CONFIG.REFRESH_TOKEN_DURATION / 1000 }
+      SECURITY_CONFIG.auth.refreshTokenSecret,
+      { expiresIn: SECURITY_CONFIG.auth.refreshTokenDuration / 1000 }
     )
     
     return { accessToken, refreshToken }
@@ -340,7 +303,7 @@ export function generateTokens(userId: string, email: string): { accessToken: st
 }
 
 // JWT token verification with comprehensive error handling
-export function verifyToken(token: string, secret: string = SECURITY_CONFIG.JWT_SECRET): any {
+export function verifyToken(token: string, secret: string = SECURITY_CONFIG.auth.jwtSecret): any {
   try {
     return jwt.verify(token, secret)
   } catch (error: any) {
@@ -369,7 +332,7 @@ export function verifyToken(token: string, secret: string = SECURITY_CONFIG.JWT_
 
 // Generate recovery codes
 export function generateRecoveryCode(): string {
-  return crypto.randomBytes(SECURITY_CONFIG.RECOVERY_CODE_LENGTH).toString('hex').toUpperCase()
+  return crypto.randomBytes(4).toString('hex').toUpperCase() // 8 characters
 }
 
 // Generate secure random string
@@ -457,7 +420,7 @@ export async function detectSuspiciousActivity(userId: string, ipAddress: string
     )
 
     const failedCount = parseInt(failedRows[0]?.count || '0')
-    if (failedCount >= SECURITY_CONFIG.MAX_LOGIN_ATTEMPTS) {
+    if (failedCount >= SECURITY_CONFIG.auth.maxLoginAttempts) {
       console.log(`🚫 IP ${ipAddress} blocked due to ${failedCount} failed attempts`)
       reasons.push('Too many failed attempts from this IP address')
     }
