@@ -40,6 +40,12 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalPr
   const [timeLeft, setTimeLeft] = useState(15 * 60) // 15 minutes in seconds
   const [isResending, setIsResending] = useState(false)
   
+  // Verify email state
+  const [showVerifyEmailOption, setShowVerifyEmailOption] = useState(false)
+  const [isRequestingVerification, setIsRequestingVerification] = useState(false)
+  const [verificationRequestError, setVerificationRequestError] = useState('')
+  const [verificationRequestSuccess, setVerificationRequestSuccess] = useState(false)
+  
   const { login, error, clearError, setAuthModalOpen } = useAuthStore()
   const router = useRouter()
 
@@ -158,6 +164,11 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalPr
     setVerificationError('')
     setVerificationSuccess(false)
     setTimeLeft(15 * 60)
+    
+    // Reset verify email state
+    setShowVerifyEmailOption(false)
+    setVerificationRequestError('')
+    setVerificationRequestSuccess(false)
     
     onClose()
   }
@@ -293,6 +304,57 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalPr
     }
   }
 
+  // Request verification email for existing user
+  const handleRequestVerification = async () => {
+    if (!email.trim()) {
+      setVerificationRequestError('Please enter your email address first')
+      return
+    }
+
+    setIsRequestingVerification(true)
+    setVerificationRequestError('')
+    setVerificationRequestSuccess(false)
+
+    try {
+      const response = await fetch('/api/auth/request-verification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase()
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setVerificationRequestSuccess(true)
+        // Show the verification step
+        setVerificationUserData({
+          userId: data.userId,
+          email: data.email,
+          name: email.trim()
+        })
+        setShowEmailVerification(true)
+        setShowVerifyEmailOption(false)
+        
+        // Reset verification state
+        setVerificationCode('')
+        setVerificationError('')
+        setVerificationSuccess(false)
+        setTimeLeft(15 * 60)
+      } else {
+        setVerificationRequestError(data.error || 'Failed to send verification email')
+      }
+    } catch (error) {
+      console.error('Verification request error:', error)
+      setVerificationRequestError('Network error. Please try again.')
+    } finally {
+      setIsRequestingVerification(false)
+    }
+  }
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -325,7 +387,7 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalPr
             </div>
 
             {/* Form */}
-            {!showEmailVerification ? (
+            {!showEmailVerification && !showVerifyEmailOption ? (
               <form onSubmit={handleSubmit} className="p-6 space-y-4">
               {/* Email Field */}
               <div className="space-y-2">
@@ -363,14 +425,24 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalPr
                   <Label htmlFor="password" className="text-sm font-medium text-gray-700">
                     Password
                   </Label>
-                  <button
-                    type="button"
-                    onClick={handleForgotPassword}
-                    className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                    disabled={isLoading}
-                  >
-                    Forgot password?
-                  </button>
+                  <div className="flex justify-between items-center">
+                    <button
+                      type="button"
+                      onClick={handleForgotPassword}
+                      className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                      disabled={isLoading}
+                    >
+                      Forgot password?
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowVerifyEmailOption(true)}
+                      className="text-sm text-green-600 hover:text-green-700 font-medium"
+                      disabled={isLoading}
+                    >
+                      Verify Email
+                    </button>
+                  </div>
                 </div>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -451,6 +523,111 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalPr
                 </p>
               </div>
             </form>
+            ) : showVerifyEmailOption ? (
+              /* Verify Email Option Section */
+              <div className="p-6 space-y-6">
+                {/* Header */}
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Mail className="w-8 h-8 text-green-600" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Verify Your Email</h2>
+                  <p className="text-gray-600">
+                    Enter your email address to receive a verification code
+                  </p>
+                </div>
+
+                {/* Email Input */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Enter your email address"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                      disabled={isRequestingVerification}
+                    />
+                  </div>
+                </div>
+
+                {/* Error Message */}
+                {verificationRequestError && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center mb-4 p-3 bg-red-50 border border-red-200 rounded-lg"
+                  >
+                    <svg className="w-5 h-5 text-red-600 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="text-sm text-red-700">
+                      <p>{verificationRequestError}</p>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Success Message */}
+                {verificationRequestSuccess && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center mb-4 p-3 bg-green-50 border border-green-200 rounded-lg"
+                  >
+                    <svg className="w-5 h-5 text-green-600 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <div className="text-sm text-green-700">
+                      <p>Verification email sent successfully!</p>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Send Verification Button */}
+                <button
+                  onClick={handleRequestVerification}
+                  disabled={isRequestingVerification || !email.trim()}
+                  className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                >
+                  {isRequestingVerification ? (
+                    <div className="flex items-center justify-center">
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                      Sending...
+                    </div>
+                  ) : (
+                    'Send Verification Email'
+                  )}
+                </button>
+
+                {/* Back to Login */}
+                <div className="mt-4 text-center">
+                  <button
+                    onClick={() => {
+                      setShowVerifyEmailOption(false)
+                      setVerificationRequestError('')
+                      setVerificationRequestSuccess(false)
+                    }}
+                    className="text-gray-600 hover:text-gray-700 font-medium transition-colors"
+                  >
+                    ← Back to Sign In
+                  </button>
+                </div>
+
+                {/* Help Text */}
+                <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                  <h4 className="text-sm font-medium text-gray-900 mb-2">Need help?</h4>
+                  <ul className="text-xs text-gray-600 space-y-1">
+                    <li>• Make sure you enter the correct email address</li>
+                    <li>• Check your spam/junk folder for the verification email</li>
+                    <li>• The verification code expires in 15 minutes</li>
+                    <li>• You can only request verification for existing accounts</li>
+                  </ul>
+                </div>
+              </div>
             ) : (
               /* Email Verification Section */
               <div className="p-6 space-y-6">
