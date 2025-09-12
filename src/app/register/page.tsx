@@ -11,10 +11,11 @@ import { Label } from '@/components/ui/label'
 import { motion } from 'framer-motion'
 import { VidalityLogo } from '@/components/ui/VidalityLogo'
 import { Mail, Lock, User } from 'lucide-react'
+import { EmailVerificationModal } from '@/components/auth/EmailVerificationModal'
 
 export default function RegisterPage() {
   const router = useRouter()
-  const { register, error, clearError, isLoading } = useAuthStore()
+  const { register, error, clearError, isLoading, user, setAuthModalOpen } = useAuthStore()
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
@@ -22,6 +23,7 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [privacyPolicyAccepted, setPrivacyPolicyAccepted] = useState(false)
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+  const [showVerification, setShowVerification] = useState(false)
 
   useEffect(() => {
     clearError()
@@ -48,10 +50,25 @@ export default function RegisterPage() {
 
     try {
       await register({ email: email.trim().toLowerCase(), password, firstName: firstName.trim(), lastName: lastName.trim(), privacyPolicyAccepted })
-      router.replace('/dashboard')
+      // On success, do NOT redirect. Show verification modal instead.
+      // Keep the auth modal state open to prevent AuthGuard redirects while verifying
+      setAuthModalOpen(true)
+      setShowVerification(true)
     } catch (e) {
       // error state is already set in the store; UI will reflect it
     }
+  }
+
+  const handleVerificationComplete = () => {
+    // Close modal guard and route to dashboard
+    setShowVerification(false)
+    setAuthModalOpen(false)
+    router.replace('/dashboard')
+  }
+
+  const handleCloseVerification = () => {
+    setShowVerification(false)
+    setAuthModalOpen(false)
   }
 
   return (
@@ -218,6 +235,17 @@ export default function RegisterPage() {
             <Link href="/login" className="text-blue-300 hover:text-blue-200">Sign in</Link>
           </div>
         </motion.div>
+        {/* Email Verification Modal */}
+        {showVerification && user && (
+          <EmailVerificationModal
+            isOpen={showVerification}
+            onClose={handleCloseVerification}
+            onVerificationComplete={handleVerificationComplete}
+            userEmail={user.email}
+            userId={user.id}
+            userName={`${firstName || user.firstName || ''} ${lastName || user.lastName || ''}`.trim()}
+          />
+        )}
       </div>
     </AuthGuard>
   )
