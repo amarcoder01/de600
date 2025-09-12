@@ -99,7 +99,7 @@ export class EmailVerificationService {
       
       const emailSent = await EmailService.sendEmail({
         to: email,
-        subject: 'Verify Your Email - TradingPro Platform',
+        subject: 'Verify Your Email - Vidality Trading Platform',
         html: verificationEmailHtml,
         text: verificationEmailText
       })
@@ -327,7 +327,7 @@ export class EmailVerificationService {
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Email Verification - TradingPro</title>
+        <title>Email Verification - Vidality</title>
         <style>
           body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
           .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
@@ -341,13 +341,13 @@ export class EmailVerificationService {
       <body>
         <div class="header">
           <h1>🔒 Email Verification</h1>
-          <p>Welcome to TradingPro Platform</p>
+          <p>Welcome to Vidality Trading Platform</p>
         </div>
         
         <div class="content">
           <h2>Hello ${firstName}!</h2>
           
-          <p>Thank you for signing up for TradingPro Platform. To complete your registration and start trading, please verify your email address using the code below:</p>
+          <p>Thank you for signing up for Vidality Trading Platform. To complete your registration and start trading, please verify your email address using the code below:</p>
           
           <div class="code-box">
             <p style="margin: 0 0 10px 0; font-weight: bold;">Your verification code:</p>
@@ -374,12 +374,12 @@ export class EmailVerificationService {
           <p>If you have any questions, feel free to contact our support team.</p>
           
           <p>Happy Trading!<br>
-          <strong>The TradingPro Team</strong></p>
+          <strong>The Vidality Team</strong></p>
         </div>
         
         <div class="footer">
-          <p>This email was sent to you because you signed up for TradingPro Platform.</p>
-          <p>© 2024 TradingPro Platform. All rights reserved.</p>
+          <p>This email was sent to you because you signed up for Vidality Trading Platform.</p>
+          <p>© 2024 Vidality Trading Platform. All rights reserved.</p>
         </div>
       </body>
       </html>
@@ -391,11 +391,11 @@ export class EmailVerificationService {
    */
   private static generateVerificationEmailText(firstName: string, code: string): string {
     return `
-Email Verification - TradingPro Platform
+Email Verification - Vidality Trading Platform
 
 Hello ${firstName}!
 
-Thank you for signing up for TradingPro Platform. To complete your registration and start trading, please verify your email address using the code below:
+Thank you for signing up for Vidality Trading Platform. To complete your registration and start trading, please verify your email address using the code below:
 
 Your verification code: ${code}
 
@@ -413,11 +413,11 @@ Once verified, you'll have full access to:
 If you have any questions, feel free to contact our support team.
 
 Happy Trading!
-The TradingPro Team
+The Vidality Team
 
 ---
-This email was sent to you because you signed up for TradingPro Platform.
-© 2024 TradingPro Platform. All rights reserved.
+This email was sent to you because you signed up for Vidality Trading Platform.
+© 2024 Vidality Trading Platform. All rights reserved.
     `
   }
 }

@@ -48,7 +48,7 @@ export class EmailService {
 
              const msg = {
          to: emailData.to,
-         from: process.env.SENDGRID_FROM_EMAIL || 'noreply@tradingpro.com',
+         from: process.env.SENDGRID_FROM_EMAIL || 'noreply@vidality.com',
          subject: emailData.subject,
          text: emailData.text,
          html: emailData.html,
@@ -154,8 +154,8 @@ export class EmailService {
           </div>
           
           <div class="footer">
-            <p>This is an automated notification from TradingPro Platform</p>
-            <p>© 2024 TradingPro. All rights reserved.</p>
+            <p>This is an automated notification from Vidality Trading Platform</p>
+            <p>© 2024 Vidality. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -185,8 +185,8 @@ The price has ${condition} your target of $${data.targetPrice.toFixed(2)}.
 View your price alerts: ${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/price-alerts
 
 ---
-This is an automated notification from TradingPro Platform
-© 2024 TradingPro. All rights reserved.
+This is an automated notification from Vidality Trading Platform
+© 2024 Vidality. All rights reserved.
     `.trim()
   }
 
