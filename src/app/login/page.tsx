@@ -24,6 +24,13 @@ export default function LoginPage() {
   const [isRequestingVerification, setIsRequestingVerification] = useState(false)
   const [verificationRequestError, setVerificationRequestError] = useState('')
   const [verificationRequestSuccess, setVerificationRequestSuccess] = useState(false)
+  // Inline verification code entry state
+  const [showVerification, setShowVerification] = useState(false)
+  const [verificationUser, setVerificationUser] = useState<{ userId: string, email: string } | null>(null)
+  const [verificationCode, setVerificationCode] = useState('')
+  const [isVerifying, setIsVerifying] = useState(false)
+  const [verificationError, setVerificationError] = useState('')
+  const [verificationSuccess, setVerificationSuccess] = useState(false)
 
   useEffect(() => {
     clearError()
@@ -51,6 +58,12 @@ export default function LoginPage() {
       if (res.ok && data.success) {
         setVerificationRequestSuccess(true)
         setVerificationRequestError('')
+        // Prepare inline verification UI
+        setVerificationUser({ userId: data.userId, email: data.email })
+        setVerificationCode('')
+        setVerificationError('')
+        setVerificationSuccess(false)
+        setShowVerification(true)
       } else {
         setVerificationRequestError(data.error || 'Failed to send verification email')
       }
@@ -171,21 +184,104 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          {/* Verify email request feedback */}
-          {(verificationRequestError || verificationRequestSuccess) && (
-            <div className="mt-4">
-              {verificationRequestError && (
-                <div className="mb-2 p-3 rounded-xl border border-red-300/30 bg-red-500/10 text-red-300 text-sm">
-                  {verificationRequestError}
+          {/* Verify email feedback and inline code entry */}
+          <div className="mt-4 space-y-3">
+            {verificationRequestError && (
+              <div className="p-3 rounded-xl border border-red-300/30 bg-red-500/10 text-red-300 text-sm">
+                {verificationRequestError}
+              </div>
+            )}
+            {verificationRequestSuccess && (
+              <div className="p-3 rounded-xl border border-emerald-300/30 bg-emerald-500/10 text-emerald-300 text-sm">
+                We sent a verification code to {verificationUser?.email || email}. Enter it below to verify.
+              </div>
+            )}
+            {showVerification && (
+              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                <Label htmlFor="verificationCode" className="text-gray-300">Verification code</Label>
+                <Input
+                  id="verificationCode"
+                  value={verificationCode}
+                  onChange={(e) => {
+                    const v = e.target.value.replace(/\D/g, '').slice(0,6)
+                    setVerificationCode(v)
+                    setVerificationError('')
+                  }}
+                  placeholder="000000"
+                  className="mt-2 text-center tracking-widest text-lg"
+                />
+                {verificationError && (
+                  <div className="mt-2 p-2 rounded-lg border border-red-300/30 bg-red-500/10 text-red-300 text-xs">
+                    {verificationError}
+                  </div>
+                )}
+                {verificationSuccess && (
+                  <div className="mt-2 p-2 rounded-lg border border-emerald-300/30 bg-emerald-500/10 text-emerald-300 text-xs">
+                    Email verified. {password ? 'Signing you in…' : 'Now click Sign in to continue.'}
+                  </div>
+                )}
+                <div className="mt-3 flex items-center gap-3">
+                  <Button
+                    type="button"
+                    onClick={async () => {
+                      if (!verificationUser) {
+                        setVerificationError('Verification data missing. Please request a new code.')
+                        return
+                      }
+                      if (verificationCode.length !== 6) {
+                        setVerificationError('Enter a valid 6-digit code')
+                        return
+                      }
+                      setIsVerifying(true)
+                      setVerificationError('')
+                      try {
+                        const res = await fetch('/api/auth/verify-email', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            userId: verificationUser.userId,
+                            email: verificationUser.email,
+                            code: verificationCode
+                          })
+                        })
+                        const data = await res.json()
+                        if (res.ok && data.success) {
+                          setVerificationSuccess(true)
+                          // Auto sign-in if password already provided
+                          if (password) {
+                            try {
+                              await login({ email: (verificationUser.email || email).toLowerCase(), password })
+                              router.replace('/dashboard')
+                            } catch (e) {
+                              // If auto-login fails, keep success note and let user click Sign in
+                            }
+                          }
+                        } else {
+                          setVerificationError(data.error || 'Verification failed')
+                        }
+                      } catch (err) {
+                        setVerificationError('Network error. Please try again.')
+                      } finally {
+                        setIsVerifying(false)
+                      }
+                    }}
+                    disabled={isVerifying || verificationCode.length !== 6}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    {isVerifying ? 'Verifying…' : 'Verify code'}
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={handleRequestVerification}
+                    disabled={isRequestingVerification}
+                    className="text-blue-300 hover:text-blue-200 text-sm disabled:opacity-60"
+                  >
+                    {isRequestingVerification ? 'Resending…' : 'Resend code'}
+                  </button>
                 </div>
-              )}
-              {verificationRequestSuccess && (
-                <div className="p-3 rounded-xl border border-emerald-300/30 bg-emerald-500/10 text-emerald-300 text-sm">
-                  Verification email sent. Please check your inbox and enter the 6-digit code when logging in.
-                </div>
-              )}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
 
           {/* Third-party sign-in disabled */}
 
