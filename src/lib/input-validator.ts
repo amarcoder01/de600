@@ -423,9 +423,9 @@ export const VALIDATION_SCHEMAS = {
   
   trade: {
     symbol: { required: true, pattern: VALIDATION_PATTERNS.symbol, sanitize: true },
-    type: { required: true, customValidator: (value) => ['buy', 'sell'].includes(value) },
-    quantity: { required: true, customValidator: (value) => !isNaN(value) && value > 0 },
-    price: { required: true, customValidator: (value) => !isNaN(value) && value > 0 }
+    type: { required: true, customValidator: (value: any) => ['buy', 'sell'].includes(value) },
+    quantity: { required: true, customValidator: (value: any) => !isNaN(value) && value > 0 },
+    price: { required: true, customValidator: (value: any) => !isNaN(value) && value > 0 }
   },
   
   portfolio: {

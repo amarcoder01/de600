@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { hashPassword } from '@/lib/auth-security'
+import { EmailVerificationService } from '@/lib/email-verification-service'
+import { logSecurityEvent, SecurityEventType, SecuritySeverity } from '@/lib/security-monitoring'
 import jwt from 'jsonwebtoken'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production'
@@ -115,6 +117,32 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    // Create and send verification code
+    const verificationResult = await EmailVerificationService.createVerificationCode(
+      user.id,
+      user.email
+    )
+
+    if (!verificationResult.success || !verificationResult.code) {
+      console.error('Failed to create verification code for user:', user.id)
+      // Continue with registration even if verification email fails
+      // User can request a new verification code later
+    } else {
+      // Send verification email
+      const emailSent = await EmailVerificationService.sendVerificationEmail(
+        user.email,
+        user.firstName,
+        verificationResult.code
+      )
+
+      if (!emailSent) {
+        console.error('Failed to send verification email to:', user.email)
+        // Continue with registration - user can request resend later
+      } else {
+        console.log('✅ Verification email sent to:', user.email)
+      }
+    }
+
     // Generate JWT token
     const accessToken = jwt.sign(
       { userId: user.id, email: user.email },
@@ -127,6 +155,20 @@ export async function POST(request: NextRequest) {
       { userId: user.id, type: 'refresh' },
       JWT_SECRET,
       { expiresIn: '30d' }
+    )
+
+    // Log successful registration
+    await logSecurityEvent(
+      SecurityEventType.USER_REGISTRATION,
+      SecuritySeverity.LOW,
+      request,
+      { 
+        reason: 'User registration successful', 
+        userId: user.id, 
+        email: user.email,
+        emailVerificationSent: verificationResult.success && verificationResult.code
+      },
+      user.id
     )
 
     // Create success response
@@ -142,7 +184,8 @@ export async function POST(request: NextRequest) {
           createdAt: user.createdAt
         },
         accessToken,
-        message: 'Account created successfully'
+        message: 'Account created successfully. Please check your email for verification code.',
+        emailVerificationSent: verificationResult.success && verificationResult.code
       }
     }, { status: 201 })
 

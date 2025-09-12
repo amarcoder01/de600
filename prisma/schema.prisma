@@ -39,6 +39,8 @@ model User {
   // NextAuth.js relations
   accounts                Account[]
   sessions                Session[]
+  // Email verification
+  emailVerificationCodes  EmailVerificationCode[]
 }
 
 // NextAuth.js required models
@@ -75,6 +77,26 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model EmailVerificationCode {
+  id        String   @id @default(cuid())
+  userId    String
+  email     String
+  code      String
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([email])
+  @@index([code])
+  @@index([expiresAt])
+  @@index([isUsed])
+  @@index([createdAt])
 }
 
 model LoginAttempt {

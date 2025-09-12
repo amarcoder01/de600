@@ -285,13 +285,13 @@ export class AuthService {
 
       if (user) {
         const newFailedAttempts = user.failedLoginAttempts + 1
-        const shouldLockAccount = newFailedAttempts >= SECURITY_CONFIG.MAX_LOGIN_ATTEMPTS
+        const shouldLockAccount = newFailedAttempts >= SECURITY_CONFIG.auth.maxLoginAttempts
 
         await prisma.user.update({
           where: { id: user.id },
           data: {
             failedLoginAttempts: newFailedAttempts,
-            lockoutUntil: shouldLockAccount ? new Date(Date.now() + SECURITY_CONFIG.LOCKOUT_DURATION) : null
+            lockoutUntil: shouldLockAccount ? new Date(Date.now() + SECURITY_CONFIG.auth.lockoutDuration) : null
           }
         })
 
@@ -354,7 +354,7 @@ export class AuthService {
         }
       })
 
-      if (activeSessions >= SECURITY_CONFIG.MAX_CONCURRENT_SESSIONS) {
+      if (activeSessions >= SECURITY_CONFIG.auth.maxConcurrentSessions) {
         // Remove oldest session
         const oldestSession = await prisma.userSession.findFirst({
           where: {
@@ -382,7 +382,7 @@ export class AuthService {
           ipAddress,
           userAgent,
           isActive: true,
-          expiresAt: new Date(Date.now() + SECURITY_CONFIG.REFRESH_TOKEN_DURATION)
+          expiresAt: new Date(Date.now() + SECURITY_CONFIG.auth.refreshTokenDuration)
         }
       })
     } catch (error) {
@@ -404,7 +404,7 @@ export class AuthService {
   }> {
     try {
       // Verify refresh token
-      const decoded = verifyToken(refreshToken, SECURITY_CONFIG.REFRESH_TOKEN_SECRET)
+      const decoded = verifyToken(refreshToken, SECURITY_CONFIG.auth.refreshTokenSecret)
 
       // Check if session exists and is active
       const session = await prisma.userSession.findUnique({
@@ -434,7 +434,7 @@ export class AuthService {
         where: { id: session.id },
         data: { 
           refreshToken: newTokens.refreshToken,
-          expiresAt: new Date(Date.now() + SECURITY_CONFIG.REFRESH_TOKEN_DURATION)
+          expiresAt: new Date(Date.now() + SECURITY_CONFIG.auth.refreshTokenDuration)
         }
       })
 
@@ -663,12 +663,12 @@ export class AuthService {
         // Don't reveal if user exists or not
         return {
           recoveryCode: generateRecoveryCode(),
-          expiresAt: new Date(Date.now() + SECURITY_CONFIG.RECOVERY_CODE_EXPIRY)
+          expiresAt: new Date(Date.now() + SECURITY_CONFIG.auth.recoveryCodeExpiry)
         }
       }
 
       const recoveryCode = generateRecoveryCode()
-      const expiresAt = new Date(Date.now() + SECURITY_CONFIG.RECOVERY_CODE_EXPIRY)
+      const expiresAt = new Date(Date.now() + SECURITY_CONFIG.auth.recoveryCodeExpiry)
 
       // Store recovery code (in production, this should be encrypted)
       // For now, we'll just return it
@@ -706,12 +706,12 @@ export class AuthService {
   static async getUserFromToken(token: string): Promise<User | null> {
     try {
       console.log('🔐 AuthService - Verifying token with secret:', {
-        secretLength: SECURITY_CONFIG.JWT_SECRET.length,
-        secretPreview: `${SECURITY_CONFIG.JWT_SECRET.substring(0, 20)}...`
+        secretLength: SECURITY_CONFIG.auth.jwtSecret.length,
+        secretPreview: `${SECURITY_CONFIG.auth.jwtSecret.substring(0, 20)}...`
       })
       
       // Verify token
-      const decoded = verifyToken(token, SECURITY_CONFIG.JWT_SECRET)
+      const decoded = verifyToken(token, SECURITY_CONFIG.auth.jwtSecret)
       console.log('🔓 AuthService - Token decoded:', {
         hasDecoded: !!decoded,
         userId: decoded?.userId,

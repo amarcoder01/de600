@@ -172,7 +172,7 @@ export async function secureTransaction<T>(
 function isQuerySafe(query: string): boolean {
   const dangerousPatterns = [
     /--/g,                    // SQL comments
-    /\/\*.*?\*\//gs,          // Block comments
+    /\/\*[\s\S]*?\*\//g,      // Block comments
     /;\s*drop\s+/gi,          // DROP statements
     /;\s*delete\s+from\s+/gi, // DELETE without WHERE
     /;\s*truncate\s+/gi,      // TRUNCATE
@@ -480,5 +480,3 @@ export class SecureTradeOperations {
   }
 }
 
-// Export the main functions
-export { secureQuery, secureTransaction }

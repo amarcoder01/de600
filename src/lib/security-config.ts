@@ -3,6 +3,8 @@
  * Centralized security settings and validation rules
  */
 
+import * as crypto from 'crypto'
+
 export interface SecurityConfig {
   // Authentication & Authorization
   auth: {
@@ -18,6 +20,8 @@ export interface SecurityConfig {
     sessionDuration: number
     refreshTokenDuration: number
     bcryptRounds: number
+    maxConcurrentSessions: number
+    recoveryCodeExpiry: number
   }
   
   // API Security
@@ -88,7 +92,9 @@ export function initializeSecurity(): SecurityConfig {
       lockoutDuration: 15 * 60 * 1000, // 15 minutes
       sessionDuration: 24 * 60 * 60 * 1000, // 24 hours (reduced from 7 days)
       refreshTokenDuration: 7 * 24 * 60 * 60 * 1000, // 7 days (reduced from 30 days)
-      bcryptRounds: 14 // Increased from 12
+      bcryptRounds: 14, // Increased from 12
+      maxConcurrentSessions: 5, // Maximum concurrent sessions per user
+      recoveryCodeExpiry: 60 * 60 * 1000 // 1 hour for recovery codes
     },
     
     api: {
@@ -190,7 +196,7 @@ export function checkRateLimit(identifier: string): { allowed: boolean; remainin
 // Clean up expired rate limit records
 setInterval(() => {
   const now = Date.now()
-  for (const [key, value] of rateLimitStore.entries()) {
+  for (const [key, value] of Array.from(rateLimitStore.entries())) {
     if (value.resetTime < now) {
       rateLimitStore.delete(key)
     }

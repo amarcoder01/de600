@@ -26,6 +26,7 @@ export enum SecurityEventType {
   LOGIN_ATTEMPT = 'LOGIN_ATTEMPT',
   LOGIN_SUCCESS = 'LOGIN_SUCCESS',
   LOGIN_FAILURE = 'LOGIN_FAILURE',
+  USER_REGISTRATION = 'USER_REGISTRATION',
   ACCOUNT_LOCKED = 'ACCOUNT_LOCKED',
   PASSWORD_CHANGE = 'PASSWORD_CHANGE',
   API_ACCESS = 'API_ACCESS',
@@ -36,7 +37,8 @@ export enum SecurityEventType {
   PATH_TRAVERSAL_ATTEMPT = 'PATH_TRAVERSAL_ATTEMPT',
   UNAUTHORIZED_ACCESS = 'UNAUTHORIZED_ACCESS',
   DATA_ACCESS = 'DATA_ACCESS',
-  ERROR = 'ERROR'
+  ERROR = 'ERROR',
+  INFO = 'INFO'
 }
 
 export enum SecuritySeverity {
@@ -510,9 +512,3 @@ export async function logSecurityEvent(
   })
 }
 
-// Export the main functions
-export {
-  SecurityMonitor,
-  securityMonitor,
-  logSecurityEvent
-}

@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     const token = authHeader.substring(7)
 
     // Verify token
-    const decoded = verifyToken(token, SECURITY_CONFIG.JWT_SECRET) as { userId: string; email: string }
+    const decoded = verifyToken(token, SECURITY_CONFIG.auth.jwtSecret) as { userId: string; email: string }
     
     // Find user
     const user = await AuthService.getUserById(decoded.userId)

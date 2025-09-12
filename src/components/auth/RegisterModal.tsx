@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { EmailVerificationModal } from './EmailVerificationModal'
 
 interface RegisterModalProps {
   isOpen: boolean
@@ -26,6 +27,14 @@ export function RegisterModal({ isOpen, onClose, onSwitchToLogin }: RegisterModa
   const [isLoading, setIsLoading] = useState(false)
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const [privacyPolicyAccepted, setPrivacyPolicyAccepted] = useState(false)
+  
+  // Email verification state
+  const [showEmailVerification, setShowEmailVerification] = useState(false)
+  const [verificationUserData, setVerificationUserData] = useState<{
+    userId: string
+    email: string
+    name: string
+  } | null>(null)
   
   const { register, error, clearError, setAuthModalOpen } = useAuthStore()
   const router = useRouter()
@@ -162,24 +171,47 @@ export function RegisterModal({ isOpen, onClose, onSwitchToLogin }: RegisterModa
       setIsLoading(false)
     }
     
-    // Only close modal if registration actually succeeded
+    // Only proceed if registration actually succeeded
     if (registrationSucceeded) {
-      console.log('🔐 RegisterModal: Registration succeeded, closing modal')
+      console.log('🔐 RegisterModal: Registration succeeded, showing email verification')
       
-      // Clear form data
-      setFirstName('')
-      setLastName('')
-      setEmail('')
-      setPassword('')
-      setConfirmPassword('')
-      setValidationErrors({})
+      // Get user data from auth store for verification
+      const userData = useAuthStore.getState().user
       
-      // Close modal immediately
-      onClose()
-      
-      // Let the parent component handle the redirect
+      if (userData) {
+        // Show email verification modal
+        setVerificationUserData({
+          userId: userData.id,
+          email: userData.email,
+          name: `${firstName.trim()} ${lastName.trim()}`
+        })
+        setShowEmailVerification(true)
+        
+        // Clear form data but keep modal open for verification
+        setFirstName('')
+        setLastName('')
+        setEmail('')
+        setPassword('')
+        setConfirmPassword('')
+        setValidationErrors({})
+      } else {
+        // Fallback: close modal if no user data
+        onClose()
+      }
       console.log('🔐 RegisterModal: Registration completed successfully')
     }
+  }
+
+  const handleEmailVerificationComplete = () => {
+    // Close email verification modal
+    setShowEmailVerification(false)
+    setVerificationUserData(null)
+    
+    // Close registration modal
+    onClose()
+    
+    // Redirect to dashboard or home page
+    router.push('/dashboard')
   }
 
   const handleClose = () => {
@@ -191,6 +223,8 @@ export function RegisterModal({ isOpen, onClose, onSwitchToLogin }: RegisterModa
     setPassword('')
     setConfirmPassword('')
     setPrivacyPolicyAccepted(false)
+    setShowEmailVerification(false)
+    setVerificationUserData(null)
     setAuthModalOpen(false)
     onClose()
   }
@@ -473,6 +507,21 @@ export function RegisterModal({ isOpen, onClose, onSwitchToLogin }: RegisterModa
             </form>
           </motion.div>
         </div>
+      )}
+
+      {/* Email Verification Modal */}
+      {verificationUserData && (
+        <EmailVerificationModal
+          isOpen={showEmailVerification}
+          onClose={() => {
+            setShowEmailVerification(false)
+            setVerificationUserData(null)
+          }}
+          onVerificationComplete={handleEmailVerificationComplete}
+          userEmail={verificationUserData.email}
+          userId={verificationUserData.userId}
+          userName={verificationUserData.name}
+        />
       )}
     </AnimatePresence>
   )

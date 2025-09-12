@@ -8,6 +8,7 @@ import { withSecurity, SecurityContext } from './api-security'
 import { validateRequestBody, VALIDATION_SCHEMAS } from './input-validator'
 import { secureQuery, SecureUserOperations } from './secure-database'
 import { AuthError, AuthErrorType, verifyToken } from './auth-security'
+import crypto from 'crypto'
 
 export interface SecureApiOptions {
   requireAuth?: boolean
@@ -143,7 +144,7 @@ async function handleUserLogin(request: NextRequest, context: SecurityContext): 
       const newAttempts = (user.failedLoginAttempts || 0) + 1
       const lockoutUntil = newAttempts >= 5 ? new Date(Date.now() + 15 * 60 * 1000) : null
       
-      await SecureUserOperations.updateLoginAttempts(user.id, newAttempts, lockoutUntil)
+      await SecureUserOperations.updateLoginAttempts(user.id, newAttempts, lockoutUntil || undefined)
       
       return NextResponse.json(
         { success: false, error: 'Invalid credentials' },
@@ -305,7 +306,10 @@ async function handleGetPortfolios(
   try {
     if (portfolioId) {
       // Get specific portfolio
-      const result = await SecureUserOperations.getPortfolioById(portfolioId, context.userId!)
+      const result = await secureQuery(
+        'SELECT * FROM "Portfolio" WHERE id = $1 AND "userId" = $2',
+        [portfolioId, context.userId!]
+      )
       if (!result.success || result.rows.length === 0) {
         return NextResponse.json(
           { success: false, error: 'Portfolio not found' },
@@ -319,7 +323,10 @@ async function handleGetPortfolios(
       })
     } else {
       // Get all user portfolios
-      const result = await SecureUserOperations.getUserPortfolios(context.userId!)
+      const result = await secureQuery(
+        'SELECT * FROM "Portfolio" WHERE "userId" = $1 ORDER BY "createdAt" DESC',
+        [context.userId!]
+      )
       return NextResponse.json({
         success: true,
         data: result.rows
@@ -345,7 +352,10 @@ async function handleCreatePortfolio(
     const body = await request.json()
     const { name } = body
     
-    const result = await SecureUserOperations.createPortfolio(context.userId!, name)
+    const result = await secureQuery(
+      'INSERT INTO "Portfolio" ("id", "userId", "name", "createdAt", "updatedAt") VALUES ($1, $2, $3, NOW(), NOW()) RETURNING *',
+      [crypto.randomUUID(), context.userId!, name]
+    )
     if (!result.success) {
       return NextResponse.json(
         { success: false, error: 'Failed to create portfolio' },
@@ -385,7 +395,10 @@ async function handleUpdatePortfolio(
     const body = await request.json()
     const { name } = body
     
-    const result = await SecureUserOperations.updatePortfolio(portfolioId, context.userId!, name)
+    const result = await secureQuery(
+      'UPDATE "Portfolio" SET name = $1, "updatedAt" = NOW() WHERE id = $2 AND "userId" = $3 RETURNING *',
+      [name, portfolioId, context.userId!]
+    )
     if (!result.success || result.rows.length === 0) {
       return NextResponse.json(
         { success: false, error: 'Portfolio not found or update failed' },
@@ -422,7 +435,10 @@ async function handleDeletePortfolio(
   }
   
   try {
-    const result = await SecureUserOperations.deletePortfolio(portfolioId, context.userId!)
+    const result = await secureQuery(
+      'DELETE FROM "Portfolio" WHERE id = $1 AND "userId" = $2',
+      [portfolioId, context.userId!]
+    )
     if (!result.success || result.rowCount === 0) {
       return NextResponse.json(
         { success: false, error: 'Portfolio not found or delete failed' },
@@ -480,7 +496,10 @@ async function handleGetTrades(
   portfolioId: string
 ): Promise<NextResponse> {
   try {
-    const result = await SecureUserOperations.getPortfolioTrades(portfolioId, context.userId!)
+    const result = await secureQuery(
+      'SELECT * FROM "Trade" WHERE "portfolioId" = $1 AND "userId" = $2 ORDER BY "createdAt" DESC',
+      [portfolioId, context.userId!]
+    )
     if (!result.success) {
       return NextResponse.json(
         { success: false, error: 'Failed to fetch trades' },
@@ -523,14 +542,20 @@ async function handleCreateTrade(
     
     const amount = quantity * price
     
-    const result = await SecureUserOperations.createTrade(portfolioId, context.userId!, {
-      symbol,
-      type,
-      quantity,
-      price,
-      amount,
-      notes
-    })
+    const result = await secureQuery(
+      'INSERT INTO "Trade" ("id", "portfolioId", "userId", symbol, type, quantity, price, amount, notes, "createdAt", "updatedAt") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW()) RETURNING *',
+      [
+        crypto.randomUUID(),
+        portfolioId,
+        context.userId!,
+        symbol.toUpperCase(),
+        type,
+        quantity,
+        price,
+        amount,
+        notes || null
+      ]
+    )
     
     if (!result.success || result.rows.length === 0) {
       return NextResponse.json(
@@ -552,9 +577,3 @@ async function handleCreateTrade(
   }
 }
 
-// Export the secure API functions
-export {
-  secureUserAuth,
-  securePortfolioApi,
-  secureTradeApi
-}

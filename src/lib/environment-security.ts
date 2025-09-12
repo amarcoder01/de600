@@ -252,7 +252,7 @@ export function checkForEnvironmentLeaks(): { hasLeaks: boolean; leaks: string[]
   )
   
   for (const value of publicValues) {
-    if (value.includes('://') && (value.includes('password=') || value.includes('secret='))) {
+    if (value && value.includes('://') && (value.includes('password=') || value.includes('secret='))) {
       leaks.push('Database URL or similar contains exposed credentials')
     }
   }
@@ -340,13 +340,3 @@ export function initializeEnvironmentSecurity(): void {
   }
 }
 
-// Export the main functions
-export {
-  validateEnvironmentSecurity,
-  generateSecureEnvironment,
-  sanitizeEnvForLogging,
-  validateApiKeyFormat,
-  checkForEnvironmentLeaks,
-  getEnvironmentSecurityReport,
-  initializeEnvironmentSecurity
-}

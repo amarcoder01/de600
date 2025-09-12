@@ -234,7 +234,7 @@ export function withSecurity<T extends any[]>(
       let rateLimitHeaders = {}
       if (options.rateLimit !== false) {
         const rateLimitResult = withRateLimit(`${ipAddress}:${userAgent}`)
-        if (!rateLimitResult.allowed) {
+        if (rateLimitResult instanceof NextResponse) {
           return rateLimitResult
         }
         rateLimitHeaders = rateLimitResult.headers
