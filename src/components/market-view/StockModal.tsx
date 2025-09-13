@@ -135,7 +135,7 @@ export const StockModal: React.FC<StockModalProps> = ({ stock, stockDetails, loa
                   {/* Session and extended hours info */}
                   <div className="mt-2 text-xs text-gray-500 space-y-1">
                     <div className="flex items-center justify-center space-x-2">
-                      {stockDetails.session && (
+                      {stockDetails.session && stockDetails.session !== 'closed' && (
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium uppercase ${
                           stockDetails.session === 'regular' 
                             ? 'bg-green-100 text-green-800'
@@ -147,7 +147,7 @@ export const StockModal: React.FC<StockModalProps> = ({ stock, stockDetails, loa
                           {stockDetails.isExtendedHours ? ' • EXT' : ''}
                         </span>
                       )}
-                      {stockDetails.marketState && (
+                      {stockDetails.marketState && stockDetails.marketState !== 'closed' && (
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                           stockDetails.marketState === 'open'
                             ? 'bg-green-100 text-green-800'
@@ -156,6 +156,11 @@ export const StockModal: React.FC<StockModalProps> = ({ stock, stockDetails, loa
                             : 'bg-gray-100 text-gray-700'
                         }`}>
                           {stockDetails.marketState}
+                        </span>
+                      )}
+                      {stockDetails.isMarketClosed && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 uppercase">
+                          closed
                         </span>
                       )}
                     </div>

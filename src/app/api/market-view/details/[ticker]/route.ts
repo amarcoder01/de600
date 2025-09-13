@@ -482,12 +482,17 @@ export async function GET(
     // Fallback: if the calculated date seems wrong (future date), use a reasonable fallback
     const currentDate = new Date()
     const calculatedDate = new Date(prevDateStr)
-    if (calculatedDate > currentDate) {
-      // If calculated date is in the future, use yesterday's date as fallback
+    
+    // Check if the calculated date is in the future or more than 7 days ago (likely wrong)
+    const sevenDaysAgo = new Date(currentDate)
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+    
+    if (calculatedDate > currentDate || calculatedDate < sevenDaysAgo) {
+      // If calculated date is in the future or too old, use yesterday's date as fallback
       const yesterday = new Date(currentDate)
       yesterday.setDate(yesterday.getDate() - 1)
       previousCloseDate = yesterday.toISOString().split('T')[0]
-      console.log(`⚠️ Calculated date ${prevDateStr} is in the future, using fallback: ${previousCloseDate}`)
+      console.log(`⚠️ Calculated date ${prevDateStr} is invalid (future: ${calculatedDate > currentDate}, too old: ${calculatedDate < sevenDaysAgo}), using fallback: ${previousCloseDate}`)
     }
 
     // Enrich with snapshot-based stats (Starter plan)
@@ -559,23 +564,31 @@ export async function GET(
     let finalChange = change
     let finalChangePercent = changePercent
     
-    // If we have zero change but different prices, try to calculate manually
-    if (change === 0 && changePercent === 0 && currentPrice !== prevClose && currentPrice > 0 && prevClose > 0) {
-      console.log(`🔄 Attempting manual change calculation for ${ticker}`)
-      finalChange = currentPrice - prevClose
-      finalChangePercent = (finalChange / prevClose) * 100
-      console.log(`🔄 Manual calculation: change=${finalChange}, changePercent=${finalChangePercent}%`)
-    }
-    
-    // If still zero change, check if we can get data from snapshot
-    if (finalChange === 0 && finalChangePercent === 0 && snapshot?.ticker) {
-      const snapshotChange = snapshot.ticker.todaysChange
-      const snapshotChangePercent = snapshot.ticker.todaysChangePerc
-      
-      if (snapshotChange !== undefined && snapshotChangePercent !== undefined) {
-        console.log(`📊 Using snapshot change data: change=${snapshotChange}, changePercent=${snapshotChangePercent}%`)
-        finalChange = snapshotChange
-        finalChangePercent = snapshotChangePercent
+    // Production-ready validation for zero changes
+    if (change === 0 && changePercent === 0) {
+      // Check if this is a legitimate zero change (same prices)
+      if (Math.abs(currentPrice - prevClose) < 0.01 && currentPrice > 0 && prevClose > 0) {
+        console.log(`✅ Legitimate zero change for ${ticker}: currentPrice=${currentPrice}, prevClose=${prevClose}`)
+        finalChange = 0
+        finalChangePercent = 0
+      } else if (currentPrice !== prevClose && currentPrice > 0 && prevClose > 0) {
+        // Recalculate if prices are different but change is zero
+        console.log(`🔄 Recalculating change for ${ticker}: currentPrice=${currentPrice}, prevClose=${prevClose}`)
+        finalChange = currentPrice - prevClose
+        finalChangePercent = (finalChange / prevClose) * 100
+        console.log(`🔄 Recalculated: change=${finalChange}, changePercent=${finalChangePercent}%`)
+      } else {
+        // Try to get data from snapshot
+        if (snapshot?.ticker) {
+          const snapshotChange = snapshot.ticker.todaysChange
+          const snapshotChangePercent = snapshot.ticker.todaysChangePerc
+          
+          if (snapshotChange !== undefined && snapshotChangePercent !== undefined) {
+            console.log(`📊 Using snapshot change data: change=${snapshotChange}, changePercent=${snapshotChangePercent}%`)
+            finalChange = snapshotChange
+            finalChangePercent = snapshotChangePercent
+          }
+        }
       }
     }
 
