@@ -100,9 +100,32 @@ async function fetchLastTradePrice(ticker: string): Promise<number | null> {
   try {
     const endpoint = `/v2/last/trade/${encodeURIComponent(ticker)}`
     const data = await makePolygonRequest(endpoint)
-    const price = typeof data?.results?.p === 'number' ? data.results.p : (typeof data?.last?.price === 'number' ? data.last.price : null)
+    // Support multiple shapes: {results:{p}} or {results:{price}} or {last:{price}}
+    const price = typeof data?.results?.p === 'number'
+      ? data.results.p
+      : (typeof data?.results?.price === 'number'
+        ? data.results.price
+        : (typeof data?.last?.price === 'number' ? data.last.price : null))
     priceCache.set(`last:${ticker}`, { lastPrice: price ?? undefined, ts: now })
     return price
+  } catch {
+    return null
+  }
+}
+
+// Fallback: fetch per-ticker snapshot and compute price/change vs prev close
+async function fetchTickerSnapshotComputed(ticker: string): Promise<{ price: number | null; prevClose: number | null; todaysChange?: number | null; todaysChangePerc?: number | null; dayOpen?: number | null } | null> {
+  try {
+    const endpoint = `/v2/snapshot/locale/us/markets/stocks/tickers/${encodeURIComponent(ticker)}`
+    const data = await makePolygonRequest(endpoint)
+    const dayClose = typeof data?.ticker?.day?.c === 'number' ? data.ticker.day.c : null
+    const prevClose = typeof data?.ticker?.prevDay?.c === 'number' ? data.ticker.prevDay.c : null
+    const lastTrade = typeof data?.ticker?.lastTrade?.p === 'number' ? data.ticker.lastTrade.p : null
+    const price = (typeof lastTrade === 'number' && lastTrade > 0) ? lastTrade : dayClose
+    const todaysChange = typeof data?.ticker?.todaysChange === 'number' ? data.ticker.todaysChange : null
+    const todaysChangePerc = typeof data?.ticker?.todaysChangePerc === 'number' ? data.ticker.todaysChangePerc : null
+    const dayOpen = typeof data?.ticker?.day?.o === 'number' ? data.ticker.day.o : null
+    return { price: price ?? null, prevClose: prevClose ?? null, todaysChange, todaysChangePerc, dayOpen }
   } catch {
     return null
   }
@@ -167,6 +190,26 @@ function transformSnapshotItem(item: any): StockData | null {
     ? (calculatedChange / previousClose) * 100
     : (typeof item?.todaysChangePerc === 'number' ? item.todaysChangePerc : 0)
   const volume = item?.day?.v ?? 0
+
+  // Extra fallback: if we still have zero change and intraday open is available, compute from day open
+  if ((calculatedChange === 0 || calculatedChangePercent === 0) && typeof item?.day?.o === 'number' && item.day.o > 0 && currentPrice > 0) {
+    const altChange = currentPrice - item.day.o
+    const altChangePerc = (altChange / item.day.o) * 100
+    // Use alt values only if non-zero and realistic
+    if (isFinite(altChangePerc) && Math.abs(altChangePerc) <= 500 && altChange !== 0) {
+      // overwrite local vars by reassigning via stock object below
+      // we'll pass these values into the stock payload
+      const stock: StockData = {
+        ticker,
+        name: ticker,
+        value: currentPrice,
+        change: altChange,
+        change_percent: altChangePerc,
+        market_cap: 0,
+      }
+      return stock
+    }
+  }
 
   // Basic validation similar to previous implementation
   if (!currentPrice || currentPrice <= 0) return null
@@ -415,10 +458,46 @@ export async function GET(request: NextRequest) {
           fetchLastTradePrice(s.ticker),
         ])
 
-        const price = typeof lastPrice === 'number' && lastPrice > 0 ? lastPrice : s.value
-        const prev = typeof prevClose === 'number' && prevClose > 0 ? prevClose : null
-        const change = prev ? price - prev : s.change
-        const change_percent = prev ? (change / prev) * 100 : s.change_percent
+        let price = typeof lastPrice === 'number' && lastPrice > 0 ? lastPrice : s.value
+        let prev = typeof prevClose === 'number' && prevClose > 0 ? prevClose : null
+        let priceIsReliable = typeof lastPrice === 'number' && lastPrice > 0
+
+        // If we still can't compute change reliably, fallback to per-ticker snapshot computation
+        if (!prev || !(price > 0)) {
+          const snap = await fetchTickerSnapshotComputed(s.ticker)
+          if (snap) {
+            if (!prev && typeof snap.prevClose === 'number' && snap.prevClose > 0) prev = snap.prevClose
+            if (!(price > 0) && typeof snap.price === 'number' && snap.price > 0) {
+              price = snap.price
+              priceIsReliable = true
+            }
+          }
+        }
+
+        // Only recompute if we have both a reliable prev close and a reliable current price
+        const canRecompute = !!prev && priceIsReliable
+        let change = canRecompute ? (price - (prev as number)) : s.change
+        let change_percent = canRecompute ? ((change / (prev as number)) * 100) : s.change_percent
+
+        // If we still don't have a meaningful change (zero or undefined), try to use snapshot's todaysChange fields
+        if (!canRecompute) {
+          const snap = await fetchTickerSnapshotComputed(s.ticker)
+          if (snap) {
+            if ((change === 0 || typeof change !== 'number') && typeof snap.todaysChange === 'number') {
+              change = snap.todaysChange
+            }
+            if ((change_percent === 0 || typeof change_percent !== 'number') && typeof snap.todaysChangePerc === 'number') {
+              change_percent = snap.todaysChangePerc
+            }
+            // As a final fallback, compute from day open if available
+            if ((change === 0 || typeof change !== 'number') && typeof snap.dayOpen === 'number' && (snap.dayOpen as number) > 0 && price > 0) {
+              change = price - (snap.dayOpen as number)
+            }
+            if ((change_percent === 0 || typeof change_percent !== 'number') && typeof snap.dayOpen === 'number' && (snap.dayOpen as number) > 0 && change !== 0) {
+              change_percent = (change / (snap.dayOpen as number)) * 100
+            }
+          }
+        }
         const market_cap_final =
           (meta && typeof meta.market_cap === 'number') ? meta.market_cap
           : (meta && typeof meta.shares_outstanding === 'number' ? price * meta.shares_outstanding : s.market_cap)
