@@ -359,14 +359,14 @@ async function fetchSnapshot(type: 'gainers' | 'losers'): Promise<any[]> {
 }
 
 // Simple in-memory cache for ticker metadata enrichment
-const tickerMetaCache = new Map<string, { name?: string; market_cap?: number; shares_outstanding?: number; ts: number }>()
+const tickerMetaCache = new Map<string, { name?: string; market_cap?: number; shares_outstanding?: number; type?: string; ts: number }>()
 const TICKER_META_TTL = 24 * 60 * 60 * 1000 // 24 hours
 
-async function fetchTickerMeta(ticker: string): Promise<{ name?: string; market_cap?: number; shares_outstanding?: number } | null> {
+async function fetchTickerMeta(ticker: string): Promise<{ name?: string; market_cap?: number; shares_outstanding?: number; type?: string } | null> {
   const now = Date.now()
   const cached = tickerMetaCache.get(ticker)
   if (cached && now - cached.ts < TICKER_META_TTL) {
-    return { name: cached.name, market_cap: cached.market_cap, shares_outstanding: cached.shares_outstanding }
+    return { name: cached.name, market_cap: cached.market_cap, shares_outstanding: cached.shares_outstanding, type: cached.type }
   }
 
   try {
@@ -376,6 +376,7 @@ async function fetchTickerMeta(ticker: string): Promise<{ name?: string; market_
     const d = details?.results || details // some clients wrap results
     let name: string | undefined = typeof d?.name === 'string' ? d.name : undefined
     let market_cap: number | undefined = typeof d?.market_cap === 'number' ? d.market_cap : undefined
+    let type: string | undefined = typeof d?.type === 'string' ? d.type : undefined
     let shares_outstanding: number | undefined =
       typeof d?.weighted_shares_outstanding === 'number' ? d.weighted_shares_outstanding
       : (typeof d?.share_class_shares === 'number' ? d.share_class_shares : undefined)
@@ -388,6 +389,7 @@ async function fetchTickerMeta(ticker: string): Promise<{ name?: string; market_
       if (result) {
         if (!name && typeof result.name === 'string') name = result.name
         if (typeof result.market_cap === 'number') market_cap = result.market_cap
+        if (!type && typeof result.type === 'string') type = result.type
         if (!shares_outstanding) {
           if (typeof result.weighted_shares_outstanding === 'number') shares_outstanding = result.weighted_shares_outstanding
           else if (typeof result.share_class_shares === 'number') shares_outstanding = result.share_class_shares
@@ -395,8 +397,8 @@ async function fetchTickerMeta(ticker: string): Promise<{ name?: string; market_
       }
     }
 
-    tickerMetaCache.set(ticker, { name, market_cap, shares_outstanding, ts: now })
-    return { name, market_cap, shares_outstanding }
+    tickerMetaCache.set(ticker, { name, market_cap, shares_outstanding, type, ts: now })
+    return { name, market_cap, shares_outstanding, type }
   } catch (e) {
     // Swallow enrichment errors silently
     return null
@@ -541,6 +543,16 @@ export async function GET(request: NextRequest) {
           (meta && typeof meta.market_cap === 'number') ? meta.market_cap
           : (meta && typeof meta.shares_outstanding === 'number' ? price * meta.shares_outstanding : s.market_cap)
 
+        // Classify instrument type and mark derivatives
+        const typeStr = meta?.type || undefined
+        const nameForHeuristic = (meta?.name || s.name || '').toLowerCase()
+        const tickerLower = s.ticker.toLowerCase()
+        const looksLikeDerivative = (
+          (typeStr && /(warrant|right|unit|preferred)/i.test(typeStr)) ||
+          /\b(warrant|right|unit|preferred)\b/i.test(nameForHeuristic) ||
+          /(ws|w|rt|u|pr)(\.|\b)/i.test(tickerLower)
+        )
+
         return {
           ...s,
           value: price,
@@ -548,6 +560,8 @@ export async function GET(request: NextRequest) {
           change_percent,
           name: meta?.name || s.name,
           market_cap: market_cap_final,
+          instrument_type: typeStr,
+          is_derivative: looksLikeDerivative,
         }
       })
     )

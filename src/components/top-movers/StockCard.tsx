@@ -14,9 +14,16 @@ export const StockCard: React.FC<StockCardProps> = ({ stock }) => {
           <h3 className="font-bold text-lg text-gray-900 mb-1">
             {stock.ticker}
           </h3>
-          <p className="text-sm text-gray-600 line-clamp-2">
-            {stock.name}
-          </p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-sm text-gray-600 line-clamp-2">
+              {stock.name}
+            </p>
+            {stock.is_derivative && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                {stock.instrument_type || 'Derivative'}
+              </span>
+            )}
+          </div>
         </div>
         {/* Change percentage hidden as requested */}
       </div>
@@ -33,9 +40,13 @@ export const StockCard: React.FC<StockCardProps> = ({ stock }) => {
       
       <div className="mt-3 pt-3 border-t border-gray-100">
         <p className="text-xs text-gray-500 uppercase tracking-wide">Market Cap</p>
-        <p className="font-semibold text-gray-900">
-          {formatMarketCap(stock.market_cap)}
-        </p>
+        {stock.is_derivative ? (
+          <p className="font-semibold text-gray-500">—</p>
+        ) : (
+          <p className="font-semibold text-gray-900">
+            {formatMarketCap(stock.market_cap)}
+          </p>
+        )}
       </div>
     </div>
   )

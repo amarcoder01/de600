@@ -5,6 +5,9 @@ export interface StockData {
   value: number
   change: number
   change_percent: number
+  // Optional metadata for instrument classification
+  instrument_type?: string // e.g., 'Common Stock', 'Warrant', 'Right', 'Unit', 'Preferred'
+  is_derivative?: boolean // true for warrant/right/unit/preferred etc.
 }
 
 export interface MarketStatus {
