@@ -34,7 +34,7 @@ export interface StockListProps {
 
 export interface StockCardProps {
   stock: StockData
-  type: 'gainers' | 'losers'
+  type?: 'gainers' | 'losers'
 }
 
 export interface MarketStatusProps {

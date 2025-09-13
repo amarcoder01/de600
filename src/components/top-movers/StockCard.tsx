@@ -2,16 +2,11 @@ import React from 'react'
 import { StockCardProps } from '@/types/top-movers'
 import { 
   formatCurrency, 
-  formatPercentage, 
-  formatMarketCap, 
-  getChangeColorClass, 
-  getChangeIcon 
+  formatMarketCap
 } from '@/lib/top-movers-utils'
 
-export const StockCard: React.FC<StockCardProps> = ({ stock, type }) => {
-  const changeColorClass = getChangeColorClass(stock.change_percent, type)
-  const changeIcon = getChangeIcon(stock.change_percent)
-
+export const StockCard: React.FC<StockCardProps> = ({ stock }) => {
+  
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200">
       <div className="flex justify-between items-start mb-2">
@@ -23,10 +18,7 @@ export const StockCard: React.FC<StockCardProps> = ({ stock, type }) => {
             {stock.name}
           </p>
         </div>
-        <div className={`flex items-center ${changeColorClass} font-semibold`}>
-          <span className="mr-1">{changeIcon}</span>
-          <span>{formatPercentage(stock.change_percent)}</span>
-        </div>
+        {/* Change percentage hidden as requested */}
       </div>
       
       <div className="grid grid-cols-2 gap-4 mt-3">
@@ -36,12 +28,7 @@ export const StockCard: React.FC<StockCardProps> = ({ stock, type }) => {
             {formatCurrency(stock.value)}
           </p>
         </div>
-        <div>
-          <p className="text-xs text-gray-500 uppercase tracking-wide">Change</p>
-          <p className={`font-semibold ${changeColorClass}`}>
-            {formatCurrency(stock.change)}
-          </p>
-        </div>
+        {/* Change value hidden as requested */}
       </div>
       
       <div className="mt-3 pt-3 border-t border-gray-100">
