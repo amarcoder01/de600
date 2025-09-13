@@ -69,6 +69,45 @@ async function fetchMarketStatus(): Promise<'open' | 'closed' | 'extended' | 'un
   }
 }
 
+// Cache for prev close and last trade
+const priceCache = new Map<string, { prevClose?: number; lastPrice?: number; ts: number }>()
+const PRICE_TTL = 60 * 1000 // 60 seconds for last trade; prev close is static but we keep same TTL for simplicity
+
+async function fetchPrevClose(ticker: string): Promise<number | null> {
+  const now = Date.now()
+  const cached = priceCache.get(`prev:${ticker}`)
+  if (cached && now - cached.ts < PRICE_TTL && typeof cached.prevClose === 'number') {
+    return cached.prevClose
+  }
+  try {
+    const endpoint = `/v2/aggs/ticker/${encodeURIComponent(ticker)}/prev?adjusted=true`
+    const data = await makePolygonRequest(endpoint)
+    const result = Array.isArray(data?.results) && data.results.length > 0 ? data.results[0] : null
+    const prev = typeof result?.c === 'number' ? result.c : null
+    priceCache.set(`prev:${ticker}`, { prevClose: prev ?? undefined, ts: now })
+    return prev
+  } catch {
+    return null
+  }
+}
+
+async function fetchLastTradePrice(ticker: string): Promise<number | null> {
+  const now = Date.now()
+  const cached = priceCache.get(`last:${ticker}`)
+  if (cached && now - cached.ts < PRICE_TTL && typeof cached.lastPrice === 'number') {
+    return cached.lastPrice
+  }
+  try {
+    const endpoint = `/v2/last/trade/${encodeURIComponent(ticker)}`
+    const data = await makePolygonRequest(endpoint)
+    const price = typeof data?.results?.p === 'number' ? data.results.p : (typeof data?.last?.price === 'number' ? data.last.price : null)
+    priceCache.set(`last:${ticker}`, { lastPrice: price ?? undefined, ts: now })
+    return price
+  } catch {
+    return null
+  }
+}
+
 // Fallback using grouped aggregates for a given date
 async function fetchGroupedMovers(type: 'gainers' | 'losers', dateISO: string): Promise<StockData[]> {
   // Reference: https://polygon.io/docs/stocks/get_v2_aggs_grouped_locale_us_market_stocks__date
@@ -255,24 +294,44 @@ async function fetchSnapshot(type: 'gainers' | 'losers'): Promise<any[]> {
 }
 
 // Simple in-memory cache for ticker metadata enrichment
-const tickerMetaCache = new Map<string, { name?: string; market_cap?: number; ts: number }>()
+const tickerMetaCache = new Map<string, { name?: string; market_cap?: number; shares_outstanding?: number; ts: number }>()
 const TICKER_META_TTL = 24 * 60 * 60 * 1000 // 24 hours
 
-async function fetchTickerMeta(ticker: string): Promise<{ name?: string; market_cap?: number } | null> {
+async function fetchTickerMeta(ticker: string): Promise<{ name?: string; market_cap?: number; shares_outstanding?: number } | null> {
   const now = Date.now()
   const cached = tickerMetaCache.get(ticker)
   if (cached && now - cached.ts < TICKER_META_TTL) {
-    return { name: cached.name, market_cap: cached.market_cap }
+    return { name: cached.name, market_cap: cached.market_cap, shares_outstanding: cached.shares_outstanding }
   }
 
   try {
-    const endpoint = `/v3/reference/tickers?ticker=${encodeURIComponent(ticker)}&active=true&limit=1`
-    const data = await makePolygonRequest(endpoint)
-    const result = Array.isArray(data?.results) && data.results.length > 0 ? data.results[0] : null
-    const name: string | undefined = result?.name
-    const market_cap: number | undefined = typeof result?.market_cap === 'number' ? result.market_cap : undefined
-    tickerMetaCache.set(ticker, { name, market_cap, ts: now })
-    return { name, market_cap }
+    // First try the Ticker Details endpoint (more reliable for market_cap)
+    const detailsEndpoint = `/v3/reference/tickers/${encodeURIComponent(ticker)}`
+    const details = await makePolygonRequest(detailsEndpoint)
+    const d = details?.results || details // some clients wrap results
+    let name: string | undefined = typeof d?.name === 'string' ? d.name : undefined
+    let market_cap: number | undefined = typeof d?.market_cap === 'number' ? d.market_cap : undefined
+    let shares_outstanding: number | undefined =
+      typeof d?.weighted_shares_outstanding === 'number' ? d.weighted_shares_outstanding
+      : (typeof d?.share_class_shares === 'number' ? d.share_class_shares : undefined)
+
+    // Fallback: search endpoint if details did not include market cap or name
+    if (!name || typeof market_cap !== 'number') {
+      const searchEndpoint = `/v3/reference/tickers?ticker=${encodeURIComponent(ticker)}&active=true&limit=1`
+      const data = await makePolygonRequest(searchEndpoint)
+      const result = Array.isArray(data?.results) && data.results.length > 0 ? data.results[0] : null
+      if (result) {
+        if (!name && typeof result.name === 'string') name = result.name
+        if (typeof result.market_cap === 'number') market_cap = result.market_cap
+        if (!shares_outstanding) {
+          if (typeof result.weighted_shares_outstanding === 'number') shares_outstanding = result.weighted_shares_outstanding
+          else if (typeof result.share_class_shares === 'number') shares_outstanding = result.share_class_shares
+        }
+      }
+    }
+
+    tickerMetaCache.set(ticker, { name, market_cap, shares_outstanding, ts: now })
+    return { name, market_cap, shares_outstanding }
   } catch (e) {
     // Swallow enrichment errors silently
     return null
@@ -347,18 +406,31 @@ export async function GET(request: NextRequest) {
     // Limit to top 20 for consistency with UI pagination
     const limitedResults = sortedResults.slice(0, 20)
 
-    // Enrich with company name and real market cap when available (best-effort)
+    // Enrich with company name, market cap, and recompute real-time change/percent using last trade and prev close
     const enriched = await Promise.allSettled(
       limitedResults.map(async (s) => {
-        const meta = await fetchTickerMeta(s.ticker)
-        if (meta) {
-          return {
-            ...s,
-            name: meta.name || s.name,
-            market_cap: typeof meta.market_cap === 'number' ? meta.market_cap : s.market_cap,
-          }
+        const [meta, prevClose, lastPrice] = await Promise.all([
+          fetchTickerMeta(s.ticker),
+          fetchPrevClose(s.ticker),
+          fetchLastTradePrice(s.ticker),
+        ])
+
+        const price = typeof lastPrice === 'number' && lastPrice > 0 ? lastPrice : s.value
+        const prev = typeof prevClose === 'number' && prevClose > 0 ? prevClose : null
+        const change = prev ? price - prev : s.change
+        const change_percent = prev ? (change / prev) * 100 : s.change_percent
+        const market_cap_final =
+          (meta && typeof meta.market_cap === 'number') ? meta.market_cap
+          : (meta && typeof meta.shares_outstanding === 'number' ? price * meta.shares_outstanding : s.market_cap)
+
+        return {
+          ...s,
+          value: price,
+          change,
+          change_percent,
+          name: meta?.name || s.name,
+          market_cap: market_cap_final,
         }
-        return s
       })
     )
 
