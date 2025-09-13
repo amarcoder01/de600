@@ -139,17 +139,72 @@ export async function GET(
       }
     }
 
-    // Determine trading day from last trade timestamp (ET)
+    // If lastTradeTs is missing, we'll still compute prevClose via prev endpoint and proceed with best available data
+    // Determine trading day from last trade timestamp (ET) when available
     if (!lastTradeTs) {
-      // if we still don't have a timestamp, we cannot compute an accurate previous day; fail
-      return NextResponse.json(
-        { error: 'Insufficient last trade timestamp for this stock' },
-        { status: 502 }
-      )
+      const prevAgg = await (makePolygonRequest(`/v2/aggs/ticker/${ticker}/prev`, { adjusted: true }) as Promise<PrevAggResponse>).catch(() => null)
+      const prevCloseFallback = prevAgg?.results?.[0]?.c || 0
+      const prevCloseTsFallback = prevAgg?.results?.[0]?.t ? toEpochMs(prevAgg.results[0].t) : 0
+
+      if (currentPrice && prevCloseFallback) {
+        const change = currentPrice - prevCloseFallback
+        const changePercent = prevCloseFallback > 0 ? (change / prevCloseFallback) * 100 : 0
+
+        // Market status/session computation continues below; for now assemble metadata
+        const nowMs = Date.now()
+        const asOfIso = new Date(nowMs).toISOString()
+        let previousCloseDate: string | undefined
+        if (prevCloseTsFallback) {
+          const parts = getETYMD(prevCloseTsFallback)
+          previousCloseDate = toDateString(parts.y, parts.m, parts.d)
+        }
+
+        // Compute marketState/session
+        const now = new Date()
+        const et = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }))
+        const minutes = et.getHours() * 60 + et.getMinutes()
+        const weekday = et.getDay() >= 1 && et.getDay() <= 5
+        const preOpen = 4 * 60
+        const regularOpen = 9 * 60 + 30
+        const regularClose = 16 * 60
+        const postClose = 20 * 60
+        let marketState: 'open' | 'closed' | 'extended' = 'closed'
+        let session: 'pre' | 'regular' | 'post' | 'closed' = 'closed'
+        let isMarketClosed = true
+        let isExtendedHours = false
+        if (marketStatus && typeof marketStatus.market === 'string') {
+          if (marketStatus.market === 'open') { marketState = 'open'; isMarketClosed = false }
+        }
+        if (weekday) {
+          if (minutes >= regularOpen && minutes < regularClose) { session = 'regular'; marketState = 'open'; isMarketClosed = false }
+          else if (minutes >= preOpen && minutes < regularOpen) { session = 'pre'; marketState = 'extended'; isExtendedHours = true }
+          else if (minutes >= regularClose && minutes < postClose) { session = 'post'; marketState = 'extended'; isExtendedHours = true }
+        }
+
+        const stockDetails: StockDetails = {
+          ticker: ticker.toUpperCase(),
+          name: ticker.toUpperCase(),
+          price: currentPrice,
+          change,
+          changePercent,
+          previousClose: prevCloseFallback,
+          isMarketClosed,
+          asOf: asOfIso,
+          marketState,
+          session,
+          isExtendedHours,
+          previousCloseDate
+        }
+
+        const res = NextResponse.json(stockDetails)
+        res.headers.set('Cache-Control', 'no-store')
+        return res
+      }
+      // otherwise continue; later guard will handle insufficient data
     }
 
     // Derive ET date components from last trade timestamp and compute previous business day in ET
-    const ltParts = getETYMD(lastTradeTs)
+    const ltParts = getETYMD(lastTradeTs ?? Date.now())
     const prevParts = prevBusinessDayET(ltParts)
     const prevDateStr = toDateString(prevParts.y, prevParts.m, prevParts.d)
 
@@ -180,10 +235,53 @@ export async function GET(
     }
 
     if (!currentPrice || !prevClose) {
-      return NextResponse.json(
-        { error: 'Insufficient data for this stock' },
-        { status: 502 }
-      )
+      // Try one more fallback: use prev close as price if current price unavailable
+      const priceFallback = currentPrice || prevClose
+      const change = priceFallback - prevClose
+      const changePercent = prevClose > 0 ? (change / prevClose) * 100 : 0
+      const nowMs = Date.now()
+      const asOfIso = new Date(nowMs).toISOString()
+
+      // Market/session
+      const now = new Date()
+      const et = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }))
+      const minutes = et.getHours() * 60 + et.getMinutes()
+      const weekday = et.getDay() >= 1 && et.getDay() <= 5
+      const preOpen = 4 * 60
+      const regularOpen = 9 * 60 + 30
+      const regularClose = 16 * 60
+      const postClose = 20 * 60
+      let marketState: 'open' | 'closed' | 'extended' = 'closed'
+      let session: 'pre' | 'regular' | 'post' | 'closed' = 'closed'
+      let isMarketClosed = true
+      let isExtendedHours = false
+      if (marketStatus && typeof marketStatus.market === 'string') {
+        if (marketStatus.market === 'open') { marketState = 'open'; isMarketClosed = false }
+      }
+      if (weekday) {
+        if (minutes >= regularOpen && minutes < regularClose) { session = 'regular'; marketState = 'open'; isMarketClosed = false }
+        else if (minutes >= preOpen && minutes < regularOpen) { session = 'pre'; marketState = 'extended'; isExtendedHours = true }
+        else if (minutes >= regularClose && minutes < postClose) { session = 'post'; marketState = 'extended'; isExtendedHours = true }
+      }
+
+      const stockDetails: StockDetails = {
+        ticker: ticker.toUpperCase(),
+        name: ticker.toUpperCase(),
+        price: priceFallback,
+        change,
+        changePercent,
+        previousClose: prevClose || 0,
+        isMarketClosed,
+        asOf: asOfIso,
+        marketState,
+        session,
+        isExtendedHours,
+        previousCloseDate: prevClose ? prevDateStr : undefined
+      }
+
+      const res = NextResponse.json(stockDetails)
+      res.headers.set('Cache-Control', 'no-store')
+      return res
     }
 
     const change = currentPrice - prevClose
@@ -240,7 +338,7 @@ export async function GET(
 
     // Build metadata
     // asOf as ISO (UTC); UI renders ET from this ISO
-    const asOfIso = new Date(lastTradeTs).toISOString()
+    const asOfIso = new Date(lastTradeTs ?? Date.now()).toISOString()
     // Use the computed prevDateStr to avoid timezone ambiguity
     let previousCloseDate: string | undefined = prevDateStr
 
