@@ -121,27 +121,30 @@ function transformSnapshotItem(item: any): StockData | null {
 
   // Prefer day close as current price; fallback to lastTrade price if present
   const currentPrice = item?.day?.c ?? item?.lastTrade?.p ?? 0
-  const change = item?.todaysChange ?? 0
-  const changePercent = item?.todaysChangePerc ?? 0
-  const volume = item?.day?.v ?? item?.lastQuote?.s ?? 0
+  const previousClose = item?.prevDay?.c ?? 0
+  // Calculate change values ourselves to avoid ambiguity of todaysChangePerc units
+  const calculatedChange = previousClose > 0 ? currentPrice - previousClose : (item?.todaysChange ?? 0)
+  const calculatedChangePercent = previousClose > 0
+    ? (calculatedChange / previousClose) * 100
+    : (typeof item?.todaysChangePerc === 'number' ? item.todaysChangePerc : 0)
+  const volume = item?.day?.v ?? 0
 
   // Basic validation similar to previous implementation
   if (!currentPrice || currentPrice <= 0) return null
   // Slightly relaxed to $0.5 to avoid empty datasets for low-priced movers
   if (currentPrice < 0.5) return null
-  if (Math.abs(changePercent) > 500) return null
+  if (Math.abs(calculatedChangePercent) > 500) return null
   if (!volume || volume <= 0) return null
 
-  // Estimate market cap (Polygon snapshot does not return market cap directly here)
-  const estimatedShares = Math.max(volume * 10, 1_000_000)
-  const marketCap = currentPrice * estimatedShares
+  // Do not estimate market cap from volume; will enrich later if possible
+  const marketCap = 0
 
   const stock: StockData = {
     ticker,
     name: ticker,
     value: currentPrice,
-    change,
-    change_percent: changePercent,
+    change: calculatedChange,
+    change_percent: calculatedChangePercent,
     market_cap: marketCap,
   }
 
@@ -184,9 +187,8 @@ function transformPolygonData(ticker: PolygonTickerData): StockData | null {
     return null
   }
   
-  // Estimate market cap based on price and volume
-  const estimatedShares = Math.max(volume * 10, 1000000) // Rough estimate
-  const marketCap = currentPrice * estimatedShares
+  // Do not estimate market cap from volume; will enrich later if possible
+  const marketCap = 0
 
   return {
     ticker: ticker.ticker,
@@ -250,6 +252,31 @@ async function fetchSnapshot(type: 'gainers' | 'losers'): Promise<any[]> {
   // Polygon returns { tickers: [...] }
   const items = data?.tickers ?? []
   return Array.isArray(items) ? items : []
+}
+
+// Simple in-memory cache for ticker metadata enrichment
+const tickerMetaCache = new Map<string, { name?: string; market_cap?: number; ts: number }>()
+const TICKER_META_TTL = 24 * 60 * 60 * 1000 // 24 hours
+
+async function fetchTickerMeta(ticker: string): Promise<{ name?: string; market_cap?: number } | null> {
+  const now = Date.now()
+  const cached = tickerMetaCache.get(ticker)
+  if (cached && now - cached.ts < TICKER_META_TTL) {
+    return { name: cached.name, market_cap: cached.market_cap }
+  }
+
+  try {
+    const endpoint = `/v3/reference/tickers?ticker=${encodeURIComponent(ticker)}&active=true&limit=1`
+    const data = await makePolygonRequest(endpoint)
+    const result = Array.isArray(data?.results) && data.results.length > 0 ? data.results[0] : null
+    const name: string | undefined = result?.name
+    const market_cap: number | undefined = typeof result?.market_cap === 'number' ? result.market_cap : undefined
+    tickerMetaCache.set(ticker, { name, market_cap, ts: now })
+    return { name, market_cap }
+  } catch (e) {
+    // Swallow enrichment errors silently
+    return null
+  }
 }
 
 export async function GET(request: NextRequest) {
@@ -318,7 +345,24 @@ export async function GET(request: NextRequest) {
     })
 
     // Limit to top 20 for consistency with UI pagination
-    const finalResults = sortedResults.slice(0, 20)
+    const limitedResults = sortedResults.slice(0, 20)
+
+    // Enrich with company name and real market cap when available (best-effort)
+    const enriched = await Promise.allSettled(
+      limitedResults.map(async (s) => {
+        const meta = await fetchTickerMeta(s.ticker)
+        if (meta) {
+          return {
+            ...s,
+            name: meta.name || s.name,
+            market_cap: typeof meta.market_cap === 'number' ? meta.market_cap : s.market_cap,
+          }
+        }
+        return s
+      })
+    )
+
+    const finalResults = enriched.map((r, i) => r.status === 'fulfilled' ? r.value : limitedResults[i]).filter(Boolean) as StockData[]
 
     if (process.env.NODE_ENV !== 'production') console.log(`✅ Successfully processed ${finalResults.length} ${type} from ${snapshotItems.length} snapshot items`)
     
