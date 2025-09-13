@@ -24,6 +24,45 @@ interface PrevAggResponse {
   next_url?: string
 }
 
+function getETYMD(epochMs: number): { y: number; m: number; d: number; weekdayIndex: number } {
+  const fmt = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    weekday: 'short',
+  })
+  const parts = fmt.formatToParts(new Date(epochMs))
+  const get = (type: string) => parts.find(p => p.type === type)?.value
+  const y = Number(get('year'))
+  const m = Number(get('month'))
+  const d = Number(get('day'))
+  const weekdayStr = get('weekday') || 'Sun'
+  const map: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 }
+  const weekdayIndex = map[weekdayStr] ?? 0
+  return { y, m, d, weekdayIndex }
+}
+
+function toDateString(y: number, m: number, d: number): string {
+  return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+}
+
+function prevBusinessDayET(ymd: { y: number; m: number; d: number; weekdayIndex: number }): { y: number; m: number; d: number; weekdayIndex: number } {
+  // Construct a UTC Date from Y-M-D, subtract days, then re-evaluate ET parts to get correct weekday
+  const dt = new Date(Date.UTC(ymd.y, ymd.m - 1, ymd.d))
+  const delta = ymd.weekdayIndex === 1 ? 3 : 1 // if Monday -> Friday (3 days), else 1 day back
+  dt.setUTCDate(dt.getUTCDate() - delta)
+  return getETYMD(dt.getTime())
+}
+
+function toEpochMs(ts: number | undefined): number | undefined {
+  if (!ts || ts <= 0) return undefined
+  // Heuristic: ns ~ 1e18, us ~ 1e15, ms ~ 1e12 range
+  if (ts > 1e17) return Math.floor(ts / 1e6) // ns -> ms
+  if (ts > 1e14) return Math.floor(ts / 1e3) // us -> ms
+  return ts // already ms
+}
+
 async function makePolygonRequest(endpoint: string, params?: Record<string, string | number | boolean>): Promise<any> {
   if (!POLYGON_API_KEY) {
     throw new Error('Polygon API key is not configured')
@@ -79,35 +118,66 @@ export async function GET(
     }
 
     // Fetch current price (v3 last trade), previous close (v2 prev adjusted), and market status in parallel
-    const [lastTrade, prevAgg, marketStatus] = await Promise.all([
-      makePolygonRequest(`/v3/last_trade/${ticker}`) // { results: { p } }
-        .catch(() => null),
-      (makePolygonRequest(`/v2/aggs/ticker/${ticker}/prev`, { adjusted: true }) as Promise<PrevAggResponse>)
+    const [lastTrade, marketStatus] = await Promise.all([
+      makePolygonRequest(`/v3/last_trade/${ticker}`) // { results: { p, t } }
         .catch(() => null),
       makePolygonRequest(`/v1/marketstatus/now`).catch(() => null)
     ])
 
     // Determine current price with fallbacks
     let currentPrice = typeof lastTrade?.results?.p === 'number' ? lastTrade.results.p : 0
-    let priceSource: 'last_trade' | 'snapshot_day_close' | 'snapshot_last_trade' | undefined = currentPrice ? 'last_trade' : undefined
+    let lastTradeTs: number | undefined = typeof lastTrade?.results?.t === 'number' ? toEpochMs(lastTrade.results.t) : undefined
 
     if (!currentPrice || currentPrice <= 0) {
-      // Fallback to snapshot day close or last trade within snapshot
+      // Fallback only to snapshot last trade if available
       const snapshot = await makePolygonRequest(`/v2/snapshot/locale/us/markets/stocks/tickers/${ticker}`).catch(() => null)
-      if (snapshot?.ticker?.day?.c) {
-        currentPrice = snapshot.ticker.day.c
-        priceSource = 'snapshot_day_close'
-      } else if (snapshot?.ticker?.lastTrade?.p) {
+      if (snapshot?.ticker?.lastTrade?.p) {
         currentPrice = snapshot.ticker.lastTrade.p
-        priceSource = 'snapshot_last_trade'
+        lastTradeTs = typeof snapshot?.ticker?.lastTrade?.t === 'number' ? toEpochMs(snapshot.ticker.lastTrade.t) : undefined
       } else {
         currentPrice = 0
       }
     }
 
-    // Extract previous close (adjusted)
-    const prevClose = prevAgg?.results?.[0]?.c || 0
-    const prevCloseTs = prevAgg?.results?.[0]?.t
+    // Determine trading day from last trade timestamp (ET)
+    if (!lastTradeTs) {
+      // if we still don't have a timestamp, we cannot compute an accurate previous day; fail
+      return NextResponse.json(
+        { error: 'Insufficient last trade timestamp for this stock' },
+        { status: 502 }
+      )
+    }
+
+    // Derive ET date components from last trade timestamp and compute previous business day in ET
+    const ltParts = getETYMD(lastTradeTs)
+    const prevParts = prevBusinessDayET(ltParts)
+    const prevDateStr = toDateString(prevParts.y, prevParts.m, prevParts.d)
+
+    // 1) Prefer v1 open-close for clarity
+    let prevClose = 0
+    let prevCloseTs = 0
+    const openClose = await makePolygonRequest(`/v1/open-close/${ticker}/${prevDateStr}`, { adjusted: true }).catch(() => null)
+    if (openClose && typeof openClose.close === 'number') {
+      prevClose = openClose.close
+      // open-close returns "from"/"symbol"/"afterHours" fields; no explicit close timestamp.
+      // Use prevDateStr at 16:00 ET as representative close time.
+      const repCloseEt = new Date(`${prevDateStr}T16:00:00-04:00`) // naive ET; sufficient for display date
+      prevCloseTs = repCloseEt.getTime()
+    }
+
+    // 2) Fallback to v2 daily bar (adjusted)
+    if (!prevClose) {
+      const daily = await makePolygonRequest(`/v2/aggs/ticker/${ticker}/range/1/day/${prevDateStr}/${prevDateStr}`, { adjusted: true }).catch(() => null)
+      prevClose = daily?.results?.[0]?.c || 0
+      prevCloseTs = daily?.results?.[0]?.t || 0
+    }
+
+    // 3) Fallback to prev endpoint as last resort
+    if (!prevClose) {
+      const prevAgg = await (makePolygonRequest(`/v2/aggs/ticker/${ticker}/prev`, { adjusted: true }) as Promise<PrevAggResponse>).catch(() => null)
+      prevClose = prevAgg?.results?.[0]?.c || 0
+      prevCloseTs = prevAgg?.results?.[0]?.t || 0
+    }
 
     if (!currentPrice || !prevClose) {
       return NextResponse.json(
@@ -169,15 +239,10 @@ export async function GET(
     }
 
     // Build metadata
-    const asOfIso = new Date(et.getTime() - et.getTimezoneOffset() * 60000).toISOString()
-    let previousCloseDate: string | undefined
-    if (typeof prevCloseTs === 'number' && prevCloseTs > 0) {
-      const prevEt = new Date(new Date(prevCloseTs).toLocaleString('en-US', { timeZone: 'America/New_York' }))
-      const yyyy = prevEt.getFullYear()
-      const mm = String(prevEt.getMonth() + 1).padStart(2, '0')
-      const dd = String(prevEt.getDate()).padStart(2, '0')
-      previousCloseDate = `${yyyy}-${mm}-${dd}`
-    }
+    // asOf as ISO (UTC); UI renders ET from this ISO
+    const asOfIso = new Date(lastTradeTs).toISOString()
+    // Use the computed prevDateStr to avoid timezone ambiguity
+    let previousCloseDate: string | undefined = prevDateStr
 
     const stockDetails: StockDetails = {
       ticker: ticker.toUpperCase(),
@@ -191,13 +256,12 @@ export async function GET(
       marketState,
       session,
       isExtendedHours,
-      priceSource: priceSource,
       previousCloseDate
     }
 
     const res = NextResponse.json(stockDetails)
-    // Cache modestly at the edge and allow stale-while-revalidate to smooth bursts
-    res.headers.set('Cache-Control', 'public, s-maxage=15, stale-while-revalidate=60')
+    // Reduce cache during validation to avoid stale responses
+    res.headers.set('Cache-Control', 'no-store')
     return res
   } catch (error) {
     console.error('Error fetching stock details:', error)
