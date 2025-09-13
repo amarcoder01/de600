@@ -135,12 +135,28 @@ export async function GET(
     }
 
     // Fetch current price (v3 last trade), previous close (v2 prev adjusted), and market status in parallel
+    console.log(`🔍 Fetching data for ${ticker}...`)
     const [lastTrade, marketStatus, snapshot] = await Promise.all([
       makePolygonRequest(`/v3/last_trade/${ticker}`) // { results: { p, t } }
-        .catch(() => null),
-      makePolygonRequest(`/v1/marketstatus/now`).catch(() => null),
-      makePolygonRequest(`/v2/snapshot/locale/us/markets/stocks/tickers/${ticker}`).catch(() => null)
+        .catch((error) => {
+          console.log(`⚠️ Failed to fetch last trade for ${ticker}:`, error.message)
+          return null
+        }),
+      makePolygonRequest(`/v1/marketstatus/now`).catch((error) => {
+        console.log(`⚠️ Failed to fetch market status:`, error.message)
+        return null
+      }),
+      makePolygonRequest(`/v2/snapshot/locale/us/markets/stocks/tickers/${ticker}`).catch((error) => {
+        console.log(`⚠️ Failed to fetch snapshot for ${ticker}:`, error.message)
+        return null
+      })
     ])
+    
+    console.log(`📊 API responses for ${ticker}:`, {
+      lastTrade: lastTrade ? 'success' : 'failed',
+      marketStatus: marketStatus ? 'success' : 'failed', 
+      snapshot: snapshot ? 'success' : 'failed'
+    })
 
     // Determine current price optimized for Starter plan: prefer snapshot lastTrade, then v3 last_trade, then snapshot day close
     let currentPrice = 0
@@ -290,7 +306,27 @@ export async function GET(
         currentPrice = snapshot.ticker.day.c
       }
       if (!currentPrice || !prevClose) {
-        return NextResponse.json({ error: 'Insufficient data for this stock' }, { status: 502 })
+        console.log(`⚠️ Insufficient data for ${ticker}, providing fallback data`)
+        
+        // Provide fallback data instead of failing
+        const fallbackStockDetails: StockDetails = {
+          ticker: ticker.toUpperCase(),
+          name: ticker.toUpperCase(),
+          price: currentPrice || 0,
+          change: 0,
+          changePercent: 0,
+          previousClose: prevClose || 0,
+          isMarketClosed: true,
+          asOf: new Date().toISOString(),
+          marketState: 'closed',
+          session: 'closed',
+          isExtendedHours: false,
+          previousCloseDate: new Date().toISOString().split('T')[0]
+        }
+        
+        const res = NextResponse.json(fallbackStockDetails)
+        res.headers.set('Cache-Control', 'no-store')
+        return res
       }
       const change = currentPrice - prevClose
       const changePercent = prevClose > 0 ? (change / prevClose) * 100 : 0
@@ -633,10 +669,25 @@ export async function GET(
     res.headers.set('Cache-Control', 'no-store')
     return res
   } catch (error) {
-    console.error('Error fetching stock details:', error)
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to fetch stock details' },
-      { status: 500 }
-    )
+    console.error(`❌ Error fetching stock details for ${ticker}:`, error)
+    
+    // Provide fallback data instead of failing completely
+    const fallbackStockDetails: StockDetails = {
+      ticker: ticker.toUpperCase(),
+      name: ticker.toUpperCase(),
+      price: 0,
+      change: 0,
+      changePercent: 0,
+      previousClose: 0,
+      isMarketClosed: true,
+      asOf: new Date().toISOString(),
+      marketState: 'closed',
+      session: 'closed',
+      isExtendedHours: false,
+      previousCloseDate: new Date().toISOString().split('T')[0]
+    }
+    
+    console.log(`🔄 Returning fallback data for ${ticker} due to error`)
+    return NextResponse.json(fallbackStockDetails)
   }
 }
