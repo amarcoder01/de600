@@ -49,6 +49,20 @@ export interface StockDetails {
   isExtendedHours?: boolean
   priceSource?: 'last_trade' | 'snapshot_day_close' | 'snapshot_last_trade'
   previousCloseDate?: string // YYYY-MM-DD of the previous close in ET
+  // Optional richer fields (Starter plan-compatible)
+  todayOpen?: number
+  todayHigh?: number
+  todayLow?: number
+  todayVolume?: number
+  prevOpen?: number
+  prevHigh?: number
+  prevLow?: number
+  prevVolume?: number
+  vwap?: number
+  high52w?: number
+  low52w?: number
+  bid?: number
+  ask?: number
 }
 
 export interface ApiResponse<T> {

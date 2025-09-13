@@ -103,6 +103,11 @@ async function makePolygonRequest(endpoint: string, params?: Record<string, stri
   }
 }
 
+// Simple in-memory cache for 52-week stats (per server instance)
+type CacheEntry = { high52w: number; low52w: number; ts: number }
+const yearStatsCache = new Map<string, CacheEntry>()
+const YEAR_STATS_TTL_MS = 6 * 60 * 60 * 1000 // 6 hours
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { ticker: string } }
@@ -355,6 +360,71 @@ export async function GET(
     // Use the computed prevDateStr to avoid timezone ambiguity
     let previousCloseDate: string | undefined = prevDateStr
 
+    // Enrich with snapshot-based stats (Starter plan)
+    let todayOpen: number | undefined
+    let todayHigh: number | undefined
+    let todayLow: number | undefined
+    let todayVolume: number | undefined
+    let vwap: number | undefined
+    let prevOpen: number | undefined
+    let prevHigh: number | undefined
+    let prevLow: number | undefined
+    let prevVolume: number | undefined
+
+    if (snapshot?.ticker?.day) {
+      todayOpen = typeof snapshot.ticker.day.o === 'number' ? snapshot.ticker.day.o : undefined
+      todayHigh = typeof snapshot.ticker.day.h === 'number' ? snapshot.ticker.day.h : undefined
+      todayLow = typeof snapshot.ticker.day.l === 'number' ? snapshot.ticker.day.l : undefined
+      todayVolume = typeof snapshot.ticker.day.v === 'number' ? snapshot.ticker.day.v : undefined
+      vwap = typeof snapshot.ticker.day.vw === 'number' ? snapshot.ticker.day.vw : undefined
+    }
+    if (snapshot?.ticker?.prevDay) {
+      prevOpen = typeof snapshot.ticker.prevDay.o === 'number' ? snapshot.ticker.prevDay.o : undefined
+      prevHigh = typeof snapshot.ticker.prevDay.h === 'number' ? snapshot.ticker.prevDay.h : undefined
+      prevLow = typeof snapshot.ticker.prevDay.l === 'number' ? snapshot.ticker.prevDay.l : undefined
+      prevVolume = typeof snapshot.ticker.prevDay.v === 'number' ? snapshot.ticker.prevDay.v : undefined
+    }
+
+    // Compute 52-week high/low with caching (non-blocking best-effort)
+    let high52w: number | undefined
+    let low52w: number | undefined
+    try {
+      const cacheKey = ticker.toUpperCase()
+      const cached = yearStatsCache.get(cacheKey)
+      const nowMs = Date.now()
+      if (cached && (nowMs - cached.ts) < YEAR_STATS_TTL_MS) {
+        high52w = cached.high52w
+        low52w = cached.low52w
+      } else {
+        // Determine a 365-day window ending at previous trading day
+        const endParts = prevParts // previous business day parts already computed above
+        const endStr = toDateString(endParts.y, endParts.m, endParts.d)
+        // Start date approx 365 days earlier
+        const endUtc = new Date(Date.UTC(endParts.y, endParts.m - 1, endParts.d))
+        const startUtc = new Date(endUtc)
+        startUtc.setUTCDate(startUtc.getUTCDate() - 365)
+        const startParts = getETYMD(startUtc.getTime())
+        const startStr = toDateString(startParts.y, startParts.m, startParts.d)
+
+        const aggs = await makePolygonRequest(`/v2/aggs/ticker/${ticker}/range/1/day/${startStr}/${endStr}`, { adjusted: true }).catch(() => null)
+        if (aggs?.results?.length) {
+          let maxH = -Infinity
+          let minL = Infinity
+          for (const r of aggs.results) {
+            if (typeof r.h === 'number') maxH = Math.max(maxH, r.h)
+            if (typeof r.l === 'number') minL = Math.min(minL, r.l)
+          }
+          if (isFinite(maxH) && isFinite(minL)) {
+            high52w = maxH
+            low52w = minL
+            yearStatsCache.set(cacheKey, { high52w, low52w, ts: nowMs })
+          }
+        }
+      }
+    } catch (_) {
+      // Non-critical; ignore errors for 52w
+    }
+
     const stockDetails: StockDetails = {
       ticker: ticker.toUpperCase(),
       name: ticker.toUpperCase(), // UI replaces with list name when available
@@ -367,7 +437,18 @@ export async function GET(
       marketState,
       session,
       isExtendedHours,
-      previousCloseDate
+      previousCloseDate,
+      todayOpen,
+      todayHigh,
+      todayLow,
+      todayVolume,
+      prevOpen,
+      prevHigh,
+      prevLow,
+      prevVolume,
+      vwap,
+      high52w,
+      low52w
     }
 
     const res = NextResponse.json(stockDetails)

@@ -177,6 +177,55 @@ export const StockModal: React.FC<StockModalProps> = ({ stock, stockDetails, loa
                   </div>
                 </div>
 
+                {/* Key Stats (optional, Starter plan-friendly) */}
+                {(stockDetails.todayOpen || stockDetails.todayHigh || stockDetails.todayLow || stockDetails.todayVolume || stockDetails.vwap || stockDetails.high52w || stockDetails.low52w || stockDetails.prevOpen || stockDetails.prevHigh || stockDetails.prevLow || stockDetails.prevVolume) && (
+                  <div className="mt-4">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">Key Stats</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      {(stockDetails.todayOpen !== undefined || stockDetails.todayHigh !== undefined || stockDetails.todayLow !== undefined) && (
+                        <div className="bg-gray-50 rounded-lg p-4">
+                          <p className="text-sm text-gray-500 mb-1">Today O / H / L</p>
+                          <p className="text-sm font-semibold text-gray-900">
+                            {stockDetails.todayOpen !== undefined ? formatPrice(stockDetails.todayOpen) : '—'} / {stockDetails.todayHigh !== undefined ? formatPrice(stockDetails.todayHigh) : '—'} / {stockDetails.todayLow !== undefined ? formatPrice(stockDetails.todayLow) : '—'}
+                          </p>
+                        </div>
+                      )}
+                      {(stockDetails.todayVolume !== undefined || stockDetails.vwap !== undefined) && (
+                        <div className="bg-gray-50 rounded-lg p-4">
+                          <p className="text-sm text-gray-500 mb-1">Volume / VWAP</p>
+                          <p className="text-sm font-semibold text-gray-900">
+                            {stockDetails.todayVolume !== undefined ? stockDetails.todayVolume.toLocaleString() : '—'}{stockDetails.vwap !== undefined ? ` / ${formatPrice(stockDetails.vwap)}` : ''}
+                          </p>
+                        </div>
+                      )}
+                      {(stockDetails.prevOpen !== undefined || stockDetails.prevHigh !== undefined || stockDetails.prevLow !== undefined) && (
+                        <div className="bg-gray-50 rounded-lg p-4">
+                          <p className="text-sm text-gray-500 mb-1">Prev O / H / L</p>
+                          <p className="text-sm font-semibold text-gray-900">
+                            {stockDetails.prevOpen !== undefined ? formatPrice(stockDetails.prevOpen) : '—'} / {stockDetails.prevHigh !== undefined ? formatPrice(stockDetails.prevHigh) : '—'} / {stockDetails.prevLow !== undefined ? formatPrice(stockDetails.prevLow) : '—'}
+                          </p>
+                        </div>
+                      )}
+                      {stockDetails.prevVolume !== undefined && (
+                        <div className="bg-gray-50 rounded-lg p-4">
+                          <p className="text-sm text-gray-500 mb-1">Prev Volume</p>
+                          <p className="text-sm font-semibold text-gray-900">
+                            {stockDetails.prevVolume.toLocaleString()}
+                          </p>
+                        </div>
+                      )}
+                      {(stockDetails.high52w !== undefined || stockDetails.low52w !== undefined) && (
+                        <div className="bg-gray-50 rounded-lg p-4 col-span-2">
+                          <p className="text-sm text-gray-500 mb-1">52 Week High / Low</p>
+                          <p className="text-sm font-semibold text-gray-900">
+                            {stockDetails.high52w !== undefined ? formatPrice(stockDetails.high52w) : '—'} / {stockDetails.low52w !== undefined ? formatPrice(stockDetails.low52w) : '—'}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Market Status */}
                 {stockDetails.isMarketClosed && (
                   <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
