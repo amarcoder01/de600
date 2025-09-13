@@ -42,6 +42,13 @@ export interface StockDetails {
   changePercent: number
   previousClose: number
   isMarketClosed: boolean
+  // Production-ready metadata for clarity and accuracy
+  asOf?: string // ISO timestamp of the price reference (server time in ET converted to ISO)
+  marketState?: 'open' | 'closed' | 'extended'
+  session?: 'pre' | 'regular' | 'post' | 'closed'
+  isExtendedHours?: boolean
+  priceSource?: 'last_trade' | 'snapshot_day_close' | 'snapshot_last_trade'
+  previousCloseDate?: string // YYYY-MM-DD of the previous close in ET
 }
 
 export interface ApiResponse<T> {

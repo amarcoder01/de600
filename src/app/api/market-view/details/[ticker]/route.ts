@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import type { StockDetails } from '@/types/market-view'
 
 const POLYGON_API_KEY = process.env.NEXT_PUBLIC_POLYGON_API_KEY || process.env.POLYGON_API_KEY
 
@@ -21,16 +22,6 @@ interface PrevAggResponse {
   status: string
   request_id: string
   next_url?: string
-}
-
-interface StockDetails {
-  ticker: string
-  name: string
-  price: number
-  change: number
-  changePercent: number
-  previousClose: number
-  isMarketClosed: boolean
 }
 
 async function makePolygonRequest(endpoint: string, params?: Record<string, string | number | boolean>): Promise<any> {
@@ -98,15 +89,25 @@ export async function GET(
 
     // Determine current price with fallbacks
     let currentPrice = typeof lastTrade?.results?.p === 'number' ? lastTrade.results.p : 0
+    let priceSource: 'last_trade' | 'snapshot_day_close' | 'snapshot_last_trade' | undefined = currentPrice ? 'last_trade' : undefined
 
     if (!currentPrice || currentPrice <= 0) {
       // Fallback to snapshot day close or last trade within snapshot
       const snapshot = await makePolygonRequest(`/v2/snapshot/locale/us/markets/stocks/tickers/${ticker}`).catch(() => null)
-      currentPrice = snapshot?.ticker?.day?.c || snapshot?.ticker?.lastTrade?.p || 0
+      if (snapshot?.ticker?.day?.c) {
+        currentPrice = snapshot.ticker.day.c
+        priceSource = 'snapshot_day_close'
+      } else if (snapshot?.ticker?.lastTrade?.p) {
+        currentPrice = snapshot.ticker.lastTrade.p
+        priceSource = 'snapshot_last_trade'
+      } else {
+        currentPrice = 0
+      }
     }
 
     // Extract previous close (adjusted)
     const prevClose = prevAgg?.results?.[0]?.c || 0
+    const prevCloseTs = prevAgg?.results?.[0]?.t
 
     if (!currentPrice || !prevClose) {
       return NextResponse.json(
@@ -118,17 +119,64 @@ export async function GET(
     const change = currentPrice - prevClose
     const changePercent = prevClose > 0 ? (change / prevClose) * 100 : 0
 
-    // Market closed detection: prefer Polygon marketstatus, fallback to ET window
-    let isMarketClosed = false
+    // Market closed detection and session classification (ET)
+    const now = new Date()
+    const et = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }))
+    const minutes = et.getHours() * 60 + et.getMinutes()
+    const weekday = et.getDay() >= 1 && et.getDay() <= 5
+    const preOpen = 4 * 60 // 4:00
+    const regularOpen = 9 * 60 + 30 // 9:30
+    const regularClose = 16 * 60 // 16:00
+    const postClose = 20 * 60 // 20:00
+
+    let marketState: 'open' | 'closed' | 'extended' = 'closed'
+    let session: 'pre' | 'regular' | 'post' | 'closed' = 'closed'
+    let isMarketClosed = true
+    let isExtendedHours = false
+
     if (marketStatus && typeof marketStatus.market === 'string') {
-      isMarketClosed = marketStatus.market !== 'open'
-    } else {
-      const now = new Date()
-      const et = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }))
-      const minutes = et.getHours() * 60 + et.getMinutes()
-      const regularOpen = 9 * 60 + 30
-      const regularClose = 16 * 60
-      isMarketClosed = !(minutes >= regularOpen && minutes < regularClose) || et.getDay() === 0 || et.getDay() === 6
+      // Use Polygon signal first
+      if (marketStatus.market === 'open') {
+        marketState = 'open'
+        isMarketClosed = false
+      } else {
+        marketState = 'closed'
+        isMarketClosed = true
+      }
+    }
+
+    // Derive session and extended hours using ET time window as a reliable fallback/enhancement
+    if (weekday) {
+      if (minutes >= regularOpen && minutes < regularClose) {
+        session = 'regular'
+        marketState = 'open'
+        isMarketClosed = false
+      } else if (minutes >= preOpen && minutes < regularOpen) {
+        session = 'pre'
+        marketState = 'extended'
+        isMarketClosed = true
+        isExtendedHours = true
+      } else if (minutes >= regularClose && minutes < postClose) {
+        session = 'post'
+        marketState = 'extended'
+        isMarketClosed = true
+        isExtendedHours = true
+      } else {
+        session = 'closed'
+        // keep marketState as computed above
+        isMarketClosed = true
+      }
+    }
+
+    // Build metadata
+    const asOfIso = new Date(et.getTime() - et.getTimezoneOffset() * 60000).toISOString()
+    let previousCloseDate: string | undefined
+    if (typeof prevCloseTs === 'number' && prevCloseTs > 0) {
+      const prevEt = new Date(new Date(prevCloseTs).toLocaleString('en-US', { timeZone: 'America/New_York' }))
+      const yyyy = prevEt.getFullYear()
+      const mm = String(prevEt.getMonth() + 1).padStart(2, '0')
+      const dd = String(prevEt.getDate()).padStart(2, '0')
+      previousCloseDate = `${yyyy}-${mm}-${dd}`
     }
 
     const stockDetails: StockDetails = {
@@ -138,10 +186,19 @@ export async function GET(
       change,
       changePercent,
       previousClose: prevClose,
-      isMarketClosed
+      isMarketClosed,
+      asOf: asOfIso,
+      marketState,
+      session,
+      isExtendedHours,
+      priceSource: priceSource,
+      previousCloseDate
     }
 
-    return NextResponse.json(stockDetails)
+    const res = NextResponse.json(stockDetails)
+    // Cache modestly at the edge and allow stale-while-revalidate to smooth bursts
+    res.headers.set('Cache-Control', 'public, s-maxage=15, stale-while-revalidate=60')
+    return res
   } catch (error) {
     console.error('Error fetching stock details:', error)
     return NextResponse.json(

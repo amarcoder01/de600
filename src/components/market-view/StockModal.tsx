@@ -50,6 +50,9 @@ export const StockModal: React.FC<StockModalProps> = ({ stock, stockDetails, loa
   }
 
   const isPositive = stockDetails ? stockDetails.change >= 0 : true
+  const asOfDisplay = stockDetails?.asOf
+    ? new Date(stockDetails.asOf).toLocaleString('en-US', { timeZone: 'America/New_York' })
+    : undefined
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -120,6 +123,24 @@ export const StockModal: React.FC<StockModalProps> = ({ stock, stockDetails, loa
                       ({formatPercentage(stockDetails.changePercent)})
                     </span>
                   </div>
+
+                  {/* Session and extended hours info */}
+                  {(stockDetails.session || asOfDisplay) && (
+                    <div className="mt-2 text-xs text-gray-500">
+                      {stockDetails.session && (
+                        <span className="mr-2 inline-flex items-center px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 uppercase">
+                          {stockDetails.session}
+                          {stockDetails.isExtendedHours ? ' • EXT' : ''}
+                        </span>
+                      )}
+                      {stockDetails.marketState && (
+                        <span className="mr-2">State: {stockDetails.marketState}</span>
+                      )}
+                      {asOfDisplay && (
+                        <span>As of: {asOfDisplay} ET</span>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Stock Details */}
@@ -129,6 +150,9 @@ export const StockModal: React.FC<StockModalProps> = ({ stock, stockDetails, loa
                     <p className="text-lg font-semibold text-gray-900">
                       {formatPrice(stockDetails.previousClose)}
                     </p>
+                    {stockDetails.previousCloseDate && (
+                      <p className="text-xs text-gray-500">Date: {stockDetails.previousCloseDate}</p>
+                    )}
                   </div>
                   
                   <div className="bg-gray-50 rounded-lg p-4">
@@ -172,6 +196,9 @@ export const StockModal: React.FC<StockModalProps> = ({ stock, stockDetails, loa
                     <span>Status: {stock.active ? 'Active' : 'Inactive'}</span>
                     <span>Last Updated: {new Date(stock.last_updated_utc).toLocaleDateString()}</span>
                   </div>
+                  {stockDetails.priceSource && (
+                    <div className="mt-2 text-xs text-gray-500">Price Source: {stockDetails.priceSource}</div>
+                  )}
                 </div>
               </div>
             ) : (
