@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import { Stock, StockDetails } from '@/types/market-view'
-import { X, TrendingUp, TrendingDown, Loader2, Building2, DollarSign } from 'lucide-react'
+import { X, Loader2, Building2, DollarSign } from 'lucide-react'
 
 interface StockModalProps {
   stock: Stock
@@ -39,21 +39,6 @@ export const StockModal: React.FC<StockModalProps> = ({ stock, stockDetails, loa
     }).format(price)
   }
 
-  const formatChange = (change: number) => {
-    if (change === 0) return '$0.00'
-    const sign = change >= 0 ? '+' : ''
-    return `${sign}${formatPrice(Math.abs(change))}`
-  }
-
-  const formatPercentage = (percentage: number) => {
-    if (percentage === 0) return '0.00%'
-    const sign = percentage >= 0 ? '+' : ''
-    return `${sign}${percentage.toFixed(2)}%`
-  }
-
-  const isPositive = stockDetails ? stockDetails.change > 0 : true
-  const isNegative = stockDetails ? stockDetails.change < 0 : false
-  const isNeutral = stockDetails ? stockDetails.change === 0 : false
   const asOfDisplay = stockDetails?.asOf
     ? new Date(stockDetails.asOf).toLocaleString('en-US', { timeZone: 'America/New_York' })
     : undefined
@@ -112,25 +97,6 @@ export const StockModal: React.FC<StockModalProps> = ({ stock, stockDetails, loa
                     </span>
                   </div>
                   
-                  <div className={`flex items-center justify-center space-x-2 ${
-                    isPositive ? 'text-green-600' : isNegative ? 'text-red-600' : 'text-gray-600'
-                  }`}>
-                    {isPositive ? (
-                      <TrendingUp className="h-4 w-4" />
-                    ) : isNegative ? (
-                      <TrendingDown className="h-4 w-4" />
-                    ) : (
-                      <span className="h-4 w-4 flex items-center justify-center">
-                        <span className="text-xs font-bold">—</span>
-                      </span>
-                    )}
-                    <span className="font-semibold">
-                      {formatChange(stockDetails.change)}
-                    </span>
-                    <span className="font-semibold">
-                      ({formatPercentage(stockDetails.changePercent)})
-                    </span>
-                  </div>
 
                   {/* Session and extended hours info */}
                   <div className="mt-2 text-xs text-gray-500 space-y-1">
@@ -174,16 +140,6 @@ export const StockModal: React.FC<StockModalProps> = ({ stock, stockDetails, loa
 
                 {/* Stock Details */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <p className="text-sm text-gray-500 mb-1">Previous Close</p>
-                    <p className="text-lg font-semibold text-gray-900">
-                      {formatPrice(stockDetails.previousClose)}
-                    </p>
-                    {stockDetails.previousCloseDate && (
-                      <p className="text-xs text-gray-500">Date: {stockDetails.previousCloseDate}</p>
-                    )}
-                  </div>
-                  
                   <div className="bg-gray-50 rounded-lg p-4">
                     <p className="text-sm text-gray-500 mb-1">Exchange</p>
                     <p className="text-lg font-semibold text-gray-900 uppercase">
