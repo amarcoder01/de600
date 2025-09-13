@@ -124,8 +124,9 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { ticker: string } }
 ) {
+  const { ticker } = params
+  
   try {
-    const { ticker } = params
 
     if (!POLYGON_API_KEY) {
       return NextResponse.json(
