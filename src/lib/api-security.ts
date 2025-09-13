@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { SECURITY_CONFIG, checkRateLimit, validateApiKey } from './security-config'
 import { sanitizeInput, validateRequestBody, VALIDATION_SCHEMAS } from './input-validator'
 import crypto from 'crypto'
+import { verifyToken } from './auth-security'
 
 export interface SecurityHeaders {
   'X-Content-Type-Options': string
@@ -41,6 +42,34 @@ export function getSecurityHeaders(): SecurityHeaders {
     'Referrer-Policy': 'strict-origin-when-cross-origin',
     'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; frame-ancestors 'none';",
     'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()'
+  }
+}
+
+/**
+ * Apply CORS headers to the response if the origin is allowed
+ */
+function applyCorsHeaders(response: NextResponse, request: NextRequest): void {
+  const origin = request.headers.get('origin')
+  const referer = request.headers.get('referer')
+  const requestOrigin = origin || (referer ? new URL(referer).origin : null)
+
+  if (!requestOrigin) return
+
+  if (
+    SECURITY_CONFIG.api.corsOrigins.includes('*') ||
+    SECURITY_CONFIG.api.corsOrigins.includes(requestOrigin)
+  ) {
+    response.headers.set('Access-Control-Allow-Origin', requestOrigin)
+    response.headers.set('Vary', 'Origin')
+    response.headers.set('Access-Control-Allow-Credentials', 'true')
+    response.headers.set(
+      'Access-Control-Allow-Headers',
+      'Content-Type, Authorization, X-Requested-With, x-api-key'
+    )
+    response.headers.set(
+      'Access-Control-Allow-Methods',
+      (SECURITY_CONFIG.api.allowedMethods.join(',') + ',OPTIONS')
+    )
   }
 }
 
@@ -147,6 +176,11 @@ export function validateRequestSize(request: NextRequest): { allowed: boolean; e
 export function validateMethod(request: NextRequest, allowedMethods: string[] = SECURITY_CONFIG.api.allowedMethods): { allowed: boolean; error?: string } {
   const method = request.method
   
+  // Always allow OPTIONS for CORS preflight
+  if (method === 'OPTIONS') {
+    return { allowed: true }
+  }
+
   if (!allowedMethods.includes(method)) {
     return {
       allowed: false,
@@ -206,28 +240,41 @@ export function withSecurity<T extends any[]>(
       // Validate CORS
       const corsValidation = validateCORS(request)
       if (!corsValidation.allowed) {
-        return NextResponse.json(
+        const resp = NextResponse.json(
           { success: false, error: corsValidation.error },
           { status: 403 }
         )
+        applyCorsHeaders(resp, request)
+        return resp
       }
       
+      // Handle CORS preflight
+      if (request.method === 'OPTIONS') {
+        const preflight = new NextResponse(null, { status: 204 })
+        applyCorsHeaders(preflight, request)
+        return preflight
+      }
+
       // Validate method
       const methodValidation = validateMethod(request, options.allowedMethods)
       if (!methodValidation.allowed) {
-        return NextResponse.json(
+        const resp = NextResponse.json(
           { success: false, error: methodValidation.error },
           { status: 405 }
         )
+        applyCorsHeaders(resp, request)
+        return resp
       }
       
       // Validate request size
       const sizeValidation = validateRequestSize(request)
       if (!sizeValidation.allowed) {
-        return NextResponse.json(
+        const resp = NextResponse.json(
           { success: false, error: sizeValidation.error },
           { status: 413 }
         )
+        applyCorsHeaders(resp, request)
+        return resp
       }
       
       // Rate limiting
@@ -235,6 +282,7 @@ export function withSecurity<T extends any[]>(
       if (options.rateLimit !== false) {
         const rateLimitResult = withRateLimit(`${ipAddress}:${userAgent}`)
         if (rateLimitResult instanceof NextResponse) {
+          applyCorsHeaders(rateLimitResult, request)
           return rateLimitResult
         }
         rateLimitHeaders = rateLimitResult.headers
@@ -248,7 +296,7 @@ export function withSecurity<T extends any[]>(
           const validation = validateRequestBody(body, options.inputSchema)
           
           if (!validation.isValid) {
-            return NextResponse.json(
+            const resp = NextResponse.json(
               {
                 success: false,
                 error: 'Invalid input',
@@ -256,14 +304,18 @@ export function withSecurity<T extends any[]>(
               },
               { status: 400 }
             )
+            applyCorsHeaders(resp, request)
+            return resp
           }
           
           sanitizedBody = validation.sanitizedValue
         } catch (error) {
-          return NextResponse.json(
+          const resp = NextResponse.json(
             { success: false, error: 'Invalid JSON in request body' },
             { status: 400 }
           )
+          applyCorsHeaders(resp, request)
+          return resp
         }
       }
       
@@ -277,9 +329,9 @@ export function withSecurity<T extends any[]>(
         
         if (token) {
           try {
-            // Basic token validation (implement proper JWT verification)
-            const decoded = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString())
-            if (decoded.userId && decoded.exp > Date.now() / 1000) {
+            // Proper JWT verification using shared auth-security
+            const decoded: any = verifyToken(token)
+            if (decoded?.userId) {
               isAuthenticated = true
               userId = decoded.userId
             }
@@ -289,10 +341,12 @@ export function withSecurity<T extends any[]>(
         }
         
         if (!isAuthenticated) {
-          return NextResponse.json(
+          const resp = NextResponse.json(
             { success: false, error: 'Authentication required' },
             { status: 401 }
           )
+          applyCorsHeaders(resp, request)
+          return resp
         }
       }
       
@@ -326,6 +380,7 @@ export function withSecurity<T extends any[]>(
       
       // Apply security headers
       const securedResponse = applySecurityHeaders(response)
+      applyCorsHeaders(securedResponse, request)
       
       // Add rate limit headers
       Object.entries(rateLimitHeaders).forEach(([key, value]) => {
@@ -359,7 +414,9 @@ export function withSecurity<T extends any[]>(
         { status: 500 }
       )
       
-      return applySecurityHeaders(errorResponse)
+      const secured = applySecurityHeaders(errorResponse)
+      applyCorsHeaders(secured, request)
+      return secured
     }
   }
 }
