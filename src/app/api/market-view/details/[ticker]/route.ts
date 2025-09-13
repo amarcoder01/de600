@@ -118,25 +118,25 @@ export async function GET(
     }
 
     // Fetch current price (v3 last trade), previous close (v2 prev adjusted), and market status in parallel
-    const [lastTrade, marketStatus] = await Promise.all([
+    const [lastTrade, marketStatus, snapshot] = await Promise.all([
       makePolygonRequest(`/v3/last_trade/${ticker}`) // { results: { p, t } }
         .catch(() => null),
-      makePolygonRequest(`/v1/marketstatus/now`).catch(() => null)
+      makePolygonRequest(`/v1/marketstatus/now`).catch(() => null),
+      makePolygonRequest(`/v2/snapshot/locale/us/markets/stocks/tickers/${ticker}`).catch(() => null)
     ])
 
-    // Determine current price with fallbacks
-    let currentPrice = typeof lastTrade?.results?.p === 'number' ? lastTrade.results.p : 0
-    let lastTradeTs: number | undefined = typeof lastTrade?.results?.t === 'number' ? toEpochMs(lastTrade.results.t) : undefined
-
-    if (!currentPrice || currentPrice <= 0) {
-      // Fallback only to snapshot last trade if available
-      const snapshot = await makePolygonRequest(`/v2/snapshot/locale/us/markets/stocks/tickers/${ticker}`).catch(() => null)
-      if (snapshot?.ticker?.lastTrade?.p) {
-        currentPrice = snapshot.ticker.lastTrade.p
-        lastTradeTs = typeof snapshot?.ticker?.lastTrade?.t === 'number' ? toEpochMs(snapshot.ticker.lastTrade.t) : undefined
-      } else {
-        currentPrice = 0
-      }
+    // Determine current price optimized for Starter plan: prefer snapshot lastTrade, then v3 last_trade, then snapshot day close
+    let currentPrice = 0
+    let lastTradeTs: number | undefined = undefined
+    if (snapshot?.ticker?.lastTrade?.p) {
+      currentPrice = snapshot.ticker.lastTrade.p
+      lastTradeTs = typeof snapshot?.ticker?.lastTrade?.t === 'number' ? toEpochMs(snapshot.ticker.lastTrade.t) : undefined
+    } else if (typeof lastTrade?.results?.p === 'number') {
+      currentPrice = lastTrade.results.p
+      lastTradeTs = typeof lastTrade?.results?.t === 'number' ? toEpochMs(lastTrade.results.t) : undefined
+    } else if (snapshot?.ticker?.day?.c) {
+      currentPrice = snapshot.ticker.day.c
+      lastTradeTs = typeof snapshot?.ticker?.day?.t === 'number' ? toEpochMs(snapshot.ticker.day.t) : undefined
     }
 
     // If lastTradeTs is missing, we'll still compute prevClose via prev endpoint and proceed with best available data
@@ -208,16 +208,24 @@ export async function GET(
     const prevParts = prevBusinessDayET(ltParts)
     const prevDateStr = toDateString(prevParts.y, prevParts.m, prevParts.d)
 
-    // 1) Prefer v1 open-close for clarity
+    // Prefer snapshot prevDay close if available (Starter plan)
     let prevClose = 0
     let prevCloseTs = 0
-    const openClose = await makePolygonRequest(`/v1/open-close/${ticker}/${prevDateStr}`, { adjusted: true }).catch(() => null)
-    if (openClose && typeof openClose.close === 'number') {
-      prevClose = openClose.close
-      // open-close returns "from"/"symbol"/"afterHours" fields; no explicit close timestamp.
-      // Use prevDateStr at 16:00 ET as representative close time.
-      const repCloseEt = new Date(`${prevDateStr}T16:00:00-04:00`) // naive ET; sufficient for display date
+    if (snapshot?.ticker?.prevDay?.c) {
+      prevClose = snapshot.ticker.prevDay.c
+      // approximate timestamp as prevDate at 16:00 ET
+      const repCloseEt = new Date(`${prevDateStr}T16:00:00-04:00`)
       prevCloseTs = repCloseEt.getTime()
+    }
+
+    // 2) Prefer v1 open-close if snapshot did not provide prevDay
+    if (!prevClose) {
+      const openClose = await makePolygonRequest(`/v1/open-close/${ticker}/${prevDateStr}`, { adjusted: true }).catch(() => null)
+      if (openClose && typeof openClose.close === 'number') {
+        prevClose = openClose.close
+        const repCloseEt = new Date(`${prevDateStr}T16:00:00-04:00`)
+        prevCloseTs = repCloseEt.getTime()
+      }
     }
 
     // 2) Fallback to v2 daily bar (adjusted)
@@ -235,12 +243,17 @@ export async function GET(
     }
 
     if (!currentPrice || !prevClose) {
-      // Try one more fallback: use prev close as price if current price unavailable
-      const priceFallback = currentPrice || prevClose
-      const change = priceFallback - prevClose
+      // Last resort fallbacks still must not force zero change by equating price and prevClose.
+      // If price is missing but we have today's snapshot day close, use that; else respond with 502.
+      if (!currentPrice && snapshot?.ticker?.day?.c) {
+        currentPrice = snapshot.ticker.day.c
+      }
+      if (!currentPrice || !prevClose) {
+        return NextResponse.json({ error: 'Insufficient data for this stock' }, { status: 502 })
+      }
+      const change = currentPrice - prevClose
       const changePercent = prevClose > 0 ? (change / prevClose) * 100 : 0
-      const nowMs = Date.now()
-      const asOfIso = new Date(nowMs).toISOString()
+      const asOfIso = new Date(lastTradeTs ?? Date.now()).toISOString()
 
       // Market/session
       const now = new Date()
@@ -267,7 +280,7 @@ export async function GET(
       const stockDetails: StockDetails = {
         ticker: ticker.toUpperCase(),
         name: ticker.toUpperCase(),
-        price: priceFallback,
+        price: currentPrice,
         change,
         changePercent,
         previousClose: prevClose || 0,
