@@ -415,9 +415,11 @@ export async function GET(request: NextRequest) {
     // Apply limit
     const limitedNews = newsItems.slice(0, limit)
     
-    // Determine if there are more articles available
-    // Only set hasMore to true if we actually have articles and got the full limit
-    const hasMore = limitedNews.length > 0 && limitedNews.length === limit
+    // Determine if there might be more articles available
+    // Relaxed logic: if we received any articles, allow client to attempt loading more.
+    // This avoids hiding the Load More button when upstream APIs return fewer than `limit`
+    // on the first page (common with certain endpoints like top-headlines).
+    const hasMore = limitedNews.length > 0
 
     // If no news found, provide helpful message
     if (limitedNews.length === 0) {
