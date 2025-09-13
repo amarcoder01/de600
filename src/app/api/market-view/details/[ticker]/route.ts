@@ -50,9 +50,21 @@ function toDateString(y: number, m: number, d: number): string {
 function prevBusinessDayET(ymd: { y: number; m: number; d: number; weekdayIndex: number }): { y: number; m: number; d: number; weekdayIndex: number } {
   // Construct a UTC Date from Y-M-D, subtract days, then re-evaluate ET parts to get correct weekday
   const dt = new Date(Date.UTC(ymd.y, ymd.m - 1, ymd.d))
-  const delta = ymd.weekdayIndex === 1 ? 3 : 1 // if Monday -> Friday (3 days), else 1 day back
+  
+  // Calculate previous business day
+  let delta = 1
+  if (ymd.weekdayIndex === 1) { // Monday -> go back to Friday (3 days)
+    delta = 3
+  } else if (ymd.weekdayIndex === 0) { // Sunday -> go back to Friday (2 days)
+    delta = 2
+  }
+  
   dt.setUTCDate(dt.getUTCDate() - delta)
-  return getETYMD(dt.getTime())
+  const result = getETYMD(dt.getTime())
+  
+  console.log(`📅 prevBusinessDayET: ${ymd.y}-${ymd.m}-${ymd.d} (${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][ymd.weekdayIndex]}) -> ${result.y}-${result.m}-${result.d} (${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][result.weekdayIndex]})`)
+  
+  return result
 }
 
 function toEpochMs(ts: number | undefined): number | undefined {
@@ -133,15 +145,28 @@ export async function GET(
     // Determine current price optimized for Starter plan: prefer snapshot lastTrade, then v3 last_trade, then snapshot day close
     let currentPrice = 0
     let lastTradeTs: number | undefined = undefined
+    
+    // Debug logging for price detection
+    console.log(`🔍 Price detection for ${ticker}:`, {
+      snapshotLastTrade: snapshot?.ticker?.lastTrade?.p,
+      lastTradeResult: lastTrade?.results?.p,
+      snapshotDayClose: snapshot?.ticker?.day?.c
+    })
+    
     if (snapshot?.ticker?.lastTrade?.p) {
       currentPrice = snapshot.ticker.lastTrade.p
       lastTradeTs = typeof snapshot?.ticker?.lastTrade?.t === 'number' ? toEpochMs(snapshot.ticker.lastTrade.t) : undefined
+      console.log(`✅ Using snapshot lastTrade price: ${currentPrice}`)
     } else if (typeof lastTrade?.results?.p === 'number') {
       currentPrice = lastTrade.results.p
       lastTradeTs = typeof lastTrade?.results?.t === 'number' ? toEpochMs(lastTrade.results.t) : undefined
+      console.log(`✅ Using v3 lastTrade price: ${currentPrice}`)
     } else if (snapshot?.ticker?.day?.c) {
       currentPrice = snapshot.ticker.day.c
       lastTradeTs = typeof snapshot?.ticker?.day?.t === 'number' ? toEpochMs(snapshot.ticker.day.t) : undefined
+      console.log(`✅ Using snapshot day close price: ${currentPrice}`)
+    } else {
+      console.log(`❌ No current price found for ${ticker}`)
     }
 
     // If lastTradeTs is missing, we'll still compute prevClose via prev endpoint and proceed with best available data
@@ -212,6 +237,15 @@ export async function GET(
     const ltParts = getETYMD(lastTradeTs ?? Date.now())
     const prevParts = prevBusinessDayET(ltParts)
     const prevDateStr = toDateString(prevParts.y, prevParts.m, prevParts.d)
+    
+    // Debug logging for date calculation
+    console.log(`📅 Date calculation for ${ticker}:`, {
+      lastTradeTs,
+      lastTradeDate: ltParts,
+      prevBusinessDay: prevParts,
+      prevDateStr,
+      currentET: new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })
+    })
 
     // Prefer snapshot prevDay close if available (Starter plan)
     let prevClose = 0
@@ -304,53 +338,136 @@ export async function GET(
 
     const change = currentPrice - prevClose
     const changePercent = prevClose > 0 ? (change / prevClose) * 100 : 0
+    
+    // Debug logging for change calculation
+    console.log(`💰 Change calculation for ${ticker}:`, {
+      currentPrice,
+      prevClose,
+      change,
+      changePercent: `${changePercent.toFixed(4)}%`,
+      isValidChange: !isNaN(change) && !isNaN(changePercent),
+      isZeroChange: change === 0 && changePercent === 0
+    })
+    
+    // Validate change calculation
+    if (isNaN(change) || isNaN(changePercent)) {
+      console.error(`❌ Invalid change calculation for ${ticker}: change=${change}, changePercent=${changePercent}`)
+    }
+    
+    // Check for suspicious zero change
+    if (change === 0 && changePercent === 0 && currentPrice !== prevClose && currentPrice > 0 && prevClose > 0) {
+      console.warn(`⚠️ Suspicious zero change for ${ticker}: currentPrice=${currentPrice}, prevClose=${prevClose}`)
+    }
 
     // Market closed detection and session classification (ET)
     const now = new Date()
     const et = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }))
     const minutes = et.getHours() * 60 + et.getMinutes()
     const weekday = et.getDay() >= 1 && et.getDay() <= 5
-    const preOpen = 4 * 60 // 4:00
-    const regularOpen = 9 * 60 + 30 // 9:30
-    const regularClose = 16 * 60 // 16:00
-    const postClose = 20 * 60 // 20:00
+    const preOpen = 4 * 60 // 4:00 AM
+    const regularOpen = 9 * 60 + 30 // 9:30 AM
+    const regularClose = 16 * 60 // 4:00 PM
+    const postClose = 20 * 60 // 8:00 PM
 
     let marketState: 'open' | 'closed' | 'extended' = 'closed'
     let session: 'pre' | 'regular' | 'post' | 'closed' = 'closed'
     let isMarketClosed = true
     let isExtendedHours = false
 
-    if (marketStatus && typeof marketStatus.market === 'string') {
-      // Use Polygon signal first
-      if (marketStatus.market === 'open') {
-        marketState = 'open'
-        isMarketClosed = false
-      } else {
-        marketState = 'closed'
-        isMarketClosed = true
-      }
-    }
+    // Debug logging for market status
+    console.log(`🕐 Market status check for ${ticker}:`, {
+      etTime: et.toLocaleString(),
+      minutes,
+      weekday,
+      marketStatusFromAPI: marketStatus?.market,
+      preOpen,
+      regularOpen,
+      regularClose,
+      postClose
+    })
 
-    // Derive session and extended hours using ET time window as a reliable fallback/enhancement
-    if (weekday) {
-      if (minutes >= regularOpen && minutes < regularClose) {
-        session = 'regular'
-        marketState = 'open'
-        isMarketClosed = false
-      } else if (minutes >= preOpen && minutes < regularOpen) {
-        session = 'pre'
-        marketState = 'extended'
+    // Use Polygon API market status as primary source, but validate with time-based logic
+    if (marketStatus && typeof marketStatus.market === 'string') {
+      console.log(`📊 Polygon API says market is: ${marketStatus.market}`)
+      
+      // For weekdays, validate the API response with time-based logic
+      if (weekday) {
+        if (marketStatus.market === 'open') {
+          // Verify it's actually during trading hours
+          if (minutes >= regularOpen && minutes < regularClose) {
+            marketState = 'open'
+            session = 'regular'
+            isMarketClosed = false
+            console.log(`✅ Market confirmed open during regular hours`)
+          } else if (minutes >= preOpen && minutes < regularOpen) {
+            marketState = 'extended'
+            session = 'pre'
+            isMarketClosed = false // Pre-market is still considered "open" for trading
+            isExtendedHours = true
+            console.log(`✅ Market open during pre-market`)
+          } else if (minutes >= regularClose && minutes < postClose) {
+            marketState = 'extended'
+            session = 'post'
+            isMarketClosed = false // After-hours is still considered "open" for trading
+            isExtendedHours = true
+            console.log(`✅ Market open during after-hours`)
+          } else {
+            // API says open but time suggests closed - trust the time
+            marketState = 'closed'
+            session = 'closed'
+            isMarketClosed = true
+            console.log(`⚠️ API says open but time suggests closed - using time-based logic`)
+          }
+        } else {
+          // API says closed - validate with time
+          if (weekday && minutes >= regularOpen && minutes < regularClose) {
+            // Time suggests open but API says closed - this might be a data issue
+            console.log(`⚠️ Time suggests market should be open but API says closed`)
+          }
+          marketState = 'closed'
+          session = 'closed'
+          isMarketClosed = true
+        }
+      } else {
+        // Weekend - always closed
+        marketState = 'closed'
+        session = 'closed'
         isMarketClosed = true
-        isExtendedHours = true
-      } else if (minutes >= regularClose && minutes < postClose) {
-        session = 'post'
-        marketState = 'extended'
-        isMarketClosed = true
-        isExtendedHours = true
+        console.log(`📅 Weekend - market closed`)
+      }
+    } else {
+      // No API status - use time-based logic only
+      console.log(`📊 No API status - using time-based logic only`)
+      
+      if (weekday) {
+        if (minutes >= regularOpen && minutes < regularClose) {
+          session = 'regular'
+          marketState = 'open'
+          isMarketClosed = false
+          console.log(`✅ Time-based: Market open during regular hours`)
+        } else if (minutes >= preOpen && minutes < regularOpen) {
+          session = 'pre'
+          marketState = 'extended'
+          isMarketClosed = false
+          isExtendedHours = true
+          console.log(`✅ Time-based: Market open during pre-market`)
+        } else if (minutes >= regularClose && minutes < postClose) {
+          session = 'post'
+          marketState = 'extended'
+          isMarketClosed = false
+          isExtendedHours = true
+          console.log(`✅ Time-based: Market open during after-hours`)
+        } else {
+          session = 'closed'
+          marketState = 'closed'
+          isMarketClosed = true
+          console.log(`✅ Time-based: Market closed`)
+        }
       } else {
         session = 'closed'
-        // keep marketState as computed above
+        marketState = 'closed'
         isMarketClosed = true
+        console.log(`✅ Time-based: Weekend - market closed`)
       }
     }
 
@@ -425,12 +542,36 @@ export async function GET(
       // Non-critical; ignore errors for 52w
     }
 
+    // Final validation and fallback for zero changes
+    let finalChange = change
+    let finalChangePercent = changePercent
+    
+    // If we have zero change but different prices, try to calculate manually
+    if (change === 0 && changePercent === 0 && currentPrice !== prevClose && currentPrice > 0 && prevClose > 0) {
+      console.log(`🔄 Attempting manual change calculation for ${ticker}`)
+      finalChange = currentPrice - prevClose
+      finalChangePercent = (finalChange / prevClose) * 100
+      console.log(`🔄 Manual calculation: change=${finalChange}, changePercent=${finalChangePercent}%`)
+    }
+    
+    // If still zero change, check if we can get data from snapshot
+    if (finalChange === 0 && finalChangePercent === 0 && snapshot?.ticker) {
+      const snapshotChange = snapshot.ticker.todaysChange
+      const snapshotChangePercent = snapshot.ticker.todaysChangePerc
+      
+      if (snapshotChange !== undefined && snapshotChangePercent !== undefined) {
+        console.log(`📊 Using snapshot change data: change=${snapshotChange}, changePercent=${snapshotChangePercent}%`)
+        finalChange = snapshotChange
+        finalChangePercent = snapshotChangePercent
+      }
+    }
+
     const stockDetails: StockDetails = {
       ticker: ticker.toUpperCase(),
       name: ticker.toUpperCase(), // UI replaces with list name when available
       price: currentPrice,
-      change,
-      changePercent,
+      change: finalChange,
+      changePercent: finalChangePercent,
       previousClose: prevClose,
       isMarketClosed,
       asOf: asOfIso,
@@ -450,6 +591,16 @@ export async function GET(
       high52w,
       low52w
     }
+    
+    console.log(`✅ Final stock details for ${ticker}:`, {
+      price: stockDetails.price,
+      change: stockDetails.change,
+      changePercent: `${stockDetails.changePercent}%`,
+      previousClose: stockDetails.previousClose,
+      marketState: stockDetails.marketState,
+      session: stockDetails.session,
+      isMarketClosed: stockDetails.isMarketClosed
+    })
 
     const res = NextResponse.json(stockDetails)
     // Reduce cache during validation to avoid stale responses

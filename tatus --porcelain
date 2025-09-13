@@ -1,0 +1,3 @@
+src/app/api/market-view/details/[ticker]/route.ts
+src/components/market-view/StockModal.tsx
+src/lib/email-verification-service.ts

@@ -417,7 +417,7 @@ The Vidality Team
 
 ---
 This email was sent to you because you signed up for Vidality Trading Platform.
-© 2024 Vidality Trading Platform. All rights reserved.
+© 2025 Vidality Trading Platform. All rights reserved.
     `
   }
 }
