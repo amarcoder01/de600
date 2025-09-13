@@ -1,5 +1,0 @@
-[33me59c7c9[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Render deploy fixes: mark API routes dynamic; output=standalone; error/not-found pages; lazy-load pdf-parse; stop auto-start schedulers
-[33me2afdfc[m Fix import error in AI chat route - use getRealTimeDataSystem function instead of direct import
-[33m5b08422[m Render deploy fixes: force dynamic SSR; mark API routes dynamic; lazy-load pdf-parse; remove auto-start schedulers; add error/not-found pages; output=standalone
-[33m022438d[m Fix Render prerender errors: force dynamic SSR; guard scheduler to Node runtime; deployment tweaks
-[33ma7b9157[m Comprehensive fix for useContext errors and Python JSON parsing
