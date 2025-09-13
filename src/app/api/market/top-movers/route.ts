@@ -235,10 +235,9 @@ function transformSnapshotItem(item: any): StockData | null {
 
   // Basic validation similar to previous implementation
   if (!currentPrice || currentPrice <= 0) return null
-  // Slightly relaxed to $0.5 to avoid empty datasets for low-priced movers
-  if (currentPrice < 0.5) return null
+  // Allow low-priced tickers down to $0.01 to avoid undercounting losers
+  if (currentPrice < 0.01) return null
   if (Math.abs(calculatedChangePercent) > 500) return null
-  if (!volume || volume <= 0) return null
 
   // Do not estimate market cap from volume; will enrich later if possible
   const marketCap = 0
