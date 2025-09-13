@@ -62,7 +62,7 @@
     "lucide-react": "^0.303.0",
     "mammoth": "^1.10.0",
     "next": "^14.2.31",
-    "next-auth": "^4.24.11",
+    "next-auth": "^4.24.7",
     "node-fetch": "^2.7.0",
     "openai": "^5.16.0",
     "pdf-parse": "^1.1.1",
@@ -101,6 +101,10 @@
     "eslint-config-next": "14.0.4",
     "prisma": "^6.15.0",
     "raw-loader": "^4.0.2"
+  },
+  "overrides": {
+    "cookie": "^0.7.0",
+    "highlight.js": "^11.9.0"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

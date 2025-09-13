@@ -130,25 +130,49 @@ export class DocumentProcessor {
 
   private static async processExcelFile(filePath: string): Promise<string> {
     try {
-      const workbook = XLSX.readFile(filePath)
+      // Guard: enforce a maximum file size to mitigate ReDoS vectors in parsers
+      const stat = await fs.stat(filePath)
+      const MAX_BYTES = 10 * 1024 * 1024 // 10MB
+      if (stat.size > MAX_BYTES) {
+        throw new Error(`Excel file too large (${stat.size} bytes). Max allowed is ${MAX_BYTES} bytes`)
+      }
+
+      const workbook = XLSX.readFile(filePath, {
+        cellNF: false,
+        cellStyles: false,
+        cellDates: false,
+        WTF: false
+      })
       let textContent = 'Excel File Analysis:\n\n'
       
       // Process each worksheet
       for (const sheetName of workbook.SheetNames) {
         const worksheet = workbook.Sheets[sheetName]
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 })
+        // Use array mode with raw values to avoid object prototype pollution
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+          header: 1,
+          raw: true,
+          defval: '',
+          blankrows: false
+        }) as any[][]
+        
+        // Cap rows/columns to reduce processing on untrusted input
+        const MAX_ROWS = 1000
+        const MAX_COLS = 100
+        const limitedData = jsonData.slice(0, Math.min(jsonData.length, MAX_ROWS)).map(row => (row as any[]).slice(0, MAX_COLS))
         
         textContent += `Sheet: ${sheetName}\n`
         textContent += `Rows: ${jsonData.length}\n`
         
-        if (jsonData.length > 0) {
-          const headers = jsonData[0] as any[]
-          textContent += `Columns: ${headers.filter(h => h !== undefined).length}\n`
-          textContent += `Headers: ${headers.filter(h => h !== undefined).join(', ')}\n\n`
+        if (limitedData.length > 0) {
+          const headers = (limitedData[0] || []) as any[]
+          const safeHeaders = headers.filter(h => h !== undefined)
+          textContent += `Columns: ${safeHeaders.length}\n`
+          textContent += `Headers: ${safeHeaders.join(', ')}\n\n`
           
           // Add sample data (first 10 rows)
           textContent += `Sample Data:\n`
-          const sampleRows = jsonData.slice(0, Math.min(11, jsonData.length)) // Include header + 10 rows
+          const sampleRows = limitedData.slice(0, Math.min(11, limitedData.length)) // Include header + 10 rows
           
           for (const row of sampleRows) {
             const rowData = row as any[]
@@ -156,12 +180,12 @@ export class DocumentProcessor {
           }
           
           // Analyze numeric columns
-          if (jsonData.length > 1) {
+          if (limitedData.length > 1) {
             textContent += `\nColumn Analysis:\n`
-            const dataRows = jsonData.slice(1) as any[][]
+            const dataRows = limitedData.slice(1) as any[][]
             
-            for (let colIndex = 0; colIndex < headers.length; colIndex++) {
-              const header = headers[colIndex]
+            for (let colIndex = 0; colIndex < safeHeaders.length; colIndex++) {
+              const header = safeHeaders[colIndex]
               if (!header) continue
               
               const values = dataRows.map(row => row[colIndex]).filter(val => val !== undefined && val !== '')

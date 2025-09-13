@@ -1,8 +1,19 @@
 import { NextAuthOptions } from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
 import { PrismaAdapter } from '@auth/prisma-adapter'
+import type { Adapter } from 'next-auth/adapters'
 import { prisma } from './db'
 import { AuthService } from './auth-service'
+
+// Logging helpers to avoid PII exposure in production
+const isDev = process.env.NODE_ENV !== 'production'
+function redactEmail(email?: string | null): string | undefined {
+  if (!email) return email ?? undefined
+  const [user, domain] = email.split('@')
+  if (!domain) return 'redacted'
+  const safeUser = user.length <= 2 ? '*'.repeat(user.length) : user.slice(0, 2) + '***'
+  return `${safeUser}@${domain}`
+}
 
 // Extend NextAuth types
 declare module 'next-auth' {
@@ -36,7 +47,7 @@ declare module 'next-auth/jwt' {
 }
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  adapter: PrismaAdapter(prisma) as unknown as Adapter,
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -60,11 +71,13 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async signIn({ user, account, profile }) {
       try {
-        console.log('🔐 NextAuth SignIn callback:', { 
-          email: user.email, 
-          provider: account?.provider,
-          profileId: (profile as any)?.id 
-        })
+        if (isDev) {
+          console.log('🔐 NextAuth SignIn callback:', { 
+            email: redactEmail(user.email), 
+            provider: account?.provider,
+            profileId: (profile as any)?.id 
+          })
+        }
 
         // For Google OAuth, ensure user exists in our database
         if (account?.provider === 'google' && user.email) {
@@ -75,7 +88,7 @@ export const authOptions: NextAuthOptions = {
 
           if (!existingUser) {
             // Create user in our custom User table
-            console.log('👤 Creating new user from Google OAuth:', user.email)
+            if (isDev) console.log('👤 Creating new user from Google OAuth:', redactEmail(user.email))
             
             const newUser = await prisma.user.create({
               data: {
@@ -107,17 +120,17 @@ export const authOptions: NextAuthOptions = {
               }
             })
             
-            console.log('✅ User created successfully:', newUser.id)
+            if (isDev) console.log('✅ User created successfully:', newUser.id)
             // Set the user ID for the session
             user.id = newUser.id
           } else {
-            console.log('✅ Existing user found:', existingUser.id)
+            if (isDev) console.log('✅ Existing user found:', existingUser.id)
             // Set the user ID for the session
             user.id = existingUser.id
             
             // Check if account is locked or disabled
             if (existingUser.isAccountLocked || existingUser.isAccountDisabled) {
-              console.log('❌ Account is locked or disabled:', existingUser.id)
+              if (isDev) console.log('❌ Account is locked or disabled:', existingUser.id)
               return false
             }
           }
@@ -125,17 +138,19 @@ export const authOptions: NextAuthOptions = {
 
         return true
       } catch (error) {
-        console.error('❌ NextAuth SignIn callback error:', error)
+        console.error('❌ NextAuth SignIn callback error')
         return false
       }
     },
     async jwt({ token, user, account }) {
       // Persist the OAuth access_token and or the user id to the token right after signin
       if (account && user) {
-        console.log('🔐 NextAuth JWT callback - new session:', { 
-          email: user.email, 
-          provider: account.provider 
-        })
+        if (isDev) {
+          console.log('🔐 NextAuth JWT callback - new session:', { 
+            email: redactEmail(user.email), 
+            provider: account.provider 
+          })
+        }
         
         // Get user from our custom User table
         if (user.email) {
@@ -165,7 +180,7 @@ export const authOptions: NextAuthOptions = {
       return session
     },
     async redirect({ url, baseUrl }) {
-      console.log('🔀 NextAuth redirect callback:', { url, baseUrl })
+      if (isDev) console.log('🔀 NextAuth redirect callback')
 
       // If NextAuth is attempting to send the user to the dashboard (or root),
       // first route through our post-login endpoint which converts the
@@ -192,21 +207,24 @@ export const authOptions: NextAuthOptions = {
   },
   events: {
     async signIn({ user, account, profile, isNewUser }) {
-      console.log('🎉 NextAuth SignIn event:', { 
-        email: user.email, 
-        provider: account?.provider,
-        isNewUser 
-      })
+      if (isDev) {
+        console.log('🎉 NextAuth SignIn event:', { 
+          email: redactEmail(user.email), 
+          provider: account?.provider,
+          isNewUser 
+        })
+      }
     },
     async signOut({ token }) {
-      console.log('👋 NextAuth SignOut event:', { email: token?.email })
+      if (isDev) console.log('👋 NextAuth SignOut event')
     },
     async session({ session, token }) {
-      console.log('🔐 NextAuth Session event:', { 
-        hasSession: !!session,
-        hasToken: !!token,
-        email: session?.user?.email 
-      })
+      if (isDev) {
+        console.log('🔐 NextAuth Session event:', { 
+          hasSession: !!session,
+          hasToken: !!token
+        })
+      }
     }
   },
   debug: process.env.NODE_ENV === 'development',
