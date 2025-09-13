@@ -51,7 +51,9 @@ export const StockModal: React.FC<StockModalProps> = ({ stock, stockDetails, loa
     return `${sign}${percentage.toFixed(2)}%`
   }
 
-  const isPositive = stockDetails ? stockDetails.change >= 0 : true
+  const isPositive = stockDetails ? stockDetails.change > 0 : true
+  const isNegative = stockDetails ? stockDetails.change < 0 : false
+  const isNeutral = stockDetails ? stockDetails.change === 0 : false
   const asOfDisplay = stockDetails?.asOf
     ? new Date(stockDetails.asOf).toLocaleString('en-US', { timeZone: 'America/New_York' })
     : undefined
@@ -111,12 +113,16 @@ export const StockModal: React.FC<StockModalProps> = ({ stock, stockDetails, loa
                   </div>
                   
                   <div className={`flex items-center justify-center space-x-2 ${
-                    isPositive ? 'text-green-600' : 'text-red-600'
+                    isPositive ? 'text-green-600' : isNegative ? 'text-red-600' : 'text-gray-600'
                   }`}>
                     {isPositive ? (
                       <TrendingUp className="h-4 w-4" />
-                    ) : (
+                    ) : isNegative ? (
                       <TrendingDown className="h-4 w-4" />
+                    ) : (
+                      <span className="h-4 w-4 flex items-center justify-center">
+                        <span className="text-xs font-bold">—</span>
+                      </span>
                     )}
                     <span className="font-semibold">
                       {formatChange(stockDetails.change)}

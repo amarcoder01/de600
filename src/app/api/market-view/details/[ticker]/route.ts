@@ -244,7 +244,9 @@ export async function GET(
       lastTradeDate: ltParts,
       prevBusinessDay: prevParts,
       prevDateStr,
-      currentET: new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })
+      currentET: new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }),
+      currentUTC: new Date().toISOString(),
+      lastTradeDateObj: lastTradeTs ? new Date(lastTradeTs).toLocaleString('en-US', { timeZone: 'America/New_York' }) : 'N/A'
     })
 
     // Prefer snapshot prevDay close if available (Starter plan)
@@ -476,6 +478,17 @@ export async function GET(
     const asOfIso = new Date(lastTradeTs ?? Date.now()).toISOString()
     // Use the computed prevDateStr to avoid timezone ambiguity
     let previousCloseDate: string | undefined = prevDateStr
+    
+    // Fallback: if the calculated date seems wrong (future date), use a reasonable fallback
+    const currentDate = new Date()
+    const calculatedDate = new Date(prevDateStr)
+    if (calculatedDate > currentDate) {
+      // If calculated date is in the future, use yesterday's date as fallback
+      const yesterday = new Date(currentDate)
+      yesterday.setDate(yesterday.getDate() - 1)
+      previousCloseDate = yesterday.toISOString().split('T')[0]
+      console.log(`⚠️ Calculated date ${prevDateStr} is in the future, using fallback: ${previousCloseDate}`)
+    }
 
     // Enrich with snapshot-based stats (Starter plan)
     let todayOpen: number | undefined
