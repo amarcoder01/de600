@@ -211,25 +211,6 @@ export const StockModal: React.FC<StockModalProps> = ({ stock, stockDetails, loa
                   </div>
                 )}
 
-                {/* Market Status */}
-                {stockDetails.isMarketClosed && (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <p className="text-sm text-yellow-800 font-medium">
-                      {stockDetails.marketState === 'extended' 
-                        ? '📈 Extended hours trading. Showing current data.'
-                        : '⚠️ Market is currently closed. Showing last available data.'
-                      }
-                    </p>
-                  </div>
-                )}
-                
-                {!stockDetails.isMarketClosed && stockDetails.marketState === 'open' && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <p className="text-sm text-green-800 font-medium">
-                      🟢 Market is currently open. Live data available.
-                    </p>
-                  </div>
-                )}
 
                 {/* Additional Info */}
                 <div className="border-t border-gray-200 pt-4">
