@@ -41,6 +41,28 @@ interface PolygonTickerData {
   fmv?: number // fair market value
 }
 
+function getPreviousBusinessDate(reference: Date = new Date()): string {
+  const d = new Date(reference)
+  // Move back one day at a time until Mon-Fri
+  d.setDate(d.getDate() - 1)
+  while (d.getDay() === 0 || d.getDay() === 6) {
+    d.setDate(d.getDate() - 1)
+  }
+  return d.toISOString().slice(0, 10)
+}
+
+async function fetchPrevCloseOpenClose(ticker: string): Promise<number | null> {
+  try {
+    const date = getPreviousBusinessDate(new Date())
+    const endpoint = `/v1/open-close/${encodeURIComponent(ticker)}/${date}?adjusted=true`
+    const data = await makePolygonRequest(endpoint)
+    const close = typeof data?.close === 'number' ? data.close : (typeof data?.c === 'number' ? data.c : null)
+    return close ?? null
+  } catch {
+    return null
+  }
+}
+
 interface StockData {
   ticker: string
   name: string
@@ -460,10 +482,15 @@ export async function GET(request: NextRequest) {
 
         let price = typeof lastPrice === 'number' && lastPrice > 0 ? lastPrice : s.value
         let prev = typeof prevClose === 'number' && prevClose > 0 ? prevClose : null
-        let priceIsReliable = typeof lastPrice === 'number' && lastPrice > 0
+        let priceIsReliable = price > 0
 
-        // If we still can't compute change reliably, fallback to per-ticker snapshot computation
+        // If we still can't compute change reliably, attempt a stronger prev close fallback and then snapshot
         if (!prev || !(price > 0)) {
+          // Try open-close API for prev close if missing
+          if (!prev) {
+            const prevOC = await fetchPrevCloseOpenClose(s.ticker)
+            if (typeof prevOC === 'number' && prevOC > 0) prev = prevOC
+          }
           const snap = await fetchTickerSnapshotComputed(s.ticker)
           if (snap) {
             if (!prev && typeof snap.prevClose === 'number' && snap.prevClose > 0) prev = snap.prevClose
@@ -495,6 +522,18 @@ export async function GET(request: NextRequest) {
             }
             if ((change_percent === 0 || typeof change_percent !== 'number') && typeof snap.dayOpen === 'number' && (snap.dayOpen as number) > 0 && change !== 0) {
               change_percent = (change / (snap.dayOpen as number)) * 100
+            }
+            // Sanity filter: avoid extreme snapshot percent if we couldn't recompute
+            if (typeof change_percent === 'number' && Math.abs(change_percent) > 100 && price > 1) {
+              // If extreme and we have dayOpen, prefer dayOpen-based percent
+              if (typeof snap.dayOpen === 'number' && snap.dayOpen > 0) {
+                const altChange = price - snap.dayOpen
+                const altPerc = (altChange / snap.dayOpen) * 100
+                if (isFinite(altPerc)) {
+                  change = altChange
+                  change_percent = altPerc
+                }
+              }
             }
           }
         }
