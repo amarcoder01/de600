@@ -567,7 +567,35 @@ export async function GET(request: NextRequest) {
 
     const finalResults = enriched.map((r, i) => r.status === 'fulfilled' ? r.value : limitedResults[i]).filter(Boolean) as StockData[]
 
-    if (process.env.NODE_ENV !== 'production') console.log(`✅ Successfully processed ${finalResults.length} ${type} from ${snapshotItems.length} snapshot items`)
+    // Ensure correct classification: keep only positive movers for gainers and negative for losers
+    let classified = finalResults.filter(s => type === 'gainers' ? (s.change_percent ?? 0) > 0 : (s.change_percent ?? 0) < 0)
+
+    // If classification removes too many due to data quirks, fallback to using the pre-enrichment limitedResults signs
+    if (classified.length < 10) {
+      const fallbackBySign = limitedResults.filter(s => type === 'gainers' ? (s.change_percent ?? 0) > 0 : (s.change_percent ?? 0) < 0)
+      // Merge unique tickers preserving enriched values where available
+      const enrichedByTicker = new Map(finalResults.map(s => [s.ticker, s]))
+      const merged: StockData[] = []
+      for (const s of fallbackBySign) {
+        merged.push(enrichedByTicker.get(s.ticker) || s)
+      }
+      // If still few, append remaining enriched items
+      if (merged.length < 20) {
+        for (const s of finalResults) {
+          if (!merged.find(m => m.ticker === s.ticker)) merged.push(s)
+          if (merged.length >= 20) break
+        }
+      }
+      classified = merged
+    }
+
+    // Final sort based on recomputed change_percent
+    classified.sort((a, b) => type === 'gainers' ? (b.change_percent - a.change_percent) : (a.change_percent - b.change_percent))
+
+    // Limit to 20
+    const responseResults = classified.slice(0, 20)
+
+    if (process.env.NODE_ENV !== 'production') console.log(`✅ Successfully processed ${responseResults.length} ${type} (post-classification) from ${snapshotItems.length} snapshot items`)
     
     // Log sample data for verification
     if (process.env.NODE_ENV !== 'production' && finalResults.length > 0) {
@@ -581,8 +609,8 @@ export async function GET(request: NextRequest) {
     
     const response: ApiResponse = {
       status: 'OK',
-      results: finalResults,
-      count: finalResults.length
+      results: responseResults,
+      count: responseResults.length
     }
 
     return NextResponse.json(response)
