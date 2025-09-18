@@ -243,8 +243,15 @@ export default function PriceAlertsPage() {
           <p className="text-muted-foreground">
             Set up price alerts for your favorite assets and get notified instantly
           </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            💡 Automatic price checking runs every 5 minutes • Manual check available below
+          </p>
         </div>
                  <div className="flex items-center space-x-2">
+           <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+             <span>Auto-check: 5min</span>
+           </div>
            <Button 
              variant="outline" 
              size="sm" 
