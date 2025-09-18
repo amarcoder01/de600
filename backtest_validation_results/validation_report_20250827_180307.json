@@ -1,0 +1,259 @@
+{
+  "data_validation": {
+    "test_name": "Data Quality Validation",
+    "passed": "True",
+    "score": 0.7833333333333332,
+    "details": {
+      "total_symbols": 3,
+      "data_quality_checks": {
+        "AAPL": {
+          "score": 1.0,
+          "price_consistency": {
+            "score": 1.0,
+            "issues": []
+          },
+          "volume_consistency": {
+            "score": 1.0,
+            "issues": []
+          },
+          "ohlc_consistency": {
+            "score": 1.0,
+            "issues": []
+          }
+        },
+        "MSFT": {
+          "score": 1.0,
+          "price_consistency": {
+            "score": 1.0,
+            "issues": []
+          },
+          "volume_consistency": {
+            "score": 1.0,
+            "issues": []
+          },
+          "ohlc_consistency": {
+            "score": 1.0,
+            "issues": []
+          }
+        },
+        "MSFY": {
+          "score": 1.0,
+          "price_consistency": {
+            "score": 1.0,
+            "issues": []
+          },
+          "volume_consistency": {
+            "score": 1.0,
+            "issues": []
+          },
+          "ohlc_consistency": {
+            "score": 1.0,
+            "issues": []
+          }
+        }
+      },
+      "integrity_checks": {
+        "AAPL": {
+          "score": 1.0,
+          "negative_prices": 0,
+          "negative_volumes": 0,
+          "price_anomalies": 0
+        },
+        "MSFT": {
+          "score": 1.0,
+          "negative_prices": 0,
+          "negative_volumes": 0,
+          "price_anomalies": 0
+        },
+        "MSFY": {
+          "score": 1.0,
+          "negative_prices": 0,
+          "negative_volumes": 0,
+          "price_anomalies": 0
+        }
+      },
+      "completeness_checks": {
+        "AAPL": {
+          "score": 0.8,
+          "total_rows": 1005,
+          "missing_values": {
+            "Volume": 0,
+            "vwap": 0,
+            "Open": 0,
+            "Close": 0,
+            "High": 0,
+            "Low": 0,
+            "timestamp": 0,
+            "transactions": 0,
+            "Adj Close": 0,
+            "returns": 1,
+            "log_returns": 1,
+            "sma_20": 19,
+            "sma_50": 49,
+            "ema_12": 0,
+            "ema_26": 0,
+            "rsi": 13,
+            "macd": 0,
+            "macd_signal": 0,
+            "macd_histogram": 0,
+            "volatility": 20,
+            "atr": 14,
+            "volume_sma": 19,
+            "volume_ratio": 19,
+            "bb_upper": 19,
+            "bb_lower": 19,
+            "bb_position": 19
+          },
+          "date_range": "2021-01-04 05:00:00 to 2024-12-31 05:00:00"
+        },
+        "MSFT": {
+          "score": 0.8,
+          "total_rows": 1005,
+          "missing_values": {
+            "Volume": 0,
+            "vwap": 0,
+            "Open": 0,
+            "Close": 0,
+            "High": 0,
+            "Low": 0,
+            "timestamp": 0,
+            "transactions": 0,
+            "Adj Close": 0,
+            "returns": 1,
+            "log_returns": 1,
+            "sma_20": 19,
+            "sma_50": 49,
+            "ema_12": 0,
+            "ema_26": 0,
+            "rsi": 13,
+            "macd": 0,
+            "macd_signal": 0,
+            "macd_histogram": 0,
+            "volatility": 20,
+            "atr": 14,
+            "volume_sma": 19,
+            "volume_ratio": 19,
+            "bb_upper": 19,
+            "bb_lower": 19,
+            "bb_position": 19
+          },
+          "date_range": "2021-01-04 05:00:00 to 2024-12-31 05:00:00"
+        },
+        "MSFY": {
+          "score": 0.8,
+          "total_rows": 294,
+          "missing_values": {
+            "Volume": 0,
+            "vwap": 0,
+            "Open": 0,
+            "Close": 0,
+            "High": 0,
+            "Low": 0,
+            "timestamp": 0,
+            "transactions": 0,
+            "Adj Close": 0,
+            "returns": 1,
+            "log_returns": 1,
+            "sma_20": 19,
+            "sma_50": 49,
+            "ema_12": 0,
+            "ema_26": 0,
+            "rsi": 13,
+            "macd": 0,
+            "macd_signal": 0,
+            "macd_histogram": 0,
+            "volatility": 20,
+            "atr": 14,
+            "volume_sma": 19,
+            "volume_ratio": 19,
+            "bb_upper": 19,
+            "bb_lower": 19,
+            "bb_position": 19
+          },
+          "date_range": "2023-10-31 04:00:00 to 2024-12-31 05:00:00"
+        }
+      },
+      "anomaly_detection": {
+        "AAPL": {
+          "score": 0.0,
+          "known_points_checked": 3
+        },
+        "MSFT": {
+          "score": 0.0,
+          "known_points_checked": 3
+        },
+        "MSFY": {
+          "score": 1.0,
+          "known_points_checked": 0
+        }
+      }
+    },
+    "error_message": null,
+    "recommendations": []
+  },
+  "calculation_validation": {
+    "test_name": "Calculation Validation",
+    "passed": "True",
+    "score": 0.6610169491525424,
+    "details": {
+      "performance_metrics": {
+        "score": 0.0,
+        "total_metrics": 3,
+        "correct_metrics": 0,
+        "issues": [
+          "Total trades mismatch - Expected: 58, Actual: 0",
+          "Winning trades mismatch - Expected: 30, Actual: 0",
+          "Total P&L mismatch - Expected: 363.95, Actual: 0.00"
+        ]
+      },
+      "trade_analysis": {
+        "score": 1.0,
+        "total_trades": 58,
+        "correct_trades": 58,
+        "issues": []
+      },
+      "portfolio_calculations": {
+        "score": 0.9830508474576272,
+        "total_values": 59,
+        "correct_values": 58,
+        "issues": [
+          "Portfolio value 58: Mismatch - Expected: 10363.95, Actual: 9869.81"
+        ]
+      },
+      "risk_metrics": {}
+    },
+    "error_message": null,
+    "recommendations": []
+  },
+  "accuracy_metrics": {
+    "data_accuracy": 0.7833333333333332,
+    "calculation_accuracy": 0.6610169491525424,
+    "strategy_accuracy": 1.0,
+    "overall_accuracy": 0.7221751412429378,
+    "confidence_level": 0.7943926553672317,
+    "validation_score": 0.7099435028248587
+  },
+  "validation_report": {
+    "validation_timestamp": "2025-08-27T18:03:07.184277",
+    "overall_status": "PASSED",
+    "accuracy_metrics": {
+      "data_accuracy": 0.7833333333333332,
+      "calculation_accuracy": 0.6610169491525424,
+      "overall_accuracy": 0.7221751412429378,
+      "confidence_level": 0.7943926553672317,
+      "validation_score": 0.7099435028248587
+    },
+    "threshold_compliance": {
+      "data_quality": "True",
+      "calculation_accuracy": "True",
+      "overall_accuracy": "False"
+    },
+    "recommendations": [],
+    "summary": {
+      "total_validation_tests": 2,
+      "passed_tests": 2,
+      "failed_tests": 0,
+      "accuracy_grade": "C (Below Average)"
+    }
+  }
+}

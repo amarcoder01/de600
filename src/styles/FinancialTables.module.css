@@ -1,0 +1,199 @@
+/* Professional Financial Data Table Styles */
+
+.financialTable {
+  @apply min-w-full border-collapse bg-white;
+  border-spacing: 0;
+  font-feature-settings: 'tnum' 1; /* Tabular numbers for better alignment */
+}
+
+.financialTable thead {
+  @apply bg-gradient-to-r from-slate-50 to-slate-100;
+  background-attachment: fixed;
+}
+
+.financialTable th {
+  @apply px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider;
+  border-bottom: 2px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: linear-gradient(to right, #f8fafc, #f1f5f9);
+}
+
+.financialTable td {
+  @apply px-6 py-4 text-sm text-gray-700;
+  border-bottom: 1px solid #f3f4f6;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.financialTable tbody tr:hover td {
+  @apply bg-gray-50;
+}
+
+.financialTable tbody tr:nth-child(even) {
+  @apply bg-gray-25;
+}
+
+/* Responsive table container */
+.tableContainer {
+  @apply overflow-x-auto shadow-lg rounded-lg border border-gray-200;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.tableContainer::-webkit-scrollbar {
+  height: 8px;
+}
+
+.tableContainer::-webkit-scrollbar-track {
+  @apply bg-gray-100 rounded-full;
+}
+
+.tableContainer::-webkit-scrollbar-thumb {
+  @apply bg-gray-400 rounded-full;
+}
+
+.tableContainer::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-500;
+}
+
+/* Financial data formatting */
+.currencyCell {
+  @apply font-mono text-gray-900 font-medium;
+}
+
+.percentageCell {
+  @apply font-medium;
+}
+
+.percentageCell.positive {
+  @apply text-green-700;
+}
+
+.percentageCell.negative {
+  @apply text-red-700;
+}
+
+.ratioCell {
+  @apply font-mono text-gray-800;
+}
+
+.metricCell {
+  @apply font-medium text-gray-900 bg-gray-50;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 640px) {
+  .financialTable th,
+  .financialTable td {
+    @apply px-3 py-2 text-xs;
+  }
+  
+  .tableContainer {
+    font-size: 0.875rem;
+  }
+}
+
+/* Focus and accessibility */
+.tableContainer:focus {
+  @apply outline-none ring-2 ring-blue-500 ring-offset-2;
+}
+
+.financialTable th:focus,
+.financialTable td:focus {
+  @apply outline-none ring-2 ring-blue-500 ring-inset;
+}
+
+/* Print styles */
+@media print {
+  .tableContainer {
+    overflow: visible !important;
+    box-shadow: none !important;
+  }
+  
+  .financialTable {
+    border: 1px solid #000 !important;
+  }
+  
+  .financialTable th,
+  .financialTable td {
+    border: 1px solid #000 !important;
+    padding: 4px 8px !important;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .financialTable {
+    @apply bg-gray-900 text-gray-100;
+  }
+  
+  .financialTable thead {
+    @apply bg-gray-800;
+  }
+  
+  .financialTable th {
+    @apply text-gray-300 border-gray-700;
+    background: #374151;
+  }
+  
+  .financialTable td {
+    @apply text-gray-300 border-gray-700;
+  }
+  
+  .financialTable tbody tr:hover td {
+    @apply bg-gray-800;
+  }
+  
+  .tableContainer {
+    @apply border-gray-700;
+  }
+}
+
+/* Animation for table loading */
+.tableLoading {
+  @apply animate-pulse;
+}
+
+.tableLoading td {
+  @apply bg-gray-200;
+}
+
+/* Sortable column indicators */
+.sortableHeader {
+  @apply cursor-pointer select-none transition-colors duration-150;
+}
+
+.sortableHeader:hover {
+  @apply bg-gray-200;
+}
+
+.sortableHeader::after {
+  content: '↕';
+  @apply ml-2 text-gray-400;
+}
+
+.sortableHeader.asc::after {
+  content: '↑';
+  @apply text-blue-600;
+}
+
+.sortableHeader.desc::after {
+  content: '↓';
+  @apply text-blue-600;
+}
+
+/* Table caption styling */
+.tableCaption {
+  @apply text-lg font-semibold text-gray-900 mb-4 text-left;
+}
+
+/* Performance optimizations */
+.financialTable tbody {
+  contain: layout style paint;
+}
+
+.tableContainer {
+  will-change: scroll-position;
+}

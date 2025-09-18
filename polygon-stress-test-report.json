@@ -1,0 +1,3938 @@
+{
+  "timestamp": "2025-09-16T13:34:44.621Z",
+  "summary": {
+    "totalRequests": 84,
+    "totalDuration": 41957,
+    "requestsPerSecond": 2,
+    "maxConcurrent": 20,
+    "successfulRequests": 16,
+    "forbiddenRequests": 66,
+    "rateLimitedRequests": 0,
+    "errorRequests": 2
+  },
+  "performance": {
+    "avgResponseTime": 432.1904761904762,
+    "minResponseTime": 234,
+    "maxResponseTime": 855
+  },
+  "memoryUsage": {
+    "rss": 44.84,
+    "heapTotal": 7.46,
+    "heapUsed": 6.14,
+    "external": 1.97
+  },
+  "detailedResults": [
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 855,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "0747845ad69fa3e2c963f67753d31ad5",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/AAPL",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 743,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "3ed6fc1761a7aca0f6184040f05164d8",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/MSFT",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 747,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "00dcc95551ba61b1b5cc185d05ab395f",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/GOOGL",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 763,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "90e86db912542993ebe9908cd2790e65",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/TSLA",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 747,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "49613b49fa479f03c29121fff58cd5ae",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/AMZN",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 740,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "edba7ab3d3457299847d96aaefade48f",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/NVDA",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 750,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "244d3a386317c6082a3eb35c0f3aef63",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/META",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 718,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "6fb49dd3d244a9f009fed137f53bc2fd",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/NFLX",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 758,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "49de6debd65d96d6dc955c0659102774",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/BABA",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 746,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "547b616c62e6c1cbdd33e2e8c607ee7c",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/TSM",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 296,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "3fdcda1740637c1925422fdba93bad5e",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/AAPL",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 251,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "5463fcd18ee6ae1d617eca5d46e99088",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/MSFT",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 272,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "f0591d9b6ffc4da90a97b386e79fcb1f",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/GOOGL",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 263,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "3c2e241ec935e5aa961afd2a968826d6",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/TSLA",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 246,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "1ed6c6781d4e2107e37e50425f93c138",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/AMZN",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 246,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "0e32686d34b2a4c6290b6073c246fe11",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/NVDA",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 248,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "1410a3ba2bcc3b5a37ac59632272b96d",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/META",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 244,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "956bc929d448ff9bbb224d2913c5f58c",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/NFLX",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 253,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "65d82dc8cabe9d027b9965f4e64ca5d6",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/BABA",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 276,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "86144f7ec06a522434a54db5863c647e",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/TSM",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 240,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "cf5639f9a55a64c664d595f4d70f3733",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/V",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 258,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "b7b59b88ddb5a0c5ddd440f0db6e3991",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/JNJ",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 247,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "d704f3477b5a64864f683765070d73c9",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/WMT",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 268,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "6a0711243e539abca18b9ed0be9e3f3f",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/JPM",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 266,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "04e443c1c3232491cbc26bc96bb150c2",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/PG",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 251,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "82354b2492551b91f5a14ab39d5126ee",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/UNH",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 260,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "7480326da47da4250a004cdbe63352ed",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/MA",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 252,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "07ffd019c942ccf4e8a666dc1d257c1f",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/HD",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 309,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "05bd67368d063489b78c96d1b4019cf2",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/BAC",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 250,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "8790701087ea4438d5878c0043e7f824",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/ABBV",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 250,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "9c02fb686fba6c6a6a4ad77e975c7438",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/PFE",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 240,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "0f8a939995a694495f2e98c6d2365842",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/KO",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 254,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "3a7f45026c4cbf0a6e31488e21f7643d",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/PEP",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 246,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "1bed3644d42d787ca851758a7fab1326",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/TMO",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 259,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "901625db0c4519086f37ecd20b152bed",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/AAPL",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 363,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "1200307555e56868208955bdff1d6612",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/MSFT",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 249,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "72182fa75899d1c92b0bcf3d93bf6da7",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/GOOGL",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 248,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "ba60b7bbc2e2069dc7839efd6d9c3c5b",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/TSLA",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 254,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "462ca0b5714fcddf99e613a2a0b77716",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/AMZN",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 287,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "17b947d539b2934bc98e3aec3a3fd5cc",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/NVDA",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 303,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "18e3e594d271e38ced069f1176217707",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/META",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 244,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "c142cee265df13d81181ab60d4f28ecb",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/NFLX",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 241,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "489d82c98fb7832897fdf1b824a5fffd",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/BABA",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 234,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "a36f54c6653f2953c8345130b596b9ad",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/TSM",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 250,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "369fb655af9c20d82bc92997278745b9",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/V",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 248,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "adeecf6ad4028cd34fd51692f8cc4870",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/JNJ",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 283,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "d286dd64d0d50439965e95623284ac60",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/WMT",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 261,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "552d38eee42dcdb31620c15ffcfbc14e",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/JPM",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 252,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "681f055fe6697e3b5c586ab79c15e318",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/PG",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 254,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "729751c922e981f95554d79c574500ce",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/UNH",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 243,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "bd07b0ee1eefec3ba2c168b0246c2d0a",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/MA",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 253,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "1249c87a38681b5576f2ada9015a8431",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/HD",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 258,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "93dee6e025d5ac21f469099b1efa533c",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/BAC",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 253,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "bfa5ae81d315558eab7125f1feb188ef",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/ABBV",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 250,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "9dff0ba9ce51f2031e06f3c919730e79",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/PFE",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 261,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "751f5d4116a8b338f2f3b6d4a34b6a39",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/KO",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 250,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "b9c3d2a89833f76bb0883beae9eecf16",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/PEP",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 253,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "6ab1659cf5a9b1894db59c50862d5942",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/TMO",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 250,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "ed0d532da6054cd2470170ba65e79c17",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/AAPL",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 251,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "e3632608328a448f0d29abea94441d72",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/MSFT",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 338,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "db72449f728178d96c3a82b4a90b7ec2",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/AAPL",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 200,
+      "responseTime": 807,
+      "data": {
+        "request_id": "a5bff2e0ac3994e08d155f338d4ff398",
+        "results": {
+          "ticker": "MSFT",
+          "name": "Microsoft Corp",
+          "market": "stocks",
+          "locale": "us",
+          "primary_exchange": "XNAS",
+          "type": "CS",
+          "active": true,
+          "currency_name": "usd",
+          "cik": "0000789019",
+          "composite_figi": "BBG000BPH459",
+          "share_class_figi": "BBG001S5TD05",
+          "market_cap": 3830756625081.44,
+          "phone_number": "425-882-8080",
+          "address": {
+            "address1": "ONE MICROSOFT WAY",
+            "city": "REDMOND",
+            "state": "WA",
+            "postal_code": "98052-6399"
+          },
+          "description": "Microsoft develops and licenses consumer and enterprise software. It is known for its Windows operating systems and Office productivity suite. The company is organized into three equally sized broad segments: productivity and business processes (legacy Microsoft Office, cloud-based Office 365, Exchange, SharePoint, Skype, LinkedIn, Dynamics), intelligence cloud (infrastructure- and platform-as-a-service offerings Azure, Windows Server OS, SQL Server), and more personal computing (Windows Client, Xbox, Bing search, display advertising, and Surface laptops, tablets, and desktops).",
+          "sic_code": "7372",
+          "sic_description": "SERVICES-PREPACKAGED SOFTWARE",
+          "ticker_root": "MSFT",
+          "homepage_url": "https://www.microsoft.com",
+          "total_employees": 228000,
+          "list_date": "1986-03-13",
+          "branding": {
+            "logo_url": "https://api.polygon.io/v1/reference/company-branding/bWljcm9zb2Z0LmNvbQ/images/2025-04-04_logo.svg",
+            "icon_url": "https://api.polygon.io/v1/reference/company-branding/bWljcm9zb2Z0LmNvbQ/images/2025-04-04_icon.jpeg"
+          },
+          "share_class_shares_outstanding": 7433166379,
+          "weighted_shares_outstanding": 7433166379,
+          "round_lot": 100
+        },
+        "status": "OK"
+      },
+      "endpoint": "/v3/reference/tickers/MSFT",
+      "dataSize": 1593
+    },
+    {
+      "success": true,
+      "status": 200,
+      "responseTime": 783,
+      "data": {
+        "ticker": {
+          "ticker": "GOOGL",
+          "todaysChangePerc": 0.3934660784547437,
+          "todaysChange": 0.9899999999999807,
+          "updated": 1758028746456617500,
+          "day": {
+            "o": 0,
+            "h": 0,
+            "l": 0,
+            "c": 0,
+            "v": 0,
+            "vw": 0
+          },
+          "min": {
+            "av": 736795,
+            "t": 1758028680000,
+            "n": 67,
+            "o": 252.6,
+            "h": 252.64,
+            "l": 252.6,
+            "c": 252.6034,
+            "v": 751,
+            "vw": 252.6238
+          },
+          "prevDay": {
+            "o": 244.66,
+            "h": 252.4099,
+            "l": 244.66,
+            "c": 251.61,
+            "v": 58383796,
+            "vw": 249.7081
+          }
+        },
+        "status": "OK",
+        "request_id": "1786b40c55981818b3da79c1bbf4fc0a"
+      },
+      "endpoint": "/v2/snapshot/locale/us/markets/stocks/tickers/GOOGL",
+      "dataSize": 439
+    },
+    {
+      "success": true,
+      "status": 200,
+      "responseTime": 796,
+      "data": {
+        "ticker": "TSLA",
+        "queryCount": 1,
+        "resultsCount": 1,
+        "adjusted": true,
+        "results": [
+          {
+            "T": "TSLA",
+            "v": 163823667,
+            "vw": 416.4816,
+            "o": 423.13,
+            "c": 410.04,
+            "h": 425.7,
+            "l": 402.43,
+            "t": 1757966400000,
+            "n": 2700428
+          }
+        ],
+        "status": "OK",
+        "request_id": "817cf3d733638ac02385e42d58d415d1",
+        "count": 1
+      },
+      "endpoint": "/v2/aggs/ticker/TSLA/prev",
+      "dataSize": 268
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 765,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "b174abd448e1d1b84b12f864b48f8f34",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/AMZN",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 200,
+      "responseTime": 757,
+      "data": {
+        "request_id": "19e895c28a5720de0602ff8ac801299d",
+        "results": {
+          "ticker": "NVDA",
+          "name": "Nvidia Corp",
+          "market": "stocks",
+          "locale": "us",
+          "primary_exchange": "XNAS",
+          "type": "CS",
+          "active": true,
+          "currency_name": "usd",
+          "cik": "0001045810",
+          "composite_figi": "BBG000BBJQV0",
+          "share_class_figi": "BBG001S5TZJ6",
+          "market_cap": 4327679250000,
+          "phone_number": "408-486-2000",
+          "address": {
+            "address1": "2788 SAN TOMAS EXPRESSWAY",
+            "city": "SANTA CLARA",
+            "state": "CA",
+            "postal_code": "95051"
+          },
+          "description": "Nvidia is a leading developer of graphics processing units. Traditionally, GPUs were used to enhance the experience on computing platforms, most notably in gaming applications on PCs. GPU use cases have since emerged as important semiconductors used in artificial intelligence to run large language models. Nvidia not only offers AI GPUs, but also a software platform, Cuda, used for AI model development and training. Nvidia is also expanding its data center networking solutions, helping to tie GPUs together to handle complex workloads.",
+          "sic_code": "3674",
+          "sic_description": "SEMICONDUCTORS & RELATED DEVICES",
+          "ticker_root": "NVDA",
+          "homepage_url": "https://www.nvidia.com",
+          "total_employees": 36000,
+          "list_date": "1999-01-22",
+          "branding": {
+            "logo_url": "https://api.polygon.io/v1/reference/company-branding/bnZpZGlhLmNvbQ/images/2025-04-04_logo.svg",
+            "icon_url": "https://api.polygon.io/v1/reference/company-branding/bnZpZGlhLmNvbQ/images/2025-04-04_icon.png"
+          },
+          "share_class_shares_outstanding": 24300000000,
+          "weighted_shares_outstanding": 24347000000,
+          "round_lot": 100
+        },
+        "status": "OK"
+      },
+      "endpoint": "/v3/reference/tickers/NVDA",
+      "dataSize": 1537
+    },
+    {
+      "success": true,
+      "status": 200,
+      "responseTime": 768,
+      "data": {
+        "ticker": {
+          "ticker": "META",
+          "todaysChangePerc": 0.3007715443964894,
+          "todaysChange": 2.2999999999999545,
+          "updated": 1758028740000000000,
+          "day": {
+            "o": 0,
+            "h": 0,
+            "l": 0,
+            "c": 0,
+            "v": 0,
+            "vw": 0
+          },
+          "min": {
+            "av": 204372,
+            "t": 1758028680000,
+            "n": 51,
+            "o": 767,
+            "h": 767,
+            "l": 767,
+            "c": 767,
+            "v": 952,
+            "vw": 767.057
+          },
+          "prevDay": {
+            "o": 757.47,
+            "h": 774.07,
+            "l": 751.985,
+            "c": 764.7,
+            "v": 10533780,
+            "vw": 763.6531
+          }
+        },
+        "status": "OK",
+        "request_id": "8224c478c87634f85c8bb8ba5712f9ee"
+      },
+      "endpoint": "/v2/snapshot/locale/us/markets/stocks/tickers/META",
+      "dataSize": 422
+    },
+    {
+      "success": true,
+      "status": 200,
+      "responseTime": 753,
+      "data": {
+        "ticker": "NFLX",
+        "queryCount": 1,
+        "resultsCount": 1,
+        "adjusted": true,
+        "results": [
+          {
+            "T": "NFLX",
+            "v": 2909277,
+            "vw": 1197.3627,
+            "o": 1188.4,
+            "c": 1202.26,
+            "h": 1207.24,
+            "l": 1173.2076,
+            "t": 1757966400000,
+            "n": 148221
+          }
+        ],
+        "status": "OK",
+        "request_id": "d7b9624546813df8e2973960a0c4e9b4",
+        "count": 1
+      },
+      "endpoint": "/v2/aggs/ticker/NFLX/prev",
+      "dataSize": 272
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 779,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "7ab3f8e712644f25e3337abfd1565911",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/BABA",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 200,
+      "responseTime": 757,
+      "data": {
+        "request_id": "ec2ad51d2c58ffa69112c255c98921c8",
+        "results": {
+          "ticker": "TSM",
+          "name": "Taiwan Semiconductor Manufacturing Company Ltd.",
+          "market": "stocks",
+          "locale": "us",
+          "primary_exchange": "XNYS",
+          "type": "ADRC",
+          "active": true,
+          "currency_name": "usd",
+          "cik": "0001046179",
+          "composite_figi": "BBG000BD8ZK0",
+          "share_class_figi": "BBG001S5WWW4",
+          "market_cap": 1355653408923.52,
+          "description": "Taiwan Semiconductor Manufacturing Co. is the world's largest dedicated chip foundry, with mid-60s market share in 2024. TSMC was founded in 1987 as a joint venture of Philips, the government of Taiwan, and private investors. It went public in Taiwan in 1994 and as an ADR in the US in 1997. TSMC's scale and high-quality technology allow the firm to generate solid operating margins, even in the highly competitive foundry business. Furthermore, the shift to the fabless business model has created tailwinds for TSMC. The foundry leader has an illustrious customer base, including Apple, AMD, and Nvidia, that looks to apply cutting-edge process technologies to its semiconductor designs. TSMC employs more than 83,000 people.",
+          "ticker_root": "TSM",
+          "homepage_url": "https://www.tsmc.com",
+          "total_employees": 83825,
+          "list_date": "1997-10-08",
+          "branding": {
+            "logo_url": "https://api.polygon.io/v1/reference/company-branding/dHNtYy5jb20/images/2025-04-04_logo.svg",
+            "icon_url": "https://api.polygon.io/v1/reference/company-branding/dHNtYy5jb20/images/2025-04-04_icon.jpeg"
+          },
+          "share_class_shares_outstanding": 5186523200,
+          "weighted_shares_outstanding": 5186523104,
+          "round_lot": 100
+        },
+        "status": "OK"
+      },
+      "endpoint": "/v3/reference/tickers/TSM",
+      "dataSize": 1550
+    },
+    {
+      "success": true,
+      "status": 200,
+      "responseTime": 766,
+      "data": {
+        "ticker": {
+          "ticker": "V",
+          "todaysChangePerc": -0.07668485474118593,
+          "todaysChange": -0.2599999999999909,
+          "updated": 1758028380000000000,
+          "day": {
+            "o": 0,
+            "h": 0,
+            "l": 0,
+            "c": 0,
+            "v": 0,
+            "vw": 0
+          },
+          "min": {
+            "av": 8084,
+            "t": 1758028320000,
+            "n": 3,
+            "o": 338.79,
+            "h": 338.79,
+            "l": 338.79,
+            "c": 338.79,
+            "v": 103,
+            "vw": 338.7947
+          },
+          "prevDay": {
+            "o": 340.61,
+            "h": 342.71,
+            "l": 338.39,
+            "c": 339.05,
+            "v": 4367547,
+            "vw": 339.8153
+          }
+        },
+        "status": "OK",
+        "request_id": "3f3292af936c7a8bdacd20fd6e5ab37f"
+      },
+      "endpoint": "/v2/snapshot/locale/us/markets/stocks/tickers/V",
+      "dataSize": 432
+    },
+    {
+      "success": true,
+      "status": 200,
+      "responseTime": 743,
+      "data": {
+        "ticker": "JNJ",
+        "queryCount": 1,
+        "resultsCount": 1,
+        "adjusted": true,
+        "results": [
+          {
+            "T": "JNJ",
+            "v": 4768547,
+            "vw": 177.5499,
+            "o": 177.76,
+            "c": 177.4,
+            "h": 178.99,
+            "l": 176.93,
+            "t": 1757966400000,
+            "n": 92035
+          }
+        ],
+        "status": "OK",
+        "request_id": "757b9ea3fa04fc420888d9f2ecc7cfba",
+        "count": 1
+      },
+      "endpoint": "/v2/aggs/ticker/JNJ/prev",
+      "dataSize": 262
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 734,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "bd9597ce8f481ab59f15010eba29d620",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/WMT",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 200,
+      "responseTime": 731,
+      "data": {
+        "request_id": "9783de1841e641919242aaa458930102",
+        "results": {
+          "ticker": "JPM",
+          "name": "JPMorgan Chase & Co.",
+          "market": "stocks",
+          "locale": "us",
+          "primary_exchange": "XNYS",
+          "type": "CS",
+          "active": true,
+          "currency_name": "usd",
+          "cik": "0000019617",
+          "composite_figi": "BBG000DMBXR2",
+          "share_class_figi": "BBG001S8CRC3",
+          "market_cap": 849398965500.6,
+          "phone_number": "(212) 270-6000",
+          "address": {
+            "address1": "383 MADISON AVENUE",
+            "city": "NEW YORK",
+            "state": "NY",
+            "postal_code": "10017"
+          },
+          "description": "JPMorgan Chase is one of the largest and most complex financial institutions in the United States, with nearly $4 trillion in assets. It is organized into four major segments: consumer and community banking, corporate and investment banking, commercial banking, and asset and wealth management. JPMorgan operates, and is subject to regulation, in multiple countries.",
+          "sic_code": "6021",
+          "sic_description": "NATIONAL COMMERCIAL BANKS",
+          "ticker_root": "JPM",
+          "homepage_url": "https://www.jpmorganchase.com",
+          "total_employees": 317233,
+          "list_date": "1969-03-05",
+          "branding": {
+            "logo_url": "https://api.polygon.io/v1/reference/company-branding/anBtb3JnYW5jaGFzZS5jb20/images/2025-04-04_logo.svg",
+            "icon_url": "https://api.polygon.io/v1/reference/company-branding/anBtb3JnYW5jaGFzZS5jb20/images/2025-04-04_icon.jpeg"
+          },
+          "share_class_shares_outstanding": 2749753854,
+          "weighted_shares_outstanding": 2749753854,
+          "round_lot": 100
+        },
+        "status": "OK"
+      },
+      "endpoint": "/v3/reference/tickers/JPM",
+      "dataSize": 1385
+    },
+    {
+      "success": true,
+      "status": 200,
+      "responseTime": 722,
+      "data": {
+        "ticker": {
+          "ticker": "PG",
+          "todaysChangePerc": -0.08926863482752966,
+          "todaysChange": -0.14000000000001478,
+          "updated": 1758028320000000000,
+          "day": {
+            "o": 0,
+            "h": 0,
+            "l": 0,
+            "c": 0,
+            "v": 0,
+            "vw": 0
+          },
+          "min": {
+            "av": 5622,
+            "t": 1758028260000,
+            "n": 4,
+            "o": 156.68,
+            "h": 156.69,
+            "l": 156.68,
+            "c": 156.69,
+            "v": 250,
+            "vw": 156.612
+          },
+          "prevDay": {
+            "o": 157.88,
+            "h": 158.52,
+            "l": 156.2,
+            "c": 156.83,
+            "v": 5994966,
+            "vw": 156.9901
+          }
+        },
+        "status": "OK",
+        "request_id": "4c5f47bdbbc93f284694f32e4aea7cd7"
+      },
+      "endpoint": "/v2/snapshot/locale/us/markets/stocks/tickers/PG",
+      "dataSize": 432
+    },
+    {
+      "success": true,
+      "status": 200,
+      "responseTime": 717,
+      "data": {
+        "ticker": "UNH",
+        "queryCount": 1,
+        "resultsCount": 1,
+        "adjusted": true,
+        "results": [
+          {
+            "T": "UNH",
+            "v": 11035852,
+            "vw": 348.9281,
+            "o": 351.255,
+            "c": 347.89,
+            "h": 351.71,
+            "l": 342.53,
+            "t": 1757966400000,
+            "n": 278036
+          }
+        ],
+        "status": "OK",
+        "request_id": "5a36e9e226c56617df4ee46d0d2d7415",
+        "count": 1
+      },
+      "endpoint": "/v2/aggs/ticker/UNH/prev",
+      "dataSize": 266
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 710,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "c44429a47237bc3c60677ebc3832c75c",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/MA",
+      "dataSize": 177
+    },
+    {
+      "success": true,
+      "status": 200,
+      "responseTime": 708,
+      "data": {
+        "request_id": "37f1e1c215afae4f8af939f88904c111",
+        "results": {
+          "ticker": "HD",
+          "name": "Home Depot, Inc.",
+          "market": "stocks",
+          "locale": "us",
+          "primary_exchange": "XNYS",
+          "type": "CS",
+          "active": true,
+          "currency_name": "usd",
+          "cik": "0000354950",
+          "composite_figi": "BBG000BKZB36",
+          "share_class_figi": "BBG001S5RTW7",
+          "market_cap": 420759889553.37,
+          "phone_number": "770-433-8211",
+          "address": {
+            "address1": "2455 PACES FERRY ROAD",
+            "city": "ATLANTA",
+            "state": "GA",
+            "postal_code": "30339-4024"
+          },
+          "description": "Home Depot is the world's largest home improvement specialty retailer, operating 2,353 warehouse-format stores offering more than 30,000 products in store and 1 million products online in the US, Canada, and Mexico. Its stores offer building materials, home improvement products, lawn and garden products, and decor products and provide various services, including home improvement installation services and tool and equipment rentals. The acquisition of Interline Brands in 2015 allowed Home Depot to enter the MRO business, which has been expanded through the tie-up with HD Supply (2020). The 2024 tie-up with SRS will help grow professional demand in roofing, pool, and landscaping projects, while the pending acquisition of GMS will lift building product sales.",
+          "sic_code": "5211",
+          "sic_description": "RETAIL-LUMBER & OTHER BUILDING MATERIALS DEALERS",
+          "ticker_root": "HD",
+          "homepage_url": "https://www.homedepot.com",
+          "total_employees": 470100,
+          "list_date": "1981-09-22",
+          "branding": {
+            "logo_url": "https://api.polygon.io/v1/reference/company-branding/aG9tZWRlcG90LmNvbQ/images/2024-10-01_logo.svg",
+            "icon_url": "https://api.polygon.io/v1/reference/company-branding/aG9tZWRlcG90LmNvbQ/images/2024-10-01_icon.jpeg"
+          },
+          "share_class_shares_outstanding": 995386647,
+          "weighted_shares_outstanding": 995386647,
+          "round_lot": 100
+        },
+        "status": "OK"
+      },
+      "endpoint": "/v3/reference/tickers/HD",
+      "dataSize": 1792
+    },
+    {
+      "success": true,
+      "status": 200,
+      "responseTime": 701,
+      "data": {
+        "ticker": {
+          "ticker": "BAC",
+          "todaysChangePerc": -0.21743427554854028,
+          "todaysChange": -0.11000000000000654,
+          "updated": 1758028772071749000,
+          "day": {
+            "o": 0,
+            "h": 0,
+            "l": 0,
+            "c": 0,
+            "v": 0,
+            "vw": 0
+          },
+          "min": {
+            "av": 48194,
+            "t": 1758028620000,
+            "n": 25,
+            "o": 50.51,
+            "h": 50.5412,
+            "l": 50.51,
+            "c": 50.5412,
+            "v": 1468,
+            "vw": 50.5123
+          },
+          "prevDay": {
+            "o": 50.85,
+            "h": 51.09,
+            "l": 50.46,
+            "c": 50.59,
+            "v": 29043572,
+            "vw": 50.6789
+          }
+        },
+        "status": "OK",
+        "request_id": "0b0db76ad045b818cc612693a2c9dd4b"
+      },
+      "endpoint": "/v2/snapshot/locale/us/markets/stocks/tickers/BAC",
+      "dataSize": 433
+    },
+    {
+      "success": true,
+      "status": 200,
+      "responseTime": 707,
+      "data": {
+        "ticker": "ABBV",
+        "queryCount": 1,
+        "resultsCount": 1,
+        "adjusted": true,
+        "results": [
+          {
+            "T": "ABBV",
+            "v": 5162389,
+            "vw": 216.8114,
+            "o": 219.6,
+            "c": 217.61,
+            "h": 219.6,
+            "l": 214.31,
+            "t": 1757966400000,
+            "n": 92575
+          }
+        ],
+        "status": "OK",
+        "request_id": "1be3c11ea06a8417fd3c50b867017663",
+        "count": 1
+      },
+      "endpoint": "/v2/aggs/ticker/ABBV/prev",
+      "dataSize": 263
+    },
+    {
+      "success": true,
+      "status": 200,
+      "responseTime": 509,
+      "data": {
+        "ticker": "AAPL",
+        "queryCount": 250,
+        "resultsCount": 250,
+        "adjusted": true,
+        "results": [
+          {
+            "v": 59357427,
+            "vw": 215.9366,
+            "o": 216.54,
+            "c": 216.32,
+            "h": 217.22,
+            "l": 213.92,
+            "t": 1726459200000,
+            "n": 870760
+          },
+          {
+            "v": 45519339,
+            "vw": 216.194,
+            "o": 215.75,
+            "c": 216.79,
+            "h": 216.9,
+            "l": 214.5,
+            "t": 1726545600000,
+            "n": 651444
+          },
+          {
+            "v": 59894928,
+            "vw": 220.4476,
+            "o": 217.55,
+            "c": 220.69,
+            "h": 222.71,
+            "l": 217.54,
+            "t": 1726632000000,
+            "n": 833014
+          },
+          {
+            "v": 66781315,
+            "vw": 228.3978,
+            "o": 224.99,
+            "c": 228.87,
+            "h": 229.82,
+            "l": 224.63,
+            "t": 1726718400000,
+            "n": 808546
+          },
+          {
+            "v": 317079888,
+            "vw": 228.9173,
+            "o": 229.97,
+            "c": 228.2,
+            "h": 233.09,
+            "l": 227.62,
+            "t": 1726804800000,
+            "n": 971913
+          },
+          {
+            "v": 54090023,
+            "vw": 227.0255,
+            "o": 227.34,
+            "c": 226.47,
+            "h": 229.45,
+            "l": 225.81,
+            "t": 1727064000000,
+            "n": 693311
+          },
+          {
+            "v": 43556068,
+            "vw": 227.2501,
+            "o": 228.645,
+            "c": 227.37,
+            "h": 229.35,
+            "l": 225.73,
+            "t": 1727150400000,
+            "n": 519573
+          },
+          {
+            "v": 42308715,
+            "vw": 225.8624,
+            "o": 224.93,
+            "c": 226.37,
+            "h": 227.29,
+            "l": 224.02,
+            "t": 1727236800000,
+            "n": 564630
+          },
+          {
+            "v": 36635707,
+            "vw": 227.2807,
+            "o": 227.3,
+            "c": 227.52,
+            "h": 228.5,
+            "l": 225.41,
+            "t": 1727323200000,
+            "n": 433164
+          },
+          {
+            "v": 34003467,
+            "vw": 228.1279,
+            "o": 228.46,
+            "c": 227.79,
+            "h": 229.52,
+            "l": 227.3,
+            "t": 1727409600000,
+            "n": 504107
+          },
+          {
+            "v": 54793391,
+            "vw": 232.0056,
+            "o": 230.04,
+            "c": 233,
+            "h": 233,
+            "l": 229.65,
+            "t": 1727668800000,
+            "n": 710084
+          },
+          {
+            "v": 63235048,
+            "vw": 225.9759,
+            "o": 229.52,
+            "c": 226.21,
+            "h": 229.65,
+            "l": 223.74,
+            "t": 1727755200000,
+            "n": 832119
+          },
+          {
+            "v": 32880605,
+            "vw": 226.0517,
+            "o": 225.89,
+            "c": 226.78,
+            "h": 227.37,
+            "l": 223.02,
+            "t": 1727841600000,
+            "n": 504717
+          },
+          {
+            "v": 34044158,
+            "vw": 225.0086,
+            "o": 225.14,
+            "c": 225.67,
+            "h": 226.805,
+            "l": 223.32,
+            "t": 1727928000000,
+            "n": 516347
+          },
+          {
+            "v": 37345098,
+            "vw": 225.8887,
+            "o": 227.9,
+            "c": 226.8,
+            "h": 228,
+            "l": 224.13,
+            "t": 1728014400000,
+            "n": 558162
+          },
+          {
+            "v": 39505354,
+            "vw": 223.2342,
+            "o": 224.5,
+            "c": 221.69,
+            "h": 225.69,
+            "l": 221.33,
+            "t": 1728273600000,
+            "n": 607240
+          },
+          {
+            "v": 31855693,
+            "vw": 225.0548,
+            "o": 224.3,
+            "c": 225.77,
+            "h": 225.98,
+            "l": 223.25,
+            "t": 1728360000000,
+            "n": 495518
+          },
+          {
+            "v": 33591091,
+            "vw": 228.3401,
+            "o": 225.23,
+            "c": 229.54,
+            "h": 229.75,
+            "l": 224.83,
+            "t": 1728446400000,
+            "n": 519279
+          },
+          {
+            "v": 28183544,
+            "vw": 228.5592,
+            "o": 227.78,
+            "c": 229.04,
+            "h": 229.5,
+            "l": 227.17,
+            "t": 1728532800000,
+            "n": 446857
+          },
+          {
+            "v": 31759188,
+            "vw": 228.0176,
+            "o": 229.3,
+            "c": 227.55,
+            "h": 229.41,
+            "l": 227.34,
+            "t": 1728619200000,
+            "n": 485460
+          },
+          {
+            "v": 39882085,
+            "vw": 230.7772,
+            "o": 228.7,
+            "c": 231.3,
+            "h": 231.73,
+            "l": 228.6,
+            "t": 1728878400000,
+            "n": 580529
+          },
+          {
+            "v": 64748367,
+            "vw": 234.795,
+            "o": 233.61,
+            "c": 233.85,
+            "h": 237.49,
+            "l": 232.37,
+            "t": 1728964800000,
+            "n": 827529
+          },
+          {
+            "v": 34082240,
+            "vw": 231.1082,
+            "o": 231.6,
+            "c": 231.78,
+            "h": 232.12,
+            "l": 229.84,
+            "t": 1729051200000,
+            "n": 551097
+          },
+          {
+            "v": 32974310,
+            "vw": 232.0782,
+            "o": 233.43,
+            "c": 232.15,
+            "h": 233.85,
+            "l": 230.52,
+            "t": 1729137600000,
+            "n": 487629
+          },
+          {
+            "v": 45831472,
+            "vw": 235.2165,
+            "o": 236.18,
+            "c": 235,
+            "h": 236.18,
+            "l": 234.01,
+            "t": 1729224000000,
+            "n": 562501
+          },
+          {
+            "v": 36254470,
+            "vw": 235.9588,
+            "o": 234.45,
+            "c": 236.48,
+            "h": 236.85,
+            "l": 234.45,
+            "t": 1729483200000,
+            "n": 538692
+          },
+          {
+            "v": 38846578,
+            "vw": 234.9316,
+            "o": 233.885,
+            "c": 235.86,
+            "h": 236.22,
+            "l": 232.6,
+            "t": 1729569600000,
+            "n": 489180
+          },
+          {
+            "v": 52286979,
+            "vw": 231.1276,
+            "o": 234.08,
+            "c": 230.76,
+            "h": 235.144,
+            "l": 227.76,
+            "t": 1729656000000,
+            "n": 722059
+          },
+          {
+            "v": 31109503,
+            "vw": 230.1026,
+            "o": 229.98,
+            "c": 230.57,
+            "h": 230.82,
+            "l": 228.41,
+            "t": 1729742400000,
+            "n": 490815
+          },
+          {
+            "v": 38602304,
+            "vw": 231.6647,
+            "o": 229.74,
+            "c": 231.41,
+            "h": 233.22,
+            "l": 229.57,
+            "t": 1729828800000,
+            "n": 551679
+          },
+          {
+            "v": 36087134,
+            "vw": 233.5569,
+            "o": 233.32,
+            "c": 233.4,
+            "h": 234.73,
+            "l": 232.55,
+            "t": 1730088000000,
+            "n": 557146
+          },
+          {
+            "v": 35413047,
+            "vw": 233.5947,
+            "o": 233.1,
+            "c": 233.67,
+            "h": 234.325,
+            "l": 232.32,
+            "t": 1730174400000,
+            "n": 484093
+          },
+          {
+            "v": 47060257,
+            "vw": 230.8804,
+            "o": 232.61,
+            "c": 230.1,
+            "h": 233.47,
+            "l": 229.55,
+            "t": 1730260800000,
+            "n": 593651
+          },
+          {
+            "v": 64370086,
+            "vw": 226.6453,
+            "o": 229.34,
+            "c": 225.91,
+            "h": 229.83,
+            "l": 225.37,
+            "t": 1730347200000,
+            "n": 767895
+          },
+          {
+            "v": 65276741,
+            "vw": 222.8124,
+            "o": 220.965,
+            "c": 222.91,
+            "h": 225.35,
+            "l": 220.27,
+            "t": 1730433600000,
+            "n": 859117
+          },
+          {
+            "v": 44344468,
+            "vw": 221.7744,
+            "o": 220.99,
+            "c": 222.01,
+            "h": 222.79,
+            "l": 219.71,
+            "t": 1730696400000,
+            "n": 647166
+          },
+          {
+            "v": 28111338,
+            "vw": 223.1048,
+            "o": 221.795,
+            "c": 223.45,
+            "h": 223.95,
+            "l": 221.14,
+            "t": 1730782800000,
+            "n": 502059
+          },
+          {
+            "v": 54561121,
+            "vw": 223.8013,
+            "o": 222.61,
+            "c": 222.72,
+            "h": 226.065,
+            "l": 221.19,
+            "t": 1730869200000,
+            "n": 796635
+          },
+          {
+            "v": 42137691,
+            "vw": 226.791,
+            "o": 224.625,
+            "c": 227.48,
+            "h": 227.875,
+            "l": 224.57,
+            "t": 1730955600000,
+            "n": 623242
+          },
+          {
+            "v": 38328824,
+            "vw": 227.2124,
+            "o": 227.17,
+            "c": 226.96,
+            "h": 228.66,
+            "l": 226.405,
+            "t": 1731042000000,
+            "n": 541125
+          },
+          {
+            "v": 42005602,
+            "vw": 223.4599,
+            "o": 225,
+            "c": 224.23,
+            "h": 225.7,
+            "l": 221.5,
+            "t": 1731301200000,
+            "n": 555127
+          },
+          {
+            "v": 40398299,
+            "vw": 224.3724,
+            "o": 224.55,
+            "c": 224.23,
+            "h": 225.59,
+            "l": 223.355,
+            "t": 1731387600000,
+            "n": 462612
+          },
+          {
+            "v": 48566217,
+            "vw": 224.9226,
+            "o": 224.01,
+            "c": 225.12,
+            "h": 226.65,
+            "l": 222.76,
+            "t": 1731474000000,
+            "n": 467219
+          },
+          {
+            "v": 44923941,
+            "vw": 227.4472,
+            "o": 225.02,
+            "c": 228.22,
+            "h": 228.87,
+            "l": 225,
+            "t": 1731560400000,
+            "n": 492068
+          },
+          {
+            "v": 47923696,
+            "vw": 225.0925,
+            "o": 226.4,
+            "c": 225,
+            "h": 226.92,
+            "l": 224.27,
+            "t": 1731646800000,
+            "n": 451319
+          },
+          {
+            "v": 44686020,
+            "vw": 228.083,
+            "o": 225.25,
+            "c": 228.02,
+            "h": 229.74,
+            "l": 225.17,
+            "t": 1731906000000,
+            "n": 437779
+          },
+          {
+            "v": 36211774,
+            "vw": 228.6648,
+            "o": 226.98,
+            "c": 228.28,
+            "h": 230.16,
+            "l": 226.66,
+            "t": 1731992400000,
+            "n": 365242
+          },
+          {
+            "v": 35075316,
+            "vw": 228.0808,
+            "o": 228.06,
+            "c": 229,
+            "h": 229.93,
+            "l": 225.89,
+            "t": 1732078800000,
+            "n": 358454
+          },
+          {
+            "v": 42108327,
+            "vw": 228.4689,
+            "o": 228.88,
+            "c": 228.52,
+            "h": 230.155,
+            "l": 225.7103,
+            "t": 1732165200000,
+            "n": 431685
+          },
+          {
+            "v": 38168252,
+            "vw": 229.6877,
+            "o": 228.06,
+            "c": 229.87,
+            "h": 230.7199,
+            "l": 228.06,
+            "t": 1732251600000,
+            "n": 380624
+          },
+          {
+            "v": 90002832,
+            "vw": 232.3535,
+            "o": 231.46,
+            "c": 232.87,
+            "h": 233.245,
+            "l": 229.74,
+            "t": 1732510800000,
+            "n": 510697
+          },
+          {
+            "v": 45986189,
+            "vw": 234.7502,
+            "o": 233.33,
+            "c": 235.06,
+            "h": 235.57,
+            "l": 233.33,
+            "t": 1732597200000,
+            "n": 450015
+          },
+          {
+            "v": 33498439,
+            "vw": 234.7968,
+            "o": 234.465,
+            "c": 234.93,
+            "h": 235.69,
+            "l": 233.8101,
+            "t": 1732683600000,
+            "n": 339860
+          },
+          {
+            "v": 28481377,
+            "vw": 236.6232,
+            "o": 234.805,
+            "c": 237.33,
+            "h": 237.81,
+            "l": 233.97,
+            "t": 1732856400000,
+            "n": 268955
+          },
+          {
+            "v": 48137103,
+            "vw": 239.4992,
+            "o": 237.27,
+            "c": 239.59,
+            "h": 240.79,
+            "l": 237.16,
+            "t": 1733115600000,
+            "n": 469685
+          },
+          {
+            "v": 38861017,
+            "vw": 241.644,
+            "o": 239.81,
+            "c": 242.65,
+            "h": 242.76,
+            "l": 238.9,
+            "t": 1733202000000,
+            "n": 419384
+          },
+          {
+            "v": 44383935,
+            "vw": 242.918,
+            "o": 242.87,
+            "c": 243.01,
+            "h": 244.11,
+            "l": 241.25,
+            "t": 1733288400000,
+            "n": 406663
+          },
+          {
+            "v": 40033878,
+            "vw": 243.0077,
+            "o": 243.99,
+            "c": 243.04,
+            "h": 244.54,
+            "l": 242.13,
+            "t": 1733374800000,
+            "n": 401262
+          },
+          {
+            "v": 36870619,
+            "vw": 243.187,
+            "o": 242.905,
+            "c": 242.84,
+            "h": 244.63,
+            "l": 242.08,
+            "t": 1733461200000,
+            "n": 366549
+          },
+          {
+            "v": 44649232,
+            "vw": 246.0624,
+            "o": 241.83,
+            "c": 246.75,
+            "h": 247.24,
+            "l": 241.75,
+            "t": 1733720400000,
+            "n": 500769
+          },
+          {
+            "v": 36914806,
+            "vw": 247.2778,
+            "o": 246.89,
+            "c": 247.77,
+            "h": 248.21,
+            "l": 245.34,
+            "t": 1733806800000,
+            "n": 423350
+          },
+          {
+            "v": 45205814,
+            "vw": 248.069,
+            "o": 247.96,
+            "c": 246.49,
+            "h": 250.8,
+            "l": 246.2601,
+            "t": 1733893200000,
+            "n": 455625
+          },
+          {
+            "v": 32777532,
+            "vw": 247.7433,
+            "o": 246.89,
+            "c": 247.96,
+            "h": 248.74,
+            "l": 245.68,
+            "t": 1733979600000,
+            "n": 353012
+          },
+          {
+            "v": 33081590,
+            "vw": 247.7598,
+            "o": 247.815,
+            "c": 248.13,
+            "h": 249.2902,
+            "l": 246.24,
+            "t": 1734066000000,
+            "n": 349809
+          },
+          {
+            "v": 51694753,
+            "vw": 250.4623,
+            "o": 247.99,
+            "c": 251.04,
+            "h": 251.38,
+            "l": 247.65,
+            "t": 1734325200000,
+            "n": 448224
+          },
+          {
+            "v": 51356360,
+            "vw": 252.982,
+            "o": 250.08,
+            "c": 253.48,
+            "h": 253.83,
+            "l": 249.78,
+            "t": 1734411600000,
+            "n": 487662
+          },
+          {
+            "v": 56764701,
+            "vw": 250.531,
+            "o": 252.16,
+            "c": 248.05,
+            "h": 254.28,
+            "l": 247.74,
+            "t": 1734498000000,
+            "n": 564346
+          },
+          {
+            "v": 60559114,
+            "vw": 249.8401,
+            "o": 247.5,
+            "c": 249.79,
+            "h": 252,
+            "l": 247.0949,
+            "t": 1734584400000,
+            "n": 532893
+          },
+          {
+            "v": 147495267,
+            "vw": 253.1916,
+            "o": 248.04,
+            "c": 254.49,
+            "h": 255,
+            "l": 245.69,
+            "t": 1734670800000,
+            "n": 551019
+          },
+          {
+            "v": 40858774,
+            "vw": 254.7699,
+            "o": 254.77,
+            "c": 255.27,
+            "h": 255.65,
+            "l": 253.45,
+            "t": 1734930000000,
+            "n": 422563
+          },
+          {
+            "v": 23234705,
+            "vw": 257.4634,
+            "o": 255.49,
+            "c": 258.2,
+            "h": 258.21,
+            "l": 255.29,
+            "t": 1735016400000,
+            "n": 245932
+          },
+          {
+            "v": 27262983,
+            "vw": 258.9315,
+            "o": 258.19,
+            "c": 259.02,
+            "h": 260.1,
+            "l": 257.63,
+            "t": 1735189200000,
+            "n": 362325
+          },
+          {
+            "v": 42355321,
+            "vw": 255.2418,
+            "o": 257.83,
+            "c": 255.59,
+            "h": 258.7,
+            "l": 253.06,
+            "t": 1735275600000,
+            "n": 474899
+          },
+          {
+            "v": 35557542,
+            "vw": 252.2669,
+            "o": 252.23,
+            "c": 252.2,
+            "h": 253.5,
+            "l": 250.75,
+            "t": 1735534800000,
+            "n": 421634
+          },
+          {
+            "v": 39480718,
+            "vw": 250.6934,
+            "o": 252.44,
+            "c": 250.42,
+            "h": 253.28,
+            "l": 249.43,
+            "t": 1735621200000,
+            "n": 361255
+          },
+          {
+            "v": 55090731,
+            "vw": 244.346,
+            "o": 248.93,
+            "c": 243.85,
+            "h": 249.1,
+            "l": 241.8201,
+            "t": 1735794000000,
+            "n": 685447
+          },
+          {
+            "v": 40244114,
+            "vw": 243.0805,
+            "o": 243.36,
+            "c": 243.36,
+            "h": 244.18,
+            "l": 241.89,
+            "t": 1735880400000,
+            "n": 493786
+          },
+          {
+            "v": 45045571,
+            "vw": 245.1726,
+            "o": 244.31,
+            "c": 245,
+            "h": 247.33,
+            "l": 243.2,
+            "t": 1736139600000,
+            "n": 493920
+          },
+          {
+            "v": 40855960,
+            "vw": 242.9459,
+            "o": 242.98,
+            "c": 242.21,
+            "h": 245.55,
+            "l": 241.35,
+            "t": 1736226000000,
+            "n": 462887
+          },
+          {
+            "v": 37613940,
+            "vw": 242.2993,
+            "o": 241.92,
+            "c": 242.7,
+            "h": 243.7123,
+            "l": 240.05,
+            "t": 1736312400000,
+            "n": 406915
+          },
+          {
+            "v": 61705156,
+            "vw": 236.6063,
+            "o": 240.01,
+            "c": 236.85,
+            "h": 240.16,
+            "l": 233,
+            "t": 1736485200000,
+            "n": 685975
+          },
+          {
+            "v": 49630725,
+            "vw": 232.7529,
+            "o": 233.53,
+            "c": 234.4,
+            "h": 234.67,
+            "l": 229.72,
+            "t": 1736744400000,
+            "n": 561231
+          },
+          {
+            "v": 39433494,
+            "vw": 233.8732,
+            "o": 234.75,
+            "c": 233.28,
+            "h": 236.12,
+            "l": 232.472,
+            "t": 1736830800000,
+            "n": 436332
+          },
+          {
+            "v": 39822169,
+            "vw": 237.58,
+            "o": 234.635,
+            "c": 237.87,
+            "h": 238.96,
+            "l": 234.43,
+            "t": 1736917200000,
+            "n": 418803
+          },
+          {
+            "v": 71752652,
+            "vw": 230.4964,
+            "o": 237.35,
+            "c": 228.26,
+            "h": 238.01,
+            "l": 228.03,
+            "t": 1737003600000,
+            "n": 786111
+          },
+          {
+            "v": 67849101,
+            "vw": 230.4618,
+            "o": 232.115,
+            "c": 229.98,
+            "h": 232.29,
+            "l": 228.48,
+            "t": 1737090000000,
+            "n": 579300
+          },
+          {
+            "v": 98070429,
+            "vw": 221.6956,
+            "o": 224,
+            "c": 222.64,
+            "h": 224.42,
+            "l": 219.38,
+            "t": 1737435600000,
+            "n": 1220197
+          },
+          {
+            "v": 64126500,
+            "vw": 222.8221,
+            "o": 219.79,
+            "c": 223.83,
+            "h": 224.12,
+            "l": 219.79,
+            "t": 1737522000000,
+            "n": 683037
+          },
+          {
+            "v": 60234760,
+            "vw": 224.1093,
+            "o": 224.74,
+            "c": 223.66,
+            "h": 227.03,
+            "l": 222.3,
+            "t": 1737608400000,
+            "n": 619806
+          },
+          {
+            "v": 54697907,
+            "vw": 223.1447,
+            "o": 224.78,
+            "c": 222.78,
+            "h": 225.63,
+            "l": 221.41,
+            "t": 1737694800000,
+            "n": 579473
+          },
+          {
+            "v": 94863418,
+            "vw": 228.8379,
+            "o": 224.02,
+            "c": 229.86,
+            "h": 232.15,
+            "l": 223.98,
+            "t": 1737954000000,
+            "n": 1008209
+          },
+          {
+            "v": 75682044,
+            "vw": 237.4839,
+            "o": 230.85,
+            "c": 238.26,
+            "h": 240.19,
+            "l": 230.81,
+            "t": 1738040400000,
+            "n": 788816
+          },
+          {
+            "v": 45475767,
+            "vw": 237.4858,
+            "o": 234.12,
+            "c": 239.36,
+            "h": 239.855,
+            "l": 234.01,
+            "t": 1738126800000,
+            "n": 515212
+          },
+          {
+            "v": 55658279,
+            "vw": 238.9601,
+            "o": 238.665,
+            "c": 237.59,
+            "h": 240.79,
+            "l": 237.21,
+            "t": 1738213200000,
+            "n": 636380
+          },
+          {
+            "v": 101071628,
+            "vw": 238.5565,
+            "o": 247.19,
+            "c": 236,
+            "h": 247.19,
+            "l": 233.44,
+            "t": 1738299600000,
+            "n": 936709
+          },
+          {
+            "v": 73039761,
+            "vw": 228.3037,
+            "o": 229.99,
+            "c": 228.01,
+            "h": 231.83,
+            "l": 225.7,
+            "t": 1738558800000,
+            "n": 851633
+          },
+          {
+            "v": 45014201,
+            "vw": 231.2132,
+            "o": 227.25,
+            "c": 232.8,
+            "h": 233.13,
+            "l": 226.65,
+            "t": 1738645200000,
+            "n": 497327
+          },
+          {
+            "v": 39664989,
+            "vw": 230.8247,
+            "o": 228.53,
+            "c": 232.47,
+            "h": 232.67,
+            "l": 228.27,
+            "t": 1738731600000,
+            "n": 445631
+          },
+          {
+            "v": 29869249,
+            "vw": 232.4036,
+            "o": 231.285,
+            "c": 233.22,
+            "h": 233.8,
+            "l": 230.425,
+            "t": 1738818000000,
+            "n": 375400
+          },
+          {
+            "v": 39707224,
+            "vw": 229.1297,
+            "o": 232.6,
+            "c": 227.63,
+            "h": 234,
+            "l": 227.26,
+            "t": 1738904400000,
+            "n": 488184
+          },
+          {
+            "v": 33096475,
+            "vw": 228.45,
+            "o": 229.57,
+            "c": 227.65,
+            "h": 230.585,
+            "l": 227.2,
+            "t": 1739163600000,
+            "n": 398258
+          },
+          {
+            "v": 53710612,
+            "vw": 232.4505,
+            "o": 228.2,
+            "c": 232.62,
+            "h": 235.23,
+            "l": 228.13,
+            "t": 1739250000000,
+            "n": 552126
+          },
+          {
+            "v": 45243281,
+            "vw": 235.0413,
+            "o": 231.2,
+            "c": 236.87,
+            "h": 236.96,
+            "l": 230.68,
+            "t": 1739336400000,
+            "n": 486474
+          },
+          {
+            "v": 53614054,
+            "vw": 240.3233,
+            "o": 236.91,
+            "c": 241.53,
+            "h": 242.3399,
+            "l": 235.57,
+            "t": 1739422800000,
+            "n": 531132
+          },
+          {
+            "v": 40383927,
+            "vw": 244.0715,
+            "o": 241.25,
+            "c": 244.6,
+            "h": 245.55,
+            "l": 240.99,
+            "t": 1739509200000,
+            "n": 481731
+          },
+          {
+            "v": 48822491,
+            "vw": 244.1423,
+            "o": 244.15,
+            "c": 244.47,
+            "h": 245.18,
+            "l": 241.84,
+            "t": 1739854800000,
+            "n": 486720
+          },
+          {
+            "v": 32204215,
+            "vw": 244.6863,
+            "o": 244.66,
+            "c": 244.87,
+            "h": 246.01,
+            "l": 243.1604,
+            "t": 1739941200000,
+            "n": 383453
+          },
+          {
+            "v": 32316907,
+            "vw": 245.6383,
+            "o": 244.94,
+            "c": 245.83,
+            "h": 246.78,
+            "l": 244.29,
+            "t": 1740027600000,
+            "n": 405771
+          },
+          {
+            "v": 53196141,
+            "vw": 246.3756,
+            "o": 245.95,
+            "c": 245.55,
+            "h": 248.69,
+            "l": 245.22,
+            "t": 1740114000000,
+            "n": 508397
+          },
+          {
+            "v": 51326396,
+            "vw": 247.2414,
+            "o": 244.925,
+            "c": 247.1,
+            "h": 248.86,
+            "l": 244.42,
+            "t": 1740373200000,
+            "n": 593130
+          },
+          {
+            "v": 48013272,
+            "vw": 247.4765,
+            "o": 248,
+            "c": 247.04,
+            "h": 250,
+            "l": 244.91,
+            "t": 1740459600000,
+            "n": 574045
+          },
+          {
+            "v": 44433564,
+            "vw": 241.6568,
+            "o": 244.33,
+            "c": 240.36,
+            "h": 244.98,
+            "l": 239.13,
+            "t": 1740546000000,
+            "n": 557242
+          },
+          {
+            "v": 41153639,
+            "vw": 239.4953,
+            "o": 239.41,
+            "c": 237.3,
+            "h": 242.46,
+            "l": 237.06,
+            "t": 1740632400000,
+            "n": 503479
+          },
+          {
+            "v": 56833349,
+            "vw": 239.5113,
+            "o": 236.95,
+            "c": 241.84,
+            "h": 242.09,
+            "l": 230.2,
+            "t": 1740718800000,
+            "n": 572583
+          },
+          {
+            "v": 47183985,
+            "vw": 239.9029,
+            "o": 241.79,
+            "c": 238.03,
+            "h": 244.0272,
+            "l": 236.112,
+            "t": 1740978000000,
+            "n": 557039
+          },
+          {
+            "v": 53798024,
+            "vw": 237.5186,
+            "o": 237.705,
+            "c": 235.93,
+            "h": 240.07,
+            "l": 234.68,
+            "t": 1741064400000,
+            "n": 685392
+          },
+          {
+            "v": 47227642,
+            "vw": 234.0871,
+            "o": 235.42,
+            "c": 235.74,
+            "h": 236.55,
+            "l": 229.23,
+            "t": 1741150800000,
+            "n": 558644
+          },
+          {
+            "v": 45155019,
+            "vw": 235.2928,
+            "o": 234.435,
+            "c": 235.33,
+            "h": 237.86,
+            "l": 233.1581,
+            "t": 1741237200000,
+            "n": 551789
+          },
+          {
+            "v": 46250710,
+            "vw": 238.9039,
+            "o": 235.105,
+            "c": 239.07,
+            "h": 241.37,
+            "l": 234.76,
+            "t": 1741323600000,
+            "n": 581194
+          },
+          {
+            "v": 72071197,
+            "vw": 227.6311,
+            "o": 235.54,
+            "c": 227.48,
+            "h": 236.16,
+            "l": 224.22,
+            "t": 1741579200000,
+            "n": 1152721
+          },
+          {
+            "v": 76124402,
+            "vw": 221.1807,
+            "o": 223.805,
+            "c": 220.84,
+            "h": 225.8399,
+            "l": 217.45,
+            "t": 1741665600000,
+            "n": 899697
+          },
+          {
+            "v": 62547467,
+            "vw": 217.6087,
+            "o": 220.14,
+            "c": 216.98,
+            "h": 221.75,
+            "l": 214.91,
+            "t": 1741752000000,
+            "n": 792931
+          },
+          {
+            "v": 61318730,
+            "vw": 212.0144,
+            "o": 215.95,
+            "c": 209.68,
+            "h": 216.8394,
+            "l": 208.42,
+            "t": 1741838400000,
+            "n": 768933
+          },
+          {
+            "v": 60107582,
+            "vw": 212.4529,
+            "o": 211.25,
+            "c": 213.49,
+            "h": 213.95,
+            "l": 209.58,
+            "t": 1741924800000,
+            "n": 668917
+          },
+          {
+            "v": 48073426,
+            "vw": 213.2536,
+            "o": 213.31,
+            "c": 214,
+            "h": 215.22,
+            "l": 209.97,
+            "t": 1742184000000,
+            "n": 577436
+          },
+          {
+            "v": 42427021,
+            "vw": 213.0584,
+            "o": 214.16,
+            "c": 212.69,
+            "h": 215.15,
+            "l": 211.49,
+            "t": 1742270400000,
+            "n": 493002
+          },
+          {
+            "v": 54383891,
+            "vw": 215.5599,
+            "o": 214.22,
+            "c": 215.24,
+            "h": 218.76,
+            "l": 213.75,
+            "t": 1742356800000,
+            "n": 524677
+          },
+          {
+            "v": 48862947,
+            "vw": 214.3888,
+            "o": 213.99,
+            "c": 214.1,
+            "h": 217.4899,
+            "l": 212.22,
+            "t": 1742443200000,
+            "n": 499769
+          },
+          {
+            "v": 93568368,
+            "vw": 215.9292,
+            "o": 211.56,
+            "c": 218.27,
+            "h": 218.84,
+            "l": 211.28,
+            "t": 1742529600000,
+            "n": 496946
+          },
+          {
+            "v": 44299483,
+            "vw": 220.0734,
+            "o": 221,
+            "c": 220.73,
+            "h": 221.48,
+            "l": 218.58,
+            "t": 1742788800000,
+            "n": 495018
+          },
+          {
+            "v": 34493583,
+            "vw": 223.1154,
+            "o": 220.77,
+            "c": 223.75,
+            "h": 224.1,
+            "l": 220.08,
+            "t": 1742875200000,
+            "n": 407132
+          },
+          {
+            "v": 34492906,
+            "vw": 222.5202,
+            "o": 223.51,
+            "c": 221.53,
+            "h": 225.02,
+            "l": 220.47,
+            "t": 1742961600000,
+            "n": 440451
+          },
+          {
+            "v": 37093374,
+            "vw": 223.3729,
+            "o": 221.39,
+            "c": 223.85,
+            "h": 224.99,
+            "l": 220.5601,
+            "t": 1743048000000,
+            "n": 387118
+          },
+          {
+            "v": 39818617,
+            "vw": 219.3577,
+            "o": 221.67,
+            "c": 217.9,
+            "h": 223.81,
+            "l": 217.68,
+            "t": 1743134400000,
+            "n": 485185
+          },
+          {
+            "v": 65283571,
+            "vw": 220.6569,
+            "o": 217.005,
+            "c": 222.13,
+            "h": 225.62,
+            "l": 216.23,
+            "t": 1743393600000,
+            "n": 646562
+          },
+          {
+            "v": 36336840,
+            "vw": 222.3346,
+            "o": 219.805,
+            "c": 223.19,
+            "h": 223.68,
+            "l": 218.9,
+            "t": 1743480000000,
+            "n": 594669
+          },
+          {
+            "v": 35905904,
+            "vw": 222.4314,
+            "o": 221.315,
+            "c": 223.89,
+            "h": 225.19,
+            "l": 221.02,
+            "t": 1743566400000,
+            "n": 473114
+          },
+          {
+            "v": 103419006,
+            "vw": 204.1959,
+            "o": 205.54,
+            "c": 203.19,
+            "h": 207.49,
+            "l": 201.25,
+            "t": 1743652800000,
+            "n": 1366640
+          },
+          {
+            "v": 125897269,
+            "vw": 192.5544,
+            "o": 193.89,
+            "c": 188.38,
+            "h": 199.88,
+            "l": 187.34,
+            "t": 1743739200000,
+            "n": 1716139
+          },
+          {
+            "v": 160406286,
+            "vw": 180.5647,
+            "o": 177.2,
+            "c": 181.46,
+            "h": 194.15,
+            "l": 174.62,
+            "t": 1743998400000,
+            "n": 2117014
+          },
+          {
+            "v": 120696904,
+            "vw": 179.0738,
+            "o": 186.7,
+            "c": 172.42,
+            "h": 190.335,
+            "l": 169.2101,
+            "t": 1744084800000,
+            "n": 1671524
+          },
+          {
+            "v": 184261774,
+            "vw": 187.9565,
+            "o": 171.95,
+            "c": 198.85,
+            "h": 200.61,
+            "l": 171.89,
+            "t": 1744171200000,
+            "n": 2212956
+          },
+          {
+            "v": 121879981,
+            "vw": 189.982,
+            "o": 189.065,
+            "c": 190.42,
+            "h": 194.7799,
+            "l": 183,
+            "t": 1744257600000,
+            "n": 1500041
+          },
+          {
+            "v": 87435915,
+            "vw": 195.623,
+            "o": 186.1,
+            "c": 198.15,
+            "h": 199.54,
+            "l": 186.06,
+            "t": 1744344000000,
+            "n": 1073191
+          },
+          {
+            "v": 101352911,
+            "vw": 205.5914,
+            "o": 211.44,
+            "c": 202.52,
+            "h": 212.94,
+            "l": 201.1621,
+            "t": 1744603200000,
+            "n": 1272714
+          },
+          {
+            "v": 51343872,
+            "vw": 202.1396,
+            "o": 201.855,
+            "c": 202.14,
+            "h": 203.51,
+            "l": 199.8,
+            "t": 1744689600000,
+            "n": 595846
+          },
+          {
+            "v": 59727673,
+            "vw": 195.8891,
+            "o": 198.36,
+            "c": 194.27,
+            "h": 200.7,
+            "l": 192.37,
+            "t": 1744776000000,
+            "n": 744248
+          },
+          {
+            "v": 52164675,
+            "vw": 196.8888,
+            "o": 197.2,
+            "c": 196.98,
+            "h": 198.8335,
+            "l": 194.42,
+            "t": 1744862400000,
+            "n": 537919
+          },
+          {
+            "v": 46742537,
+            "vw": 192.0767,
+            "o": 193.265,
+            "c": 193.16,
+            "h": 193.8,
+            "l": 189.8112,
+            "t": 1745208000000,
+            "n": 576340
+          },
+          {
+            "v": 52976371,
+            "vw": 199.2937,
+            "o": 196.12,
+            "c": 199.74,
+            "h": 201.59,
+            "l": 195.97,
+            "t": 1745294400000,
+            "n": 608790
+          },
+          {
+            "v": 52929165,
+            "vw": 205.3603,
+            "o": 206,
+            "c": 204.6,
+            "h": 208,
+            "l": 202.799,
+            "t": 1745380800000,
+            "n": 664354
+          },
+          {
+            "v": 47310989,
+            "vw": 207.0889,
+            "o": 204.89,
+            "c": 208.37,
+            "h": 208.8299,
+            "l": 202.94,
+            "t": 1745467200000,
+            "n": 490831
+          },
+          {
+            "v": 38222258,
+            "vw": 208.3682,
+            "o": 206.365,
+            "c": 209.28,
+            "h": 209.75,
+            "l": 206.2,
+            "t": 1745553600000,
+            "n": 469917
+          },
+          {
+            "v": 38737224,
+            "vw": 209.6743,
+            "o": 210,
+            "c": 210.14,
+            "h": 211.5,
+            "l": 207.46,
+            "t": 1745812800000,
+            "n": 436968
+          },
+          {
+            "v": 36827633,
+            "vw": 210.9585,
+            "o": 208.693,
+            "c": 211.21,
+            "h": 212.24,
+            "l": 208.37,
+            "t": 1745899200000,
+            "n": 403524
+          },
+          {
+            "v": 52286454,
+            "vw": 211.3283,
+            "o": 209.3,
+            "c": 212.5,
+            "h": 213.58,
+            "l": 206.6705,
+            "t": 1745985600000,
+            "n": 501667
+          },
+          {
+            "v": 57364925,
+            "vw": 211.8686,
+            "o": 209.08,
+            "c": 213.32,
+            "h": 214.56,
+            "l": 208.9,
+            "t": 1746072000000,
+            "n": 712565
+          },
+          {
+            "v": 101010621,
+            "vw": 204.9131,
+            "o": 206.09,
+            "c": 205.35,
+            "h": 206.99,
+            "l": 202.16,
+            "t": 1746158400000,
+            "n": 1100613
+          },
+          {
+            "v": 69018452,
+            "vw": 199.7435,
+            "o": 203.1,
+            "c": 198.89,
+            "h": 204.1,
+            "l": 198.21,
+            "t": 1746417600000,
+            "n": 770697
+          },
+          {
+            "v": 51216482,
+            "vw": 198.8453,
+            "o": 198.21,
+            "c": 198.51,
+            "h": 200.65,
+            "l": 197.02,
+            "t": 1746504000000,
+            "n": 529849
+          },
+          {
+            "v": 68616943,
+            "vw": 195.9883,
+            "o": 199.17,
+            "c": 196.25,
+            "h": 199.44,
+            "l": 193.25,
+            "t": 1746590400000,
+            "n": 753075
+          },
+          {
+            "v": 50478872,
+            "vw": 197.7519,
+            "o": 197.72,
+            "c": 197.49,
+            "h": 200.05,
+            "l": 194.6796,
+            "t": 1746676800000,
+            "n": 599001
+          },
+          {
+            "v": 36453923,
+            "vw": 198.6614,
+            "o": 199,
+            "c": 198.53,
+            "h": 200.5399,
+            "l": 197.535,
+            "t": 1746763200000,
+            "n": 423067
+          },
+          {
+            "v": 63775814,
+            "vw": 209.7114,
+            "o": 210.97,
+            "c": 210.79,
+            "h": 211.2679,
+            "l": 206.75,
+            "t": 1747022400000,
+            "n": 806841
+          },
+          {
+            "v": 51909332,
+            "vw": 211.8003,
+            "o": 210.43,
+            "c": 212.93,
+            "h": 213.4,
+            "l": 209,
+            "t": 1747108800000,
+            "n": 608884
+          },
+          {
+            "v": 49325825,
+            "vw": 212.2847,
+            "o": 212.43,
+            "c": 212.33,
+            "h": 213.94,
+            "l": 210.5801,
+            "t": 1747195200000,
+            "n": 596267
+          },
+          {
+            "v": 45029473,
+            "vw": 211.308,
+            "o": 210.95,
+            "c": 211.45,
+            "h": 212.96,
+            "l": 209.54,
+            "t": 1747281600000,
+            "n": 550863
+          },
+          {
+            "v": 54737850,
+            "vw": 211.25,
+            "o": 212.36,
+            "c": 211.26,
+            "h": 212.57,
+            "l": 209.77,
+            "t": 1747368000000,
+            "n": 512788
+          },
+          {
+            "v": 46140527,
+            "vw": 207.6892,
+            "o": 207.91,
+            "c": 208.78,
+            "h": 209.48,
+            "l": 204.26,
+            "t": 1747627200000,
+            "n": 617742
+          },
+          {
+            "v": 42496635,
+            "vw": 207.0811,
+            "o": 207.67,
+            "c": 206.86,
+            "h": 208.47,
+            "l": 205.03,
+            "t": 1747713600000,
+            "n": 511393
+          },
+          {
+            "v": 59211774,
+            "vw": 203.4576,
+            "o": 205.17,
+            "c": 202.09,
+            "h": 207.04,
+            "l": 200.71,
+            "t": 1747800000000,
+            "n": 783994
+          },
+          {
+            "v": 46742407,
+            "vw": 201.4092,
+            "o": 200.71,
+            "c": 201.36,
+            "h": 202.75,
+            "l": 199.7,
+            "t": 1747886400000,
+            "n": 615608
+          },
+          {
+            "v": 78432918,
+            "vw": 195.8833,
+            "o": 193.665,
+            "c": 195.27,
+            "h": 197.7,
+            "l": 193.46,
+            "t": 1747972800000,
+            "n": 1035410
+          },
+          {
+            "v": 56288475,
+            "vw": 199.4808,
+            "o": 198.3,
+            "c": 200.21,
+            "h": 200.74,
+            "l": 197.43,
+            "t": 1748318400000,
+            "n": 710445
+          },
+          {
+            "v": 45339678,
+            "vw": 200.9086,
+            "o": 200.59,
+            "c": 200.42,
+            "h": 202.73,
+            "l": 199.9,
+            "t": 1748404800000,
+            "n": 549615
+          },
+          {
+            "v": 51477938,
+            "vw": 200.5388,
+            "o": 203.575,
+            "c": 199.95,
+            "h": 203.81,
+            "l": 198.51,
+            "t": 1748491200000,
+            "n": 652509
+          },
+          {
+            "v": 70819942,
+            "vw": 199.9641,
+            "o": 199.37,
+            "c": 200.85,
+            "h": 201.96,
+            "l": 196.78,
+            "t": 1748577600000,
+            "n": 605924
+          },
+          {
+            "v": 35423294,
+            "vw": 201.2063,
+            "o": 200.28,
+            "c": 201.7,
+            "h": 202.13,
+            "l": 200.12,
+            "t": 1748836800000,
+            "n": 501431
+          },
+          {
+            "v": 46381567,
+            "vw": 202.8132,
+            "o": 201.35,
+            "c": 203.27,
+            "h": 203.77,
+            "l": 200.955,
+            "t": 1748923200000,
+            "n": 519820
+          },
+          {
+            "v": 43603985,
+            "vw": 203.6276,
+            "o": 202.91,
+            "c": 202.82,
+            "h": 206.24,
+            "l": 202.1,
+            "t": 1749009600000,
+            "n": 568214
+          },
+          {
+            "v": 55221235,
+            "vw": 201.838,
+            "o": 203.5,
+            "c": 200.63,
+            "h": 204.75,
+            "l": 200.15,
+            "t": 1749096000000,
+            "n": 637645
+          },
+          {
+            "v": 46607693,
+            "vw": 204.0682,
+            "o": 203,
+            "c": 203.92,
+            "h": 205.7,
+            "l": 202.05,
+            "t": 1749182400000,
+            "n": 556357
+          },
+          {
+            "v": 72862557,
+            "vw": 202.5405,
+            "o": 204.39,
+            "c": 201.45,
+            "h": 206,
+            "l": 200.02,
+            "t": 1749441600000,
+            "n": 860118
+          },
+          {
+            "v": 54672608,
+            "vw": 202.5339,
+            "o": 200.6,
+            "c": 202.67,
+            "h": 204.35,
+            "l": 200.57,
+            "t": 1749528000000,
+            "n": 611323
+          },
+          {
+            "v": 60989857,
+            "vw": 200.4652,
+            "o": 203.5,
+            "c": 198.78,
+            "h": 204.5,
+            "l": 198.41,
+            "t": 1749614400000,
+            "n": 770310
+          },
+          {
+            "v": 43904635,
+            "vw": 198.7007,
+            "o": 199.08,
+            "c": 199.2,
+            "h": 199.68,
+            "l": 197.3601,
+            "t": 1749700800000,
+            "n": 541843
+          },
+          {
+            "v": 51447349,
+            "vw": 197.0361,
+            "o": 199.73,
+            "c": 196.45,
+            "h": 200.37,
+            "l": 195.7,
+            "t": 1749787200000,
+            "n": 716210
+          },
+          {
+            "v": 43020691,
+            "vw": 197.8895,
+            "o": 197.3,
+            "c": 198.42,
+            "h": 198.685,
+            "l": 196.5636,
+            "t": 1750046400000,
+            "n": 568354
+          },
+          {
+            "v": 38856152,
+            "vw": 196.4948,
+            "o": 197.2,
+            "c": 195.64,
+            "h": 198.39,
+            "l": 195.21,
+            "t": 1750132800000,
+            "n": 522902
+          },
+          {
+            "v": 45394689,
+            "vw": 196.4448,
+            "o": 195.94,
+            "c": 196.58,
+            "h": 197.57,
+            "l": 195.07,
+            "t": 1750219200000,
+            "n": 520881
+          },
+          {
+            "v": 96813542,
+            "vw": 199.8096,
+            "o": 198.235,
+            "c": 201,
+            "h": 201.7,
+            "l": 196.855,
+            "t": 1750392000000,
+            "n": 680915
+          },
+          {
+            "v": 55814272,
+            "vw": 201.1824,
+            "o": 201.625,
+            "c": 201.5,
+            "h": 202.3,
+            "l": 198.96,
+            "t": 1750651200000,
+            "n": 618980
+          },
+          {
+            "v": 54064033,
+            "vw": 201.4391,
+            "o": 202.59,
+            "c": 200.3,
+            "h": 203.44,
+            "l": 200.2,
+            "t": 1750737600000,
+            "n": 666917
+          },
+          {
+            "v": 39525730,
+            "vw": 201.7923,
+            "o": 201.45,
+            "c": 201.56,
+            "h": 203.67,
+            "l": 200.6201,
+            "t": 1750824000000,
+            "n": 514978
+          },
+          {
+            "v": 50799121,
+            "vw": 200.6328,
+            "o": 201.43,
+            "c": 201,
+            "h": 202.64,
+            "l": 199.46,
+            "t": 1750910400000,
+            "n": 622887
+          },
+          {
+            "v": 73188571,
+            "vw": 201.4224,
+            "o": 201.89,
+            "c": 201.08,
+            "h": 203.22,
+            "l": 200,
+            "t": 1750996800000,
+            "n": 596078
+          },
+          {
+            "v": 91912816,
+            "vw": 203.3565,
+            "o": 202.01,
+            "c": 205.17,
+            "h": 207.39,
+            "l": 199.2607,
+            "t": 1751256000000,
+            "n": 914593
+          },
+          {
+            "v": 78788867,
+            "vw": 208.176,
+            "o": 206.665,
+            "c": 207.82,
+            "h": 210.1865,
+            "l": 206.1401,
+            "t": 1751342400000,
+            "n": 970491
+          },
+          {
+            "v": 67941811,
+            "vw": 211.7489,
+            "o": 208.91,
+            "c": 212.44,
+            "h": 213.34,
+            "l": 208.14,
+            "t": 1751428800000,
+            "n": 798402
+          },
+          {
+            "v": 34954599,
+            "vw": 213.5582,
+            "o": 212.145,
+            "c": 213.55,
+            "h": 214.65,
+            "l": 211.8101,
+            "t": 1751515200000,
+            "n": 432767
+          },
+          {
+            "v": 50228984,
+            "vw": 211.1605,
+            "o": 212.68,
+            "c": 209.95,
+            "h": 216.23,
+            "l": 208.8,
+            "t": 1751860800000,
+            "n": 670324
+          },
+          {
+            "v": 42848928,
+            "vw": 209.9116,
+            "o": 210.1,
+            "c": 210.01,
+            "h": 211.43,
+            "l": 208.45,
+            "t": 1751947200000,
+            "n": 512140
+          },
+          {
+            "v": 48749367,
+            "vw": 209.5626,
+            "o": 209.53,
+            "c": 211.14,
+            "h": 211.33,
+            "l": 207.22,
+            "t": 1752033600000,
+            "n": 590796
+          },
+          {
+            "v": 44443635,
+            "vw": 212.2489,
+            "o": 210.505,
+            "c": 212.41,
+            "h": 213.48,
+            "l": 210.03,
+            "t": 1752120000000,
+            "n": 545131
+          },
+          {
+            "v": 39765812,
+            "vw": 211.0285,
+            "o": 210.565,
+            "c": 211.16,
+            "h": 212.13,
+            "l": 209.86,
+            "t": 1752206400000,
+            "n": 431665
+          },
+          {
+            "v": 38840111,
+            "vw": 208.7627,
+            "o": 209.925,
+            "c": 208.62,
+            "h": 210.91,
+            "l": 207.54,
+            "t": 1752465600000,
+            "n": 525534
+          },
+          {
+            "v": 42296339,
+            "vw": 210.0604,
+            "o": 209.22,
+            "c": 209.11,
+            "h": 211.89,
+            "l": 208.92,
+            "t": 1752552000000,
+            "n": 526311
+          },
+          {
+            "v": 47490532,
+            "vw": 210.3633,
+            "o": 210.295,
+            "c": 210.16,
+            "h": 212.4,
+            "l": 208.64,
+            "t": 1752638400000,
+            "n": 535850
+          },
+          {
+            "v": 48068141,
+            "vw": 210.5606,
+            "o": 210.57,
+            "c": 210.02,
+            "h": 211.8,
+            "l": 209.59,
+            "t": 1752724800000,
+            "n": 574972
+          },
+          {
+            "v": 48974591,
+            "vw": 210.8567,
+            "o": 210.87,
+            "c": 211.18,
+            "h": 211.79,
+            "l": 209.7045,
+            "t": 1752811200000,
+            "n": 478858
+          },
+          {
+            "v": 51377434,
+            "vw": 213.3495,
+            "o": 212.1,
+            "c": 212.48,
+            "h": 215.78,
+            "l": 211.63,
+            "t": 1753070400000,
+            "n": 651657
+          },
+          {
+            "v": 46404072,
+            "vw": 213.6492,
+            "o": 213.14,
+            "c": 214.4,
+            "h": 214.95,
+            "l": 212.2301,
+            "t": 1753156800000,
+            "n": 549182
+          },
+          {
+            "v": 46989301,
+            "vw": 213.7982,
+            "o": 215,
+            "c": 214.15,
+            "h": 215.15,
+            "l": 212.41,
+            "t": 1753243200000,
+            "n": 497904
+          },
+          {
+            "v": 46022620,
+            "vw": 214.3924,
+            "o": 213.9,
+            "c": 213.76,
+            "h": 215.69,
+            "l": 213.53,
+            "t": 1753329600000,
+            "n": 505013
+          },
+          {
+            "v": 40268781,
+            "vw": 214.1284,
+            "o": 214.7,
+            "c": 213.88,
+            "h": 215.24,
+            "l": 213.4,
+            "t": 1753416000000,
+            "n": 409972
+          },
+          {
+            "v": 37858017,
+            "vw": 214.04,
+            "o": 214.03,
+            "c": 214.05,
+            "h": 214.845,
+            "l": 213.06,
+            "t": 1753675200000,
+            "n": 425354
+          },
+          {
+            "v": 51411723,
+            "vw": 212.1244,
+            "o": 214.175,
+            "c": 211.27,
+            "h": 214.81,
+            "l": 210.82,
+            "t": 1753761600000,
+            "n": 537963
+          },
+          {
+            "v": 45512514,
+            "vw": 209.5067,
+            "o": 211.895,
+            "c": 209.05,
+            "h": 212.39,
+            "l": 207.72,
+            "t": 1753848000000,
+            "n": 542351
+          },
+          {
+            "v": 80698431,
+            "vw": 208.9948,
+            "o": 208.49,
+            "c": 207.57,
+            "h": 209.84,
+            "l": 207.16,
+            "t": 1753934400000,
+            "n": 827514
+          },
+          {
+            "v": 104434473,
+            "vw": 204.507,
+            "o": 210.865,
+            "c": 202.38,
+            "h": 213.58,
+            "l": 201.5,
+            "t": 1754020800000,
+            "n": 1201399
+          },
+          {
+            "v": 75109298,
+            "vw": 204.2151,
+            "o": 204.505,
+            "c": 203.35,
+            "h": 207.88,
+            "l": 201.675,
+            "t": 1754280000000,
+            "n": 785189
+          },
+          {
+            "v": 44155079,
+            "vw": 203.548,
+            "o": 203.4,
+            "c": 202.92,
+            "h": 205.34,
+            "l": 202.16,
+            "t": 1754366400000,
+            "n": 491748
+          },
+          {
+            "v": 108483103,
+            "vw": 212.8573,
+            "o": 205.63,
+            "c": 213.25,
+            "h": 215.38,
+            "l": 205.59,
+            "t": 1754452800000,
+            "n": 1104103
+          },
+          {
+            "v": 90224834,
+            "vw": 219.3267,
+            "o": 218.875,
+            "c": 220.03,
+            "h": 220.85,
+            "l": 216.58,
+            "t": 1754539200000,
+            "n": 1007838
+          },
+          {
+            "v": 113853967,
+            "vw": 227.3071,
+            "o": 220.83,
+            "c": 229.35,
+            "h": 231,
+            "l": 219.25,
+            "t": 1754625600000,
+            "n": 1135405
+          },
+          {
+            "v": 61806132,
+            "vw": 227.323,
+            "o": 227.92,
+            "c": 227.18,
+            "h": 229.56,
+            "l": 224.76,
+            "t": 1754884800000,
+            "n": 692122
+          },
+          {
+            "v": 55672301,
+            "vw": 229.3355,
+            "o": 228.005,
+            "c": 229.65,
+            "h": 230.8,
+            "l": 227.07,
+            "t": 1754971200000,
+            "n": 561508
+          },
+          {
+            "v": 69878546,
+            "vw": 232.7762,
+            "o": 231.07,
+            "c": 233.33,
+            "h": 235,
+            "l": 230.43,
+            "t": 1755057600000,
+            "n": 740719
+          },
+          {
+            "v": 51916275,
+            "vw": 232.7455,
+            "o": 234.055,
+            "c": 232.78,
+            "h": 235.12,
+            "l": 230.85,
+            "t": 1755144000000,
+            "n": 558697
+          },
+          {
+            "v": 56038657,
+            "vw": 231.5464,
+            "o": 234,
+            "c": 231.59,
+            "h": 234.28,
+            "l": 229.335,
+            "t": 1755230400000,
+            "n": 503028
+          },
+          {
+            "v": 37476188,
+            "vw": 231.1904,
+            "o": 231.7,
+            "c": 230.89,
+            "h": 233.12,
+            "l": 230.11,
+            "t": 1755489600000,
+            "n": 430736
+          },
+          {
+            "v": 39402564,
+            "vw": 230.8466,
+            "o": 231.275,
+            "c": 230.56,
+            "h": 232.87,
+            "l": 229.35,
+            "t": 1755576000000,
+            "n": 445624
+          },
+          {
+            "v": 42263865,
+            "vw": 226.7667,
+            "o": 229.98,
+            "c": 226.01,
+            "h": 230.47,
+            "l": 225.77,
+            "t": 1755662400000,
+            "n": 527559
+          },
+          {
+            "v": 30621249,
+            "vw": 224.9952,
+            "o": 226.27,
+            "c": 224.9,
+            "h": 226.52,
+            "l": 223.7804,
+            "t": 1755748800000,
+            "n": 406761
+          },
+          {
+            "v": 42477811,
+            "vw": 227.764,
+            "o": 226.17,
+            "c": 227.76,
+            "h": 229.09,
+            "l": 225.41,
+            "t": 1755835200000,
+            "n": 488076
+          },
+          {
+            "v": 30983133,
+            "vw": 227.9958,
+            "o": 226.48,
+            "c": 227.16,
+            "h": 229.3,
+            "l": 226.23,
+            "t": 1756094400000,
+            "n": 426385
+          },
+          {
+            "v": 54575107,
+            "vw": 228.1997,
+            "o": 226.87,
+            "c": 229.31,
+            "h": 229.49,
+            "l": 224.69,
+            "t": 1756180800000,
+            "n": 405233
+          },
+          {
+            "v": 31259513,
+            "vw": 230.023,
+            "o": 228.61,
+            "c": 230.49,
+            "h": 230.9,
+            "l": 228.26,
+            "t": 1756267200000,
+            "n": 387841
+          },
+          {
+            "v": 38074700,
+            "vw": 232.0548,
+            "o": 230.82,
+            "c": 232.56,
+            "h": 233.41,
+            "l": 229.335,
+            "t": 1756353600000,
+            "n": 423338
+          },
+          {
+            "v": 39418437,
+            "vw": 232.321,
+            "o": 232.51,
+            "c": 232.14,
+            "h": 233.38,
+            "l": 231.37,
+            "t": 1756440000000,
+            "n": 428938
+          },
+          {
+            "v": 44075638,
+            "vw": 229.9932,
+            "o": 229.25,
+            "c": 229.72,
+            "h": 230.85,
+            "l": 226.97,
+            "t": 1756785600000,
+            "n": 598029
+          },
+          {
+            "v": 66427835,
+            "vw": 237.0292,
+            "o": 237.21,
+            "c": 238.47,
+            "h": 238.85,
+            "l": 234.36,
+            "t": 1756872000000,
+            "n": 898535
+          },
+          {
+            "v": 47549429,
+            "vw": 238.5031,
+            "o": 238.45,
+            "c": 239.78,
+            "h": 239.8999,
+            "l": 236.74,
+            "t": 1756958400000,
+            "n": 541770
+          },
+          {
+            "v": 54870397,
+            "vw": 239.6771,
+            "o": 239.995,
+            "c": 239.69,
+            "h": 241.32,
+            "l": 238.4901,
+            "t": 1757044800000,
+            "n": 610786
+          },
+          {
+            "v": 48999495,
+            "vw": 238.2065,
+            "o": 239.3,
+            "c": 237.88,
+            "h": 240.15,
+            "l": 236.34,
+            "t": 1757304000000,
+            "n": 563611
+          },
+          {
+            "v": 66313918,
+            "vw": 235.5793,
+            "o": 237,
+            "c": 234.35,
+            "h": 238.7805,
+            "l": 233.36,
+            "t": 1757390400000,
+            "n": 757845
+          },
+          {
+            "v": 83440810,
+            "vw": 227.7892,
+            "o": 232.185,
+            "c": 226.79,
+            "h": 232.42,
+            "l": 225.95,
+            "t": 1757476800000,
+            "n": 1031749
+          },
+          {
+            "v": 50208578,
+            "vw": 229.1184,
+            "o": 226.875,
+            "c": 230.03,
+            "h": 230.45,
+            "l": 226.65,
+            "t": 1757563200000,
+            "n": 592895
+          },
+          {
+            "v": 55824216,
+            "vw": 233.1344,
+            "o": 229.22,
+            "c": 234.07,
+            "h": 234.51,
+            "l": 229.02,
+            "t": 1757649600000,
+            "n": 602121
+          },
+          {
+            "v": 42704907,
+            "vw": 236.3383,
+            "o": 237,
+            "c": 236.7,
+            "h": 238.19,
+            "l": 235.03,
+            "t": 1757908800000,
+            "n": 575908
+          }
+        ],
+        "status": "DELAYED",
+        "request_id": "0da68413689c091547c1d79e639f126d",
+        "count": 250
+      },
+      "endpoint": "/v2/aggs/ticker/AAPL/range/1/day/2024-09-16/2025-09-16",
+      "dataSize": 26830
+    },
+    {
+      "success": true,
+      "status": 403,
+      "responseTime": 251,
+      "data": {
+        "status": "NOT_AUTHORIZED",
+        "request_id": "1e1bafdaa7421f9b61b8809c7b188dba",
+        "message": "You are not entitled to this data. Please upgrade your plan at https://polygon.io/pricing"
+      },
+      "endpoint": "/v2/last/trade/INVALID123",
+      "dataSize": 177
+    },
+    {
+      "success": false,
+      "status": 404,
+      "responseTime": 247,
+      "error": "JSON Parse Error",
+      "endpoint": "/v2/invalid/endpoint/AAPL",
+      "dataSize": 18
+    },
+    {
+      "success": false,
+      "status": 404,
+      "responseTime": 250,
+      "error": "JSON Parse Error",
+      "endpoint": "/v2/last/trade/",
+      "dataSize": 18
+    }
+  ]
+}

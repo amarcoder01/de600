@@ -1,0 +1,344 @@
+{
+  "data_validation": {
+    "test_name": "Data Quality Validation",
+    "passed": "True",
+    "score": 0.7833333333333332,
+    "details": {
+      "total_symbols": 3,
+      "data_quality_checks": {
+        "AAPL": {
+          "score": 1.0,
+          "price_consistency": {
+            "score": 1.0,
+            "issues": []
+          },
+          "volume_consistency": {
+            "score": 1.0,
+            "issues": []
+          },
+          "ohlc_consistency": {
+            "score": 1.0,
+            "issues": []
+          }
+        },
+        "MSFT": {
+          "score": 1.0,
+          "price_consistency": {
+            "score": 1.0,
+            "issues": []
+          },
+          "volume_consistency": {
+            "score": 1.0,
+            "issues": []
+          },
+          "ohlc_consistency": {
+            "score": 1.0,
+            "issues": []
+          }
+        },
+        "GOOGL": {
+          "score": 1.0,
+          "price_consistency": {
+            "score": 1.0,
+            "issues": []
+          },
+          "volume_consistency": {
+            "score": 1.0,
+            "issues": []
+          },
+          "ohlc_consistency": {
+            "score": 1.0,
+            "issues": []
+          }
+        }
+      },
+      "integrity_checks": {
+        "AAPL": {
+          "score": 1.0,
+          "negative_prices": 0,
+          "negative_volumes": 0,
+          "price_anomalies": 0
+        },
+        "MSFT": {
+          "score": 1.0,
+          "negative_prices": 0,
+          "negative_volumes": 0,
+          "price_anomalies": 0
+        },
+        "GOOGL": {
+          "score": 1.0,
+          "negative_prices": 0,
+          "negative_volumes": 0,
+          "price_anomalies": 0
+        }
+      },
+      "completeness_checks": {
+        "AAPL": {
+          "score": 0.8,
+          "total_rows": 1005,
+          "missing_values": {
+            "Volume": 0,
+            "vwap": 0,
+            "Open": 0,
+            "Close": 0,
+            "High": 0,
+            "Low": 0,
+            "timestamp": 0,
+            "transactions": 0,
+            "Adj Close": 0,
+            "returns": 1,
+            "log_returns": 1,
+            "sma_20": 19,
+            "sma_50": 49,
+            "ema_12": 0,
+            "ema_26": 0,
+            "rsi": 13,
+            "macd": 0,
+            "macd_signal": 0,
+            "macd_histogram": 0,
+            "volatility": 20,
+            "atr": 14,
+            "volume_sma": 19,
+            "volume_ratio": 19,
+            "bb_upper": 19,
+            "bb_lower": 19,
+            "bb_position": 19
+          },
+          "date_range": "2021-01-04 05:00:00 to 2024-12-31 05:00:00"
+        },
+        "MSFT": {
+          "score": 0.8,
+          "total_rows": 1005,
+          "missing_values": {
+            "Volume": 0,
+            "vwap": 0,
+            "Open": 0,
+            "Close": 0,
+            "High": 0,
+            "Low": 0,
+            "timestamp": 0,
+            "transactions": 0,
+            "Adj Close": 0,
+            "returns": 1,
+            "log_returns": 1,
+            "sma_20": 19,
+            "sma_50": 49,
+            "ema_12": 0,
+            "ema_26": 0,
+            "rsi": 13,
+            "macd": 0,
+            "macd_signal": 0,
+            "macd_histogram": 0,
+            "volatility": 20,
+            "atr": 14,
+            "volume_sma": 19,
+            "volume_ratio": 19,
+            "bb_upper": 19,
+            "bb_lower": 19,
+            "bb_position": 19
+          },
+          "date_range": "2021-01-04 05:00:00 to 2024-12-31 05:00:00"
+        },
+        "GOOGL": {
+          "score": 0.8,
+          "total_rows": 1005,
+          "missing_values": {
+            "Volume": 0,
+            "vwap": 0,
+            "Open": 0,
+            "Close": 0,
+            "High": 0,
+            "Low": 0,
+            "timestamp": 0,
+            "transactions": 0,
+            "Adj Close": 0,
+            "returns": 1,
+            "log_returns": 1,
+            "sma_20": 19,
+            "sma_50": 49,
+            "ema_12": 0,
+            "ema_26": 0,
+            "rsi": 13,
+            "macd": 0,
+            "macd_signal": 0,
+            "macd_histogram": 0,
+            "volatility": 20,
+            "atr": 14,
+            "volume_sma": 19,
+            "volume_ratio": 19,
+            "bb_upper": 19,
+            "bb_lower": 19,
+            "bb_position": 19
+          },
+          "date_range": "2021-01-04 05:00:00 to 2024-12-31 05:00:00"
+        }
+      },
+      "anomaly_detection": {
+        "AAPL": {
+          "score": 0.0,
+          "known_points_checked": 3
+        },
+        "MSFT": {
+          "score": 0.0,
+          "known_points_checked": 3
+        },
+        "GOOGL": {
+          "score": 1.0,
+          "known_points_checked": 0
+        }
+      }
+    },
+    "error_message": null,
+    "recommendations": []
+  },
+  "calculation_validation": {
+    "test_name": "Calculation Validation",
+    "passed": "False",
+    "score": 0.5982456140350877,
+    "details": {
+      "performance_metrics": {
+        "score": 0.0,
+        "total_metrics": 3,
+        "correct_metrics": 0,
+        "issues": [
+          "Total trades mismatch - Expected: 379, Actual: 0",
+          "Winning trades mismatch - Expected: 203, Actual: 0",
+          "Total P&L mismatch - Expected: -256.45, Actual: 0.00"
+        ]
+      },
+      "trade_analysis": {
+        "score": 1.0,
+        "total_trades": 379,
+        "correct_trades": 379,
+        "issues": []
+      },
+      "portfolio_calculations": {
+        "score": 0.7947368421052632,
+        "total_values": 380,
+        "correct_values": 302,
+        "issues": [
+          "Portfolio value 55: Mismatch - Expected: 104691.10, Actual: 99251.47",
+          "Portfolio value 56: Mismatch - Expected: 104426.58, Actual: 99251.47",
+          "Portfolio value 57: Mismatch - Expected: 104465.28, Actual: 99251.47",
+          "Portfolio value 58: Mismatch - Expected: 104324.38, Actual: 99251.47",
+          "Portfolio value 59: Mismatch - Expected: 104462.60, Actual: 99251.47",
+          "Portfolio value 60: Mismatch - Expected: 104480.56, Actual: 99251.47",
+          "Portfolio value 92: Mismatch - Expected: 105977.51, Actual: 100823.95",
+          "Portfolio value 93: Mismatch - Expected: 105856.62, Actual: 100813.88",
+          "Portfolio value 96: Mismatch - Expected: 106042.73, Actual: 100747.77",
+          "Portfolio value 97: Mismatch - Expected: 106689.23, Actual: 101040.17",
+          "Portfolio value 98: Mismatch - Expected: 106450.56, Actual: 101048.17",
+          "Portfolio value 100: Mismatch - Expected: 106739.79, Actual: 101026.93",
+          "Portfolio value 101: Mismatch - Expected: 106817.78, Actual: 101002.00",
+          "Portfolio value 102: Mismatch - Expected: 106609.45, Actual: 101106.03",
+          "Portfolio value 103: Mismatch - Expected: 106397.99, Actual: 101095.85",
+          "Portfolio value 151: Mismatch - Expected: 98834.38, Actual: 104478.03",
+          "Portfolio value 152: Mismatch - Expected: 98195.32, Actual: 104454.35",
+          "Portfolio value 153: Mismatch - Expected: 98134.90, Actual: 104617.57",
+          "Portfolio value 154: Mismatch - Expected: 98307.76, Actual: 104757.53",
+          "Portfolio value 155: Mismatch - Expected: 98155.23, Actual: 104859.09",
+          "Portfolio value 156: Mismatch - Expected: 98149.23, Actual: 104584.66",
+          "Portfolio value 157: Mismatch - Expected: 97899.11, Actual: 104202.33",
+          "Portfolio value 158: Mismatch - Expected: 97665.47, Actual: 104432.37",
+          "Portfolio value 159: Mismatch - Expected: 97645.28, Actual: 104891.75",
+          "Portfolio value 160: Mismatch - Expected: 97940.21, Actual: 105184.43",
+          "Portfolio value 161: Mismatch - Expected: 97790.04, Actual: 105148.04",
+          "Portfolio value 162: Mismatch - Expected: 97483.85, Actual: 105182.22",
+          "Portfolio value 163: Mismatch - Expected: 96909.47, Actual: 104982.70",
+          "Portfolio value 164: Mismatch - Expected: 96967.84, Actual: 105238.51",
+          "Portfolio value 165: Mismatch - Expected: 97040.57, Actual: 105671.17",
+          "Portfolio value 166: Mismatch - Expected: 96558.15, Actual: 105495.70",
+          "Portfolio value 167: Mismatch - Expected: 97020.89, Actual: 105569.97",
+          "Portfolio value 168: Mismatch - Expected: 97469.40, Actual: 105471.47",
+          "Portfolio value 169: Mismatch - Expected: 97374.16, Actual: 105540.54",
+          "Portfolio value 170: Mismatch - Expected: 97385.52, Actual: 105683.54",
+          "Portfolio value 171: Mismatch - Expected: 97363.69, Actual: 105481.68",
+          "Portfolio value 172: Mismatch - Expected: 97891.54, Actual: 105317.30",
+          "Portfolio value 173: Mismatch - Expected: 98370.03, Actual: 104753.89",
+          "Portfolio value 174: Mismatch - Expected: 98644.17, Actual: 104925.47",
+          "Portfolio value 175: Mismatch - Expected: 97830.52, Actual: 104902.68",
+          "Portfolio value 176: Mismatch - Expected: 97936.68, Actual: 105041.60",
+          "Portfolio value 177: Mismatch - Expected: 98372.91, Actual: 104984.15",
+          "Portfolio value 178: Mismatch - Expected: 98010.22, Actual: 104611.37",
+          "Portfolio value 179: Mismatch - Expected: 97384.62, Actual: 104285.55",
+          "Portfolio value 180: Mismatch - Expected: 97131.47, Actual: 104266.21",
+          "Portfolio value 181: Mismatch - Expected: 97075.44, Actual: 104266.21",
+          "Portfolio value 182: Mismatch - Expected: 96971.22, Actual: 104266.21",
+          "Portfolio value 183: Mismatch - Expected: 97373.73, Actual: 104266.21",
+          "Portfolio value 184: Mismatch - Expected: 97616.67, Actual: 104266.21",
+          "Portfolio value 185: Mismatch - Expected: 98044.30, Actual: 104266.21",
+          "Portfolio value 186: Mismatch - Expected: 97949.84, Actual: 104266.21",
+          "Portfolio value 187: Mismatch - Expected: 97978.19, Actual: 104266.21",
+          "Portfolio value 188: Mismatch - Expected: 97749.29, Actual: 104266.21",
+          "Portfolio value 189: Mismatch - Expected: 97809.95, Actual: 104266.21",
+          "Portfolio value 190: Mismatch - Expected: 97971.58, Actual: 104266.21",
+          "Portfolio value 191: Mismatch - Expected: 98299.18, Actual: 104266.21",
+          "Portfolio value 192: Mismatch - Expected: 98677.78, Actual: 104266.21",
+          "Portfolio value 193: Mismatch - Expected: 98732.18, Actual: 104266.21",
+          "Portfolio value 194: Mismatch - Expected: 98891.23, Actual: 104266.21",
+          "Portfolio value 195: Mismatch - Expected: 98676.35, Actual: 104266.21",
+          "Portfolio value 196: Mismatch - Expected: 98613.09, Actual: 104266.21",
+          "Portfolio value 197: Mismatch - Expected: 98577.24, Actual: 104266.21",
+          "Portfolio value 198: Mismatch - Expected: 98718.92, Actual: 104266.21",
+          "Portfolio value 199: Mismatch - Expected: 98705.15, Actual: 104266.21",
+          "Portfolio value 200: Mismatch - Expected: 98687.38, Actual: 104427.35",
+          "Portfolio value 201: Mismatch - Expected: 98476.98, Actual: 104331.86",
+          "Portfolio value 202: Mismatch - Expected: 98710.77, Actual: 104465.90",
+          "Portfolio value 206: Mismatch - Expected: 99360.62, Actual: 104918.93",
+          "Portfolio value 207: Mismatch - Expected: 99529.67, Actual: 105170.73",
+          "Portfolio value 208: Mismatch - Expected: 99427.81, Actual: 105374.54",
+          "Portfolio value 209: Mismatch - Expected: 99433.38, Actual: 104970.65",
+          "Portfolio value 210: Mismatch - Expected: 99760.24, Actual: 105220.69",
+          "Portfolio value 237: Mismatch - Expected: 101303.63, Actual: 106938.48",
+          "Portfolio value 249: Mismatch - Expected: 100976.46, Actual: 106560.73",
+          "Portfolio value 250: Mismatch - Expected: 100638.68, Actual: 106394.99",
+          "Portfolio value 251: Mismatch - Expected: 100693.92, Actual: 106194.39",
+          "Portfolio value 252: Mismatch - Expected: 100621.46, Actual: 106426.63",
+          "Portfolio value 253: Mismatch - Expected: 100494.96, Actual: 106034.77"
+        ]
+      },
+      "risk_metrics": {}
+    },
+    "error_message": null,
+    "recommendations": [
+      "Calculation accuracy below threshold",
+      "Review trade P&L calculations",
+      "Verify portfolio value calculations"
+    ]
+  },
+  "accuracy_metrics": {
+    "data_accuracy": 0.7833333333333332,
+    "calculation_accuracy": 0.5982456140350877,
+    "strategy_accuracy": 1.0,
+    "overall_accuracy": 0.6907894736842104,
+    "confidence_level": 0.7598684210526315,
+    "validation_score": 0.6722807017543859
+  },
+  "validation_report": {
+    "validation_timestamp": "2025-08-27T17:53:52.830857",
+    "overall_status": "FAILED",
+    "accuracy_metrics": {
+      "data_accuracy": 0.7833333333333332,
+      "calculation_accuracy": 0.5982456140350877,
+      "overall_accuracy": 0.6907894736842104,
+      "confidence_level": 0.7598684210526315,
+      "validation_score": 0.6722807017543859
+    },
+    "threshold_compliance": {
+      "data_quality": "True",
+      "calculation_accuracy": "False",
+      "overall_accuracy": "False"
+    },
+    "recommendations": [
+      "Calculation accuracy below threshold",
+      "Review trade P&L calculations",
+      "Verify portfolio value calculations"
+    ],
+    "summary": {
+      "total_validation_tests": 2,
+      "passed_tests": 1,
+      "failed_tests": 1,
+      "accuracy_grade": "F (Failed)"
+    }
+  }
+}

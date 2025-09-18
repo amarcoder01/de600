@@ -1,0 +1,156 @@
+{
+  "data_validation": {
+    "test_name": "Data Quality Validation",
+    "passed": "False",
+    "score": 0.7,
+    "details": {
+      "total_symbols": 1,
+      "data_quality_checks": {
+        "AAPL": {
+          "score": 1.0,
+          "price_consistency": {
+            "score": 1.0,
+            "issues": []
+          },
+          "volume_consistency": {
+            "score": 1.0,
+            "issues": []
+          },
+          "ohlc_consistency": {
+            "score": 1.0,
+            "issues": []
+          }
+        }
+      },
+      "integrity_checks": {
+        "AAPL": {
+          "score": 1.0,
+          "negative_prices": 0,
+          "negative_volumes": 0,
+          "price_anomalies": 0
+        }
+      },
+      "completeness_checks": {
+        "AAPL": {
+          "score": 0.8,
+          "total_rows": 840,
+          "missing_values": {
+            "Volume": 0,
+            "vwap": 0,
+            "Open": 0,
+            "Close": 0,
+            "High": 0,
+            "Low": 0,
+            "timestamp": 0,
+            "transactions": 0,
+            "Adj Close": 0,
+            "returns": 1,
+            "log_returns": 1,
+            "sma_20": 19,
+            "sma_50": 49,
+            "ema_12": 0,
+            "ema_26": 0,
+            "rsi": 13,
+            "macd": 0,
+            "macd_signal": 0,
+            "macd_histogram": 0,
+            "volatility": 20,
+            "atr": 14,
+            "volume_sma": 19,
+            "volume_ratio": 19,
+            "bb_upper": 19,
+            "bb_lower": 19,
+            "bb_position": 19
+          },
+          "date_range": "2020-08-28 04:00:00 to 2023-12-29 05:00:00"
+        }
+      },
+      "anomaly_detection": {
+        "AAPL": {
+          "score": 0.0,
+          "known_points_checked": 3
+        }
+      }
+    },
+    "error_message": null,
+    "recommendations": [
+      "Data quality below threshold - review data source",
+      "Check for missing or corrupted data points",
+      "Verify API rate limits and data availability"
+    ]
+  },
+  "calculation_validation": {
+    "test_name": "Calculation Validation",
+    "passed": "False",
+    "score": 0.6666666666666666,
+    "details": {
+      "performance_metrics": {
+        "score": 0.0,
+        "total_metrics": 3,
+        "correct_metrics": 0,
+        "issues": [
+          "Total trades mismatch - Expected: 104, Actual: 0",
+          "Winning trades mismatch - Expected: 59, Actual: 0",
+          "Total P&L mismatch - Expected: 3641.22, Actual: 0.00"
+        ]
+      },
+      "trade_analysis": {
+        "score": 1.0,
+        "total_trades": 104,
+        "correct_trades": 104,
+        "issues": []
+      },
+      "portfolio_calculations": {
+        "score": 1.0,
+        "total_values": 105,
+        "correct_values": 105,
+        "issues": []
+      },
+      "risk_metrics": {}
+    },
+    "error_message": null,
+    "recommendations": [
+      "Calculation accuracy below threshold",
+      "Review trade P&L calculations",
+      "Verify portfolio value calculations"
+    ]
+  },
+  "accuracy_metrics": {
+    "data_accuracy": 0.7,
+    "calculation_accuracy": 0.6666666666666666,
+    "strategy_accuracy": 1.0,
+    "overall_accuracy": 0.6833333333333333,
+    "confidence_level": 0.7516666666666667,
+    "validation_score": 0.6799999999999999
+  },
+  "validation_report": {
+    "validation_timestamp": "2025-08-27T17:53:19.218765",
+    "overall_status": "FAILED",
+    "accuracy_metrics": {
+      "data_accuracy": 0.7,
+      "calculation_accuracy": 0.6666666666666666,
+      "overall_accuracy": 0.6833333333333333,
+      "confidence_level": 0.7516666666666667,
+      "validation_score": 0.6799999999999999
+    },
+    "threshold_compliance": {
+      "data_quality": "False",
+      "calculation_accuracy": "False",
+      "overall_accuracy": "False"
+    },
+    "recommendations": [
+      "Data quality below threshold - review data source",
+      "Verify API rate limits and data availability",
+      "Calculation accuracy below threshold",
+      "Review trade P&L calculations",
+      "Check for missing or corrupted data points",
+      "Verify portfolio value calculations"
+    ],
+    "summary": {
+      "total_validation_tests": 2,
+      "passed_tests": 0,
+      "failed_tests": 2,
+      "accuracy_grade": "F (Failed)"
+    }
+  }
+}

@@ -1,0 +1,50 @@
+services:
+  # Web service for the Next.js application
+  - type: web
+    name: tradingpro-platform
+    env: node
+    plan: starter
+    buildCommand: bash scripts/install-python-deps.sh && npm install && npx prisma generate && npm run build
+    startCommand: sh -c "npx prisma migrate deploy && npm start"
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: RENDER
+        value: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: tradingpro-db
+          property: connectionString
+      - key: POLYGON_API_KEY
+        sync: false
+      - key: NEXT_PUBLIC_POLYGON_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: CHARTIMG_API_KEY
+        sync: false
+      - key: NEXT_PUBLIC_CHARTIMG_API_KEY
+        sync: false
+      - key: GOOGLE_SEARCH_API_KEY
+        sync: false
+      - key: GOOGLE_SEARCH_ENGINE_ID
+        sync: false
+      - key: NEXT_PUBLIC_ALPHA_VANTAGE_API_KEY
+        sync: false
+      - key: NEXT_PUBLIC_BASE_URL
+        value: https://vidality.com
+      - key: NEXT_PUBLIC_ENABLE_REAL_TIME
+        value: true
+      - key: NEXT_PUBLIC_ENABLE_AI_CHAT
+        value: true
+      - key: NEXT_PUBLIC_ENABLE_PAPER_TRADING
+        value: true
+    healthCheckPath: /
+    autoDeploy: true
+
+databases:
+  # PostgreSQL database for the application
+  - name: tradingpro-db
+    databaseName: tradingpro_db
+    user: tradingpro_user
+    plan: starter

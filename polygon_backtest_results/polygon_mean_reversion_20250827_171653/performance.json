@@ -1,0 +1,17 @@
+{
+  "total_trades": 56,
+  "winning_trades": 30,
+  "losing_trades": 26,
+  "win_rate": 0.5357142857142857,
+  "total_pnl": 4666.674441123079,
+  "total_return": 0.046666744411231045,
+  "avg_win": 396.0682176237488,
+  "avg_loss": -277.5143110611302,
+  "profit_factor": 1.6467683695966109,
+  "volatility": 0.020907389396770355,
+  "sharpe_ratio": 0.5143483600441549,
+  "max_drawdown": -0.026254571305204373,
+  "avg_trade_duration": 10.535714285714286,
+  "final_portfolio_value": 104666.6744411231,
+  "initial_capital": 100000
+}

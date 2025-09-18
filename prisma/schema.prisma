@@ -1,0 +1,373 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                      String                @id @default(cuid())
+  email                   String                @unique
+  password                String
+  firstName               String
+  lastName                String
+  isEmailVerified         Boolean               @default(false)
+  isAccountLocked         Boolean               @default(false)
+  isAccountDisabled       Boolean               @default(false)
+  lastLoginAt             DateTime?
+  failedLoginAttempts     Int                   @default(0)
+  lockoutUntil            DateTime?
+  settings                String?
+  preferences             String?               @default("{\"theme\":\"system\",\"currency\":\"USD\",\"timezone\":\"UTC\",\"notifications\":{\"email\":true,\"push\":true,\"sms\":false}}")
+  passwordResetToken      String?
+  passwordResetExpires    DateTime?
+  privacyPolicyAccepted   Boolean               @default(false)
+  privacyPolicyAcceptedAt DateTime?
+  createdAt               DateTime              @default(now())
+  updatedAt               DateTime              @updatedAt
+  chatSessions            ChatSession[]
+  deviceTrusts            DeviceTrust[]
+  loginAttempts           LoginAttempt[]
+  paperTradingAccounts    PaperTradingAccount[]
+  portfolios              Portfolio[]
+  priceAlerts             PriceAlert[]
+  telemetryEvents         TelemetryEvent[]
+  userSessions            UserSession[]
+  watchlists              Watchlist[]
+  // NextAuth.js relations
+  accounts                Account[]
+  sessions                Session[]
+  // Email verification
+  emailVerificationCodes  EmailVerificationCode[]
+  // Security events
+  securityEvents          SecurityEvent[]
+}
+
+// NextAuth.js required models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model EmailVerificationCode {
+  id        String   @id @default(cuid())
+  userId    String
+  email     String
+  code      String
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([email])
+  @@index([code])
+  @@index([expiresAt])
+  @@index([isUsed])
+  @@index([createdAt])
+}
+
+model LoginAttempt {
+  id                String   @id @default(cuid())
+  userId            String?
+  email             String
+  ipAddress         String
+  userAgent         String
+  deviceFingerprint String
+  success           Boolean
+  failureReason     String?
+  location          String?
+  timestamp         DateTime @default(now())
+  user              User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserSession {
+  id                String   @id @default(cuid())
+  userId            String
+  refreshToken      String   @unique
+  deviceFingerprint String
+  ipAddress         String
+  userAgent         String
+  isActive          Boolean  @default(true)
+  expiresAt         DateTime
+  lastUsedAt        DateTime @default(now())
+  createdAt         DateTime @default(now())
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model DeviceTrust {
+  id                String   @id @default(cuid())
+  userId            String
+  deviceFingerprint String
+  deviceName        String
+  isTrusted         Boolean  @default(false)
+  lastUsedAt        DateTime @default(now())
+  createdAt         DateTime @default(now())
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, deviceFingerprint])
+}
+
+model Portfolio {
+  id        String     @id @default(cuid())
+  userId    String
+  name      String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  user      User       @relation(fields: [userId], references: [id])
+  positions Position[]
+  trades    Trade[]
+}
+
+model Position {
+  id           String    @id @default(cuid())
+  portfolioId  String
+  symbol       String
+  quantity     Float
+  averagePrice Float
+  entryDate    DateTime
+  notes        String?
+  portfolio    Portfolio @relation(fields: [portfolioId], references: [id])
+}
+
+model Trade {
+  id          String    @id @default(cuid())
+  portfolioId String
+  symbol      String
+  type        String
+  quantity    Float
+  price       Float
+  amount      Float
+  date        DateTime  @default(now())
+  notes       String?
+  portfolio   Portfolio @relation(fields: [portfolioId], references: [id])
+}
+
+model Watchlist {
+  id        String          @id @default(cuid())
+  userId    String
+  name      String
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  user      User            @relation(fields: [userId], references: [id])
+  items     WatchlistItem[]
+}
+
+model WatchlistItem {
+  id            String    @id @default(cuid())
+  watchlistId   String
+  symbol        String
+  name          String
+  type          String    @default("stock")
+  price         Float?
+  change        Float?
+  changePercent Float?
+  exchange      String?
+  sector        String?
+  industry      String?
+  volume        Float?
+  marketCap     Float?
+  lastUpdated   DateTime  @default(now())
+  addedAt       DateTime  @default(now())
+  watchlist     Watchlist @relation(fields: [watchlistId], references: [id], onDelete: Cascade)
+}
+
+model ChatSession {
+  id        String        @id @default(cuid())
+  userId    String
+  title     String
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  messages  ChatMessage[]
+  user      User          @relation(fields: [userId], references: [id])
+}
+
+model ChatMessage {
+  id        String      @id @default(cuid())
+  sessionId String
+  role      String
+  content   String
+  metadata  String?
+  timestamp DateTime    @default(now())
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+model PaperTradingAccount {
+  id              String             @id @default(cuid())
+  userId          String
+  name            String
+  initialBalance  Float              @default(100000)
+  currentBalance  Float              @default(100000)
+  availableCash   Float              @default(100000)
+  totalValue      Float              @default(100000)
+  totalPnL        Float              @default(0)
+  totalPnLPercent Float              @default(0)
+  isActive        Boolean            @default(true)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  orders          PaperOrder[]
+  positions       PaperPosition[]
+  user            User               @relation(fields: [userId], references: [id])
+  transactions    PaperTransaction[]
+}
+
+model PaperPosition {
+  id                   String              @id @default(cuid())
+  accountId            String
+  symbol               String
+  name                 String
+  quantity             Float
+  averagePrice         Float
+  currentPrice         Float
+  marketValue          Float
+  unrealizedPnL        Float
+  unrealizedPnLPercent Float
+  type                 String              @default("stock")
+  exchange             String?
+  sector               String?
+  notes                String?             // NEW: For storing risk management parameters
+  entryDate            DateTime            @default(now())
+  lastUpdated          DateTime            @default(now())
+  account              PaperTradingAccount @relation(fields: [accountId], references: [id])
+}
+
+model PaperOrder {
+  id             String              @id @default(cuid())
+  accountId      String
+  symbol         String
+  type           String
+  side           String
+  quantity       Float
+  price          Float?
+  stopPrice      Float?
+  status         String              @default("pending")
+  filledQuantity Float               @default(0)
+  averagePrice   Float?
+  commission     Float               @default(0)
+  notes          String?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  account        PaperTradingAccount @relation(fields: [accountId], references: [id])
+}
+
+model PaperTransaction {
+  id          String              @id @default(cuid())
+  accountId   String
+  orderId     String?
+  symbol      String
+  type        String
+  quantity    Float?
+  price       Float?
+  amount      Float
+  commission  Float               @default(0)
+  description String?
+  timestamp   DateTime            @default(now())
+  account     PaperTradingAccount @relation(fields: [accountId], references: [id])
+}
+
+model PriceAlert {
+  id          String              @id @default(cuid())
+  userId      String
+  symbol      String
+  targetPrice Float
+  condition   String
+  userEmail   String              @default("demo@vidality.com")
+  status      String              @default("active")
+  isActive    Boolean             @default(true)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  triggeredAt DateTime?
+  lastChecked DateTime?
+  user        User                @relation(fields: [userId], references: [id])
+  history     PriceAlertHistory[]
+}
+
+model PriceAlertHistory {
+  id        String     @id @default(cuid())
+  alertId   String
+  action    String
+  price     Float?
+  message   String?
+  timestamp DateTime   @default(now())
+  alert     PriceAlert @relation(fields: [alertId], references: [id])
+}
+
+model TelemetryEvent {
+  id         String   @id @default(cuid())
+  sessionId  String
+  userId     String?
+  event      String
+  category   String
+  timestamp  DateTime @default(now())
+  properties String   @default("{}")
+  metadata   String   @default("{}")
+  severity   String?
+  value      Float?
+  unit       String?
+  createdAt  DateTime @default(now())
+  user       User?    @relation(fields: [userId], references: [id])
+
+  @@index([sessionId])
+  @@index([userId])
+  @@index([category])
+  @@index([timestamp])
+  @@index([event])
+}
+
+model SecurityEvent {
+  id        String   @id @default(cuid())
+  timestamp DateTime @default(now())
+  eventType String
+  severity  String
+  userId    String?
+  ipAddress String
+  userAgent String
+  requestId String
+  endpoint  String?
+  method    String?
+  details   String   @default("{}")
+  riskScore Int      @default(0)
+  blocked   Boolean  @default(false)
+  
+  user      User?    @relation(fields: [userId], references: [id])
+  
+  @@index([eventType])
+  @@index([severity])
+  @@index([userId])
+  @@index([timestamp])
+  @@index([ipAddress])
+}

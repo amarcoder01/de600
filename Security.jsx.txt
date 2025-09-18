@@ -1,0 +1,163 @@
+// Security.jsx
+import React from "react";
+
+const Security = () => {
+  const effectiveDate = "August 31, 2025";
+
+  return (
+    <main className="min-h-screen bg-gray-50 py-12 px-6">
+      <div className="mx-auto max-w-5xl bg-white rounded-2xl shadow-md p-8 md:p-12">
+        <header className="mb-6">
+          <h1 className="text-3xl md:text-4xl font-semibold text-gray-900">
+            Security
+          </h1>
+          <p className="text-sm text-gray-500 mt-2">Last updated: {effectiveDate}</p>
+        </header>
+
+        <article className="prose prose-neutral max-w-none text-gray-800">
+          <section>
+            <h2>Overview</h2>
+            <p>
+              Vidality Pty Ltd (the “Platform”) treats information security as a core business priority. This document describes the principal technical, physical, and organizational measures we maintain to protect the confidentiality, integrity, and availability of platform systems and user data.
+            </p>
+            <p className="text-sm text-gray-600 italic">
+              Note: Security is an evolving discipline — while we employ industry-best controls, no system can be guaranteed 100% secure.
+            </p>
+          </section>
+
+          <section>
+            <h2>Governance & Risk Management</h2>
+            <p>
+              Security governance at Vidality is overseen by senior leadership and our appointed Security Officer. We maintain documented policies and procedures covering information security, data protection, incident response, vendor risk, and business continuity. Risk assessments are performed regularly to identify, evaluate and remediate security risks.
+            </p>
+          </section>
+
+          <section>
+            <h2>Technical Controls</h2>
+            <ul>
+              <li>
+                <strong>Encryption:</strong> Data in transit is protected using TLS 1.2+ (HTTPS). Sensitive data at rest is encrypted using AES-256 or equivalent standards where applicable.
+              </li>
+              <li>
+                <strong>Access Control:</strong> Role-based access control (RBAC), the principle of least privilege, and just-in-time access are enforced for systems and administrative functions.
+              </li>
+              <li>
+                <strong>Authentication:</strong> Strong authentication is required for accounts. We support multi-factor authentication (MFA) for privileged access and encourage MFA for all users.
+              </li>
+              <li>
+                <strong>Logging & Monitoring:</strong> Comprehensive logging, centralized log aggregation, and real-time monitoring are in place to detect anomalous behavior and support forensic investigations.
+              </li>
+              <li>
+                <strong>Network Security:</strong> Firewalls, network segmentation, intrusion detection/prevention systems (IDS/IPS), and secure VPC configurations are used to reduce attack surface.
+              </li>
+              <li>
+                <strong>Secure Development:</strong> Secure coding standards, dependency management, static analysis, and code reviews are integrated into the development lifecycle.
+              </li>
+            </ul>
+          </section>
+
+          <section>
+            <h2>Operational Security</h2>
+            <ul>
+              <li>
+                <strong>Vulnerability Management:</strong> Regular vulnerability scanning, prioritized patching, and remediation workflows are maintained for infrastructure and application components.
+              </li>
+              <li>
+                <strong>Penetration Testing:</strong> Periodic third-party penetration tests and internal red-team exercises are performed to validate controls and uncover weaknesses.
+              </li>
+              <li>
+                <strong>Backups & Recovery:</strong> Automated backups are maintained with tested restore procedures and secure offsite storage. Business continuity and disaster recovery plans are reviewed and tested periodically.
+              </li>
+              <li>
+                <strong>Change Management:</strong> Changes to production systems follow formal change control with testing, approval, and rollback procedures.
+              </li>
+            </ul>
+          </section>
+
+          <section>
+            <h2>Data Protection & Privacy</h2>
+            <p>
+              We design systems with privacy in mind. Personal data handling follows our Privacy Policy and applicable legal requirements (including GDPR/CCPA/Applicable Privacy Laws). Data minimization, pseudonymization where appropriate, and strict retention schedules are adopted.
+            </p>
+          </section>
+
+          <section>
+            <h2>Third-Party & Supply Chain Risk</h2>
+            <p>
+              Third-party services (cloud providers, analytics, market-data APIs, payment processors) are assessed for security posture before engagement. Data processing agreements, least-privilege access, and regular vendor reviews ensure supply chain risks are identified and managed.
+            </p>
+          </section>
+
+          <section>
+            <h2>Personnel Security & Training</h2>
+            <p>
+              All employees and contractors undergo background checks and role-appropriate security training. Regular awareness programs, phishing simulations, and technical training are provided to maintain a security-aware culture.
+            </p>
+          </section>
+
+          <section>
+            <h2>Incident Response & Notification</h2>
+            <p>
+              Vidality maintains a documented incident response plan detailing detection, containment, eradication, recovery, and post-incident review. In the event of a data breach or security incident that materially affects user data or service availability, we will notify affected users and relevant authorities in accordance with applicable laws and contractual obligations.
+            </p>
+            <p className="text-sm text-gray-600">
+              To report suspected security issues or vulnerabilities, contact our Security Team at:
+            </p>
+            <ul className="list-disc pl-6">
+              <li>
+                <a href="mailto:security@vidalitytrading.com" className="text-blue-600 hover:underline">
+                  security@vidalitytrading.com
+                </a>
+              </li>
+            </ul>
+          </section>
+
+          <section>
+            <h2>Certifications & Standards</h2>
+            <p>
+              Vidality seeks to align its security program with recognised frameworks and standards (for example, ISO/IEC 27001, NIST Cybersecurity Framework, and industry best practices). Where applicable, we pursue third-party audits and certifications to validate controls. Specific certification claims will be published in this section when achieved.
+            </p>
+          </section>
+
+          <section>
+            <h2>Bug Bounty & Responsible Disclosure</h2>
+            <p>
+              We welcome responsible security research. If you discover a vulnerability, please follow our responsible disclosure process by contacting <a href="mailto:security@vidalitytrading.com" className="text-blue-600 hover:underline">security@vidalitytrading.com</a>. Do not exploit vulnerabilities or access data unnecessarily. We review reports promptly and may offer recognition or rewards for valid findings at our discretion.
+            </p>
+          </section>
+
+          <section>
+            <h2>Legal & Liability</h2>
+            <p>
+              While we implement strong security measures, no system is completely immune to compromise. Vidality does not warrant absolute security, and liability related to security incidents is governed by the Terms of Service and applicable law.
+            </p>
+          </section>
+
+          <section>
+            <h2>Continuous Improvement</h2>
+            <p>
+              Our security programme is subject to continual improvement through audits, independent assessments, technology upgrades, and security training. We regularly review controls to address new threats and operational changes.
+            </p>
+          </section>
+
+          <section>
+            <h2>Contact & Escalation</h2>
+            <p>
+              Security inquiries and escalations:
+            </p>
+            <ul className="list-disc pl-6">
+              <li>Email: <a href="mailto:security@vidalitytrading.com" className="text-blue-600 hover:underline">security@vidalitytrading.com</a></li>
+              <li>Support: <a href="mailto:contact.support.vidality@gmail.com" className="text-blue-600 hover:underline">contact.support.vidality@gmail.com</a></li>
+            </ul>
+          </section>
+        </article>
+
+        <footer className="mt-8 text-sm text-gray-500">
+          © 2025 Vidality Pty Ltd. All rights reserved.
+        </footer>
+      </div>
+    </main>
+  );
+};
+
+export default Security;
