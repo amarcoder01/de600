@@ -8,7 +8,6 @@ import {
   Trash2, 
   Edit, 
   Eye, 
-  Clock, 
   Phone, 
   MessageSquare,
   AlertTriangle,
@@ -38,7 +37,6 @@ export default function PriceAlertsPage() {
   const { 
     alerts, 
     currentPrices,
-    schedulerStatus,
     isLoading, 
     error, 
     createAlert, 
@@ -47,9 +45,6 @@ export default function PriceAlertsPage() {
     cancelAlert, 
     loadAlerts, 
     loadCurrentPrices,
-    loadSchedulerStatus,
-    startScheduler,
-    stopScheduler,
     refreshAlerts,
     getActiveAlerts,
     getAlertHistory
@@ -80,8 +75,7 @@ export default function PriceAlertsPage() {
   useEffect(() => {
     loadAlerts()
     loadStats()
-    loadSchedulerStatus()
-  }, [loadAlerts, loadSchedulerStatus])
+  }, [loadAlerts])
 
   // Set up automatic price updates every 30 seconds
   useEffect(() => {
@@ -252,23 +246,6 @@ export default function PriceAlertsPage() {
         </div>
                  <div className="flex items-center space-x-2">
            <Button 
-             variant={schedulerStatus.isActive ? "default" : "outline"} 
-             size="sm" 
-             onClick={schedulerStatus.isActive ? stopScheduler : startScheduler}
-           >
-             {schedulerStatus.isActive ? (
-               <>
-                 <CheckCircle className="w-4 h-4 mr-2" />
-                 Auto Check ON
-               </>
-             ) : (
-               <>
-                 <Clock className="w-4 h-4 mr-2" />
-                 Auto Check OFF
-               </>
-             )}
-           </Button>
-           <Button 
              variant="outline" 
              size="sm" 
              onClick={handleManualCheck}
@@ -354,36 +331,6 @@ export default function PriceAlertsPage() {
         </div>
       </motion.div>
 
-             {/* Scheduler Status */}
-       <motion.div
-         initial={{ opacity: 0, y: 20 }}
-         animate={{ opacity: 1, y: 0 }}
-         className="mb-4"
-       >
-         <Card>
-           <CardContent className="p-4">
-             <div className="flex items-center justify-between">
-               <div className="flex items-center space-x-3">
-                 <div className={`w-3 h-3 rounded-full ${schedulerStatus.isActive ? 'bg-green-500' : 'bg-gray-400'}`} />
-                 <div>
-                   <p className="text-sm font-medium">
-                     Automatic Price Checking: {schedulerStatus.isActive ? 'Active' : 'Inactive'}
-                   </p>
-                   <p className="text-xs text-muted-foreground">
-                     Checks every {schedulerStatus.intervalSeconds} seconds
-                     {schedulerStatus.nextCheckTime && (
-                       <span> • Next check: {new Date(schedulerStatus.nextCheckTime).toLocaleTimeString()}</span>
-                     )}
-                   </p>
-                 </div>
-               </div>
-               <Badge variant={schedulerStatus.isActive ? "default" : "secondary"}>
-                 {schedulerStatus.isActive ? 'LIVE' : 'OFFLINE'}
-               </Badge>
-             </div>
-           </CardContent>
-         </Card>
-       </motion.div>
 
        {/* Statistics Cards */}
        <motion.div
