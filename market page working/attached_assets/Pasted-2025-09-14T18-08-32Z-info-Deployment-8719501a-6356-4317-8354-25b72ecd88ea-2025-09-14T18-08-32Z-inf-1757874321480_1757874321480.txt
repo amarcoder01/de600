@@ -1,0 +1,64 @@
+2025-09-14T18:08:32Z info: Deployment: 8719501a-6356-4317-8354-25b72ecd88ea
+2025-09-14T18:08:32Z info: Build: c92785f2-72a3-4153-98bd-3725372621e3
+2025-09-14T18:08:32Z info: Connecting to builder
+2025-09-14T18:08:35Z info: Builder connected
+2025-09-14T18:08:36Z info: Installing packages
+2025-09-14T18:08:37Z info: Starting Build
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+
+vite v5.4.19 building for production...
+
+transforming...
+
+Browserslist: browsers data (caniuse-lite) is 11 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+
+✓ 1733 modules transformed.
+
+rendering chunks...
+
+computing gzip size...
+
+../dist/public/index.html                   1.95 kB │ gzip:   0.74 kB
+
+../dist/public/assets/index-DLsKNk4x.css   68.88 kB │ gzip:  12.09 kB
+../dist/public/assets/index-D-Si3k10.js   404.72 kB │ gzip: 123.71 kB
+✓ built in 7.38s
+
+
+  dist/index.js  73.1kb
+
+⚡ Done in 250ms
+
+npm notice
+npm notice New major version of npm available! 10.8.2 -> 11.6.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.6.0
+npm notice To update run: npm install -g npm@11.6.0
+npm notice
+
+2025-09-14T18:08:49Z info: Pushing pid1 binary layer...
+2025-09-14T18:08:50Z info: Pushing Repl layer...
+2025-09-14T18:08:50Z info: Pushing hosting layer...
+2025-09-14T18:08:50Z info: Created hosting layer
+2025-09-14T18:08:51Z info: Created pid1 binary layer
+2025-09-14T18:09:11Z info: Created Repl layer
+2025-09-14T18:09:14Z info: Pushed image manifest
+2025-09-14T18:09:16Z info: Pushed soci index manifest
+2025-09-14T18:09:20Z info: Creating Autoscale service
+Using pre-defined sector data for 103 major stocks
+starting up user application
+Initializing stock data...
+Found 11409 stocks from Polygon API
+> rest-express@1.0.0 start
+forwarding local port 5000 to external port 80 (mapped as 1104)
+6:09:44 PM [express] serving on port 5000
+Loaded 5000 ticker mappings
+> NODE_ENV=production node dist/index.js
+Loaded previous close data for 11436 stocks
+2025-09-14T18:09:51Z info: Waiting for service to be ready
+Initialized 11293 stocks and 3 market indices
+2025-09-14T18:09:58Z error: The deployment failed to initialize due to a configuration or code error. Check the logs tab for more information. For additional support, contact us at support@replit.com. 

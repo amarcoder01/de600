@@ -21,6 +21,7 @@ export interface PolygonNewsResponseRaw {
 
 export interface FetchPolygonNewsParams {
   q?: string
+  ticker?: string
   limit: number
   page: number
   daysBack?: number // defaults to 7
@@ -36,7 +37,7 @@ export async function fetchPolygonNews(params: FetchPolygonNewsParams): Promise<
   results: PolygonNewsItemRaw[]
   hasNext: boolean
 }> {
-  const { q, limit, page, daysBack = 7 } = params
+  const { q, ticker, limit, page, daysBack = 7 } = params
   const apiKey = getPolygonApiKey()
 
   // Emulate page-number pagination by over-fetching up to N * limit and slicing at the caller.
@@ -48,7 +49,9 @@ export async function fetchPolygonNews(params: FetchPolygonNewsParams): Promise<
   url.searchParams.set('order', 'desc')
   url.searchParams.set('sort', 'published_utc')
 
-  if (q && q.trim()) {
+  if (ticker && ticker.trim()) {
+    url.searchParams.set('ticker', ticker.trim().toUpperCase())
+  } else if (q && q.trim()) {
     url.searchParams.set('q', q.trim())
   }
 

@@ -12,6 +12,9 @@ interface NewsAPIResponse {
 async function fetchNewsFromPolygon(query?: string, category?: string, limit: number = 20, page: number = 1): Promise<NewsItem[]> {
   // Build search query consistent with category handling
   let searchQuery = query
+  // Detect ticker-like query (improves relevance and avoids foreign-language general results)
+  const tickerCandidate = (query || '').trim().toUpperCase()
+  const isTicker = /^[A-Z]{1,6}(?:\.[A-Z]{1,3}|-[A-Z]{1,2})?$/.test(tickerCandidate)
   if (!searchQuery && category && category !== 'all') {
     const keywords = CATEGORY_KEYWORDS[category as keyof typeof CATEGORY_KEYWORDS] || []
     if (keywords.length > 0) {
@@ -23,12 +26,27 @@ async function fetchNewsFromPolygon(query?: string, category?: string, limit: nu
     searchQuery = 'stock market OR trading OR investing OR financial news'
   }
 
-  const { results } = await fetchPolygonNews({ q: searchQuery, limit, page, daysBack: 7 })
+  // When query looks like a ticker, prefer Polygon's ticker filter
+  const { results } = await fetchPolygonNews({ q: isTicker ? undefined : searchQuery, ticker: isTicker ? tickerCandidate : undefined, limit, page, daysBack: 7 })
 
   // Emulated pagination: fetchPolygonNews over-fetched N*limit; return just current window
   const start = (page - 1) * limit
   const end = start + limit
-  const pageResults = results.slice(start, end)
+  // Heuristic English-language filter: drop items whose title & description are mostly non-ASCII
+  const isLikelyEnglish = (t: string) => {
+    if (!t) return false
+    const ascii = t.replace(/[^\x00-\x7F]/g, '')
+    return ascii.length / t.length >= 0.6 // at least 60% ASCII
+  }
+  const filtered = results.filter(item => {
+    const title = item.title || ''
+    const desc = item.description || ''
+    // Always allow when searching a ticker and Polygon matched tickers list
+    if (isTicker && Array.isArray(item.tickers) && item.tickers.includes(tickerCandidate)) return true
+    // Otherwise require likely-English title or description
+    return isLikelyEnglish(title) || isLikelyEnglish(desc)
+  })
+  const pageResults = filtered.slice(start, end)
 
   // Map Polygon results to internal NewsItem shape
   const newsItems: NewsItem[] = pageResults.map((item, index) => {
