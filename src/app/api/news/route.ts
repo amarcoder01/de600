@@ -1,10 +1,71 @@
 // API Route for Real-time News & Sentiment Analysis
 import { NextRequest, NextResponse } from 'next/server'
+import { fetchPolygonNews } from '@/lib/news/polygon-news'
 
 interface NewsAPIResponse {
   status: string
   totalResults: number
   articles: NewsAPIArticle[]
+}
+
+// Fetch news from Polygon.io (modular, behind feature flag)
+async function fetchNewsFromPolygon(query?: string, category?: string, limit: number = 20, page: number = 1): Promise<NewsItem[]> {
+  // Build search query consistent with category handling
+  let searchQuery = query
+  if (!searchQuery && category && category !== 'all') {
+    const keywords = CATEGORY_KEYWORDS[category as keyof typeof CATEGORY_KEYWORDS] || []
+    if (keywords.length > 0) {
+      searchQuery = keywords.join(' OR ')
+    }
+  }
+  // Default general market terms if nothing specified (parity with NewsAPI path)
+  if (!searchQuery) {
+    searchQuery = 'stock market OR trading OR investing OR financial news'
+  }
+
+  const { results } = await fetchPolygonNews({ q: searchQuery, limit, page, daysBack: 7 })
+
+  // Emulated pagination: fetchPolygonNews over-fetched N*limit; return just current window
+  const start = (page - 1) * limit
+  const end = start + limit
+  const pageResults = results.slice(start, end)
+
+  // Map Polygon results to internal NewsItem shape
+  const newsItems: NewsItem[] = pageResults.map((item, index) => {
+    const title = item.title || 'Untitled'
+    const description = item.description || 'No description available'
+    const source = item.publisher?.name || 'Unknown'
+    const symbols = (item.tickers && item.tickers.length > 0)
+      ? item.tickers.slice(0, 5)
+      : extractStockSymbols(title, description)
+    const sentiment = analyzeSentiment(title, description)
+    const impact = determineImpact(title, description, source)
+    const category = categorizeNews(title, description)
+    const aiInsights = generateAIInsights(title, description, symbols)
+
+    return {
+      id: item.id || `polygon_news_${Date.now()}_${start + index}`,
+      title,
+      summary: description,
+      content: description,
+      source,
+      url: item.article_url || '#',
+      publishedAt: item.published_utc || new Date().toISOString(),
+      category,
+      sentiment,
+      impact,
+      symbols,
+      aiInsights,
+      relatedStocks: symbols.slice(0, 3)
+    }
+  })
+
+  return newsItems
+}
+
+// Fetch top headlines via Polygon (uses general market terms)
+async function fetchTopHeadlinesFromPolygon(limit: number = 20, page: number = 1): Promise<NewsItem[]> {
+  return fetchNewsFromPolygon(undefined, 'all', limit, page)
 }
 
 interface NewsAPIArticle {
@@ -47,8 +108,12 @@ interface MarketUpdate {
   priority: 'high' | 'medium' | 'low'
 }
 
-// NewsAPI Configuration
-const NEWS_API_KEY = 'e1ea318668a84a58bb26d1c155813b03'
+// News Source Configuration
+// Use env-driven selection to avoid impacting existing behavior.
+// Default remains NewsAPI to ensure zero-impact if env not set.
+const NEWS_SOURCE = process.env.NEWS_SOURCE || 'newsapi'
+// NewsAPI Configuration (fallback-safe: use env or existing value)
+const NEWS_API_KEY = process.env.NEWS_API_KEY || 'e1ea318668a84a58bb26d1c155813b03'
 const NEWS_API_BASE_URL = 'https://newsapi.org/v2'
 
 // Stock symbols for financial news
@@ -391,20 +456,42 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Fetch real news from NewsAPI
+    // Fetch real news from selected source with safe fallback
     let newsItems: NewsItem[] = []
-    
-    if (query) {
-      // Search for specific query
-      newsItems = await fetchNewsFromAPI(query, category || undefined, limit, page)
-    } else if (category && category !== 'all') {
-      // Search by category
-      const categoryKeywords = CATEGORY_KEYWORDS[category as keyof typeof CATEGORY_KEYWORDS] || []
-      const searchQuery = categoryKeywords.join(' OR ')
-      newsItems = await fetchNewsFromAPI(searchQuery, category || undefined, limit, page)
+
+    if (NEWS_SOURCE === 'polygon') {
+      try {
+        if (query) {
+          newsItems = await fetchNewsFromPolygon(query, category || undefined, limit, page)
+        } else if (category && category !== 'all') {
+          newsItems = await fetchNewsFromPolygon(undefined, category || undefined, limit, page)
+        } else {
+          newsItems = await fetchTopHeadlinesFromPolygon(limit, page)
+        }
+      } catch (polygonError) {
+        console.warn('⚠️ Polygon news failed, falling back to NewsAPI:', polygonError)
+        // Fallback to existing NewsAPI behavior
+        if (query) {
+          newsItems = await fetchNewsFromAPI(query, category || undefined, limit, page)
+        } else if (category && category !== 'all') {
+          const categoryKeywords = CATEGORY_KEYWORDS[category as keyof typeof CATEGORY_KEYWORDS] || []
+          const searchQuery = categoryKeywords.join(' OR ')
+          newsItems = await fetchNewsFromAPI(searchQuery, category || undefined, limit, page)
+        } else {
+          newsItems = await fetchTopHeadlines(limit, page)
+        }
+      }
     } else {
-      // Get top business headlines for 'all' category or no category specified
-      newsItems = await fetchTopHeadlines(limit, page)
+      // Original NewsAPI path (default)
+      if (query) {
+        newsItems = await fetchNewsFromAPI(query, category || undefined, limit, page)
+      } else if (category && category !== 'all') {
+        const categoryKeywords = CATEGORY_KEYWORDS[category as keyof typeof CATEGORY_KEYWORDS] || []
+        const searchQuery = categoryKeywords.join(' OR ')
+        newsItems = await fetchNewsFromAPI(searchQuery, category || undefined, limit, page)
+      } else {
+        newsItems = await fetchTopHeadlines(limit, page)
+      }
     }
 
     // Apply sentiment filter if specified
@@ -445,7 +532,7 @@ export async function GET(request: NextRequest) {
       page: page,
       hasMore: hasMore,
       filters: { category, sentiment, query },
-      source: 'NewsAPI.org',
+      source: NEWS_SOURCE === 'polygon' ? 'Polygon.io' : 'NewsAPI.org',
       timestamp: new Date().toISOString()
     })
     

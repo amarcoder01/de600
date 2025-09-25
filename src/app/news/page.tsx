@@ -538,15 +538,8 @@ export default function NewsPage() {
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center text-sm">
                         <span className="text-muted-foreground">Source: {item.source}</span>
-                        <div className="flex items-center space-x-2">
-                          {item.symbols.map((symbol) => (
-                            <Badge key={symbol} variant="outline" className="text-xs">
-                              {symbol}
-                            </Badge>
-                          ))}
-                        </div>
                       </div>
                       
                       
