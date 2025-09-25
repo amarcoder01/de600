@@ -2,13 +2,15 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
-import { Filter, X } from 'lucide-react';
+import { Filter, X, Brain, Sparkles } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import FilterControls from './FilterControls';
 import ResultsTable from './ResultsTable';
 import { ScreenerStock, FilterCriteria, SortConfig } from '../../types/screener';
 import { fetchAllUSStocks, getPopularStocks } from '../../lib/screener/polygonApi';
 
 const StockScreener: React.FC = () => {
+  const router = useRouter();
   const [stocks, setStocks] = useState<ScreenerStock[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -559,6 +561,23 @@ const StockScreener: React.FC = () => {
                 <h1 className="text-xl lg:text-2xl font-bold text-foreground">
                   Stock Screener
                 </h1>
+                {/* AI Screener Button */}
+                <button
+                  onClick={() => router.push('/smart-screener')}
+                  className="hidden sm:flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
+                >
+                  <Brain className="w-4 h-4" />
+                  <span className="hidden md:inline">AI Screener</span>
+                  <Sparkles className="w-3 h-3 opacity-80" />
+                </button>
+                {/* Mobile AI Screener Button */}
+                <button
+                  onClick={() => router.push('/smart-screener')}
+                  className="sm:hidden p-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+                  title="AI Screener"
+                >
+                  <Brain className="w-4 h-4" />
+                </button>
                 {/* Mobile Filter Toggle */}
                 <button
                   onClick={() => setShowFilters(!showFilters)}

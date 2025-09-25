@@ -167,6 +167,20 @@ class PolygonApiService {
     this.snapshotCache = new Map();
   }
 
+  // Ensure Polygon pagination URLs always include the API key
+  private withApiKey(url: string): string {
+    try {
+      const u = new URL(url);
+      if (!u.searchParams.get('apikey')) {
+        u.searchParams.set('apikey', this.apiKey);
+      }
+      return u.toString();
+    } catch {
+      // If parsing fails (shouldn't for Polygon next_url), return original
+      return url;
+    }
+  }
+
   // Check if API key is available
   private hasValidApiKey(): boolean {
     return !!(this.apiKey && this.apiKey.trim() !== '' && this.apiKey !== 'your_polygon_api_key_here');
@@ -937,7 +951,8 @@ class PolygonApiService {
     while (safetyPages++ < maxPages) {
       let response: any;
       if (nextUrl) {
-        response = await axios.get<PolygonTickerResponse>(nextUrl);
+        // Follow Polygon pagination while ensuring apikey is present
+        response = await axios.get<PolygonTickerResponse>(this.withApiKey(nextUrl));
       } else {
         const params: any = {
           apikey: this.apiKey,

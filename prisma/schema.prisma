@@ -43,6 +43,8 @@ model User {
   emailVerificationCodes  EmailVerificationCode[]
   // Security events
   securityEvents          SecurityEvent[]
+  queryHistory            QueryHistory[]
+  savedFilters            SavedFilter[]
 }
 
 // NextAuth.js required models
@@ -370,4 +372,47 @@ model SecurityEvent {
   @@index([userId])
   @@index([timestamp])
   @@index([ipAddress])
+}
+
+model QueryHistory {
+  id              String   @id @default(cuid())
+  userId          String?
+  naturalQuery    String
+  parsedCriteria  Json
+  resultCount     Int
+  executionTime   Int      // in milliseconds
+  success         Boolean
+  errorMessage    String?
+  createdAt       DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("query_history")
+}
+
+model SavedFilter {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  criteria    Json
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("saved_filters")
+}
+
+model QueryResultsCache {
+  id            String   @id @default(cuid())
+  queryHash     String   @unique
+  criteria      Json
+  results       Json
+  resultCount   Int
+  createdAt     DateTime @default(now())
+  expiresAt     DateTime
+
+  @@map("query_results_cache")
 }
