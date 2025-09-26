@@ -154,5 +154,8 @@
   "overrides": {
     "cookie": "^0.7.0",
     "highlight.js": "^11.9.0"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
   }
 }
