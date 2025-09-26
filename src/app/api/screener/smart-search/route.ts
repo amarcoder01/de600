@@ -47,20 +47,37 @@ export async function POST(req: NextRequest) {
       const parsedCriteria: FilterCriteria = parseResult.filters
       const queryHash = generateQueryHash(parsedCriteria)
 
-      // Step 1.5: If Google web search is configured, try web-search-first flow
+      // Step 1.5: If Google web search is configured, try enhanced web-search-first flow
       try {
         const hasGoogleSearch = !!(process.env.GOOGLE_SEARCH_API_KEY || process.env.GOOGLE_API_KEY)
         const hasSearchEngine = !!(process.env.GOOGLE_SEARCH_ENGINE_ID || process.env.SEARCH_ENGINE_ID)
         if (hasGoogleSearch && hasSearchEngine) {
           const webService = new WebSearchScreenerService()
-          const webResult = await webService.webSmartSearch(query, { limit, skipEnrichment: false, maxTickersToEnrich: 60 })
+          
+          // Try enhanced search first for better results
+          let webResult
+          try {
+            webResult = await webService.enhancedWebSearch(query, { 
+              limit, 
+              skipEnrichment: false, 
+              maxTickersToEnrich: 60,
+              useMultiSource: true,
+              enableSynthesis: true,
+              maxSources: 3
+            })
+          } catch (enhancedErr) {
+            console.warn('Enhanced search failed, falling back to basic web search:', enhancedErr)
+            // Fallback to basic web search
+            webResult = await webService.webSmartSearch(query, { limit, skipEnrichment: false, maxTickersToEnrich: 60 })
+          }
+          
           if ((webResult?.stocks?.length || 0) > 0) {
             // Log history for web-search success
             try {
               await prisma.queryHistory.create({
                 data: {
                   userId: session?.user?.id || null,
-                  naturalQuery: `[WEB] ${query}`,
+                  naturalQuery: `[WEB${webResult.enhanced ? '-ENHANCED' : ''}] ${query}`,
                   parsedCriteria: webResult.parsedCriteria as any,
                   resultCount: webResult.totalCount,
                   executionTime: Date.now() - startTime,
@@ -82,6 +99,14 @@ export async function POST(req: NextRequest) {
               executionTime: Date.now() - startTime,
               tradingDate: getTradingDateISO(),
               usedWebSearch: true,
+              // Enhanced fields (if available)
+              ...(webResult.enhanced && {
+                synthesizedData: webResult.synthesizedData,
+                sources: webResult.sources,
+                confidence: webResult.confidence,
+                responseTime: webResult.responseTime,
+                enhanced: true
+              })
             })
           }
         }

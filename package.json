@@ -8,10 +8,15 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "NODE_ENV=production npm run install-python-deps && NODE_ENV=production next build",
+    "build": "cross-env NODE_ENV=production next build",
     "start": "PORT=10000 next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:enhanced-web-search": "jest tests/enhanced-web-search.test.ts",
+    "benchmark": "ts-node tests/performance-benchmark.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "postinstall": "prisma generate",
@@ -131,6 +136,7 @@
     "zustand": "^4.4.7"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "@types/pdf-parse": "^1.1.5",
     "@types/react-syntax-highlighter": "^15.5.13",
     "@typescript-eslint/eslint-plugin": "^6.15.0",
@@ -138,7 +144,12 @@
     "eslint": "^8.56.0",
     "eslint-config-next": "14.0.4",
     "prisma": "^6.15.0",
-    "raw-loader": "^4.0.2"
+    "raw-loader": "^4.0.2",
+    "jest": "^29.7.0",
+    "@types/jest": "^29.5.12",
+    "ts-jest": "^29.1.2",
+    "ts-node": "^10.9.2",
+    "@jest/globals": "^29.7.0"
   },
   "overrides": {
     "cookie": "^0.7.0",

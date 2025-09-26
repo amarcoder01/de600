@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { Brain, Search, Sparkles, History, BookmarkPlus, Filter } from 'lucide-react';
+import { Brain, Search, Sparkles, Filter } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
@@ -14,21 +14,7 @@ import ResultsTable from './ResultsTable';
 import FilterControls from './FilterControls';
 import { ScreenerStock, FilterCriteria, SortConfig } from '../../types/screener';
 
-interface QueryHistory {
-  id: string;
-  query: string;
-  parsedFilters: FilterCriteria;
-  resultCount: number;
-  createdAt: string;
-}
-
-interface SavedFilter {
-  id: string;
-  name: string;
-  description?: string;
-  filters: FilterCriteria;
-  createdAt: string;
-}
+// History and Saved filters removed per request
 
 interface AlternativeQuery {
   query: string;
@@ -42,8 +28,7 @@ const SmartScreener: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [parsedFilters, setParsedFilters] = useState<FilterCriteria | null>(null);
-  const [queryHistory, setQueryHistory] = useState<QueryHistory[]>([]);
-  const [savedFilters, setSavedFilters] = useState<SavedFilter[]>([]);
+  // Removed: history and saved filters state
   const [alternativeQueries, setAlternativeQueries] = useState<AlternativeQuery[]>([]);
   const [showAlternatives, setShowAlternatives] = useState(false);
   const [showExamples, setShowExamples] = useState(false);
@@ -60,35 +45,7 @@ const SmartScreener: React.FC = () => {
     "High-volume stocks today"
   ];
 
-  // Load query history and saved filters on component mount
-  useEffect(() => {
-    loadQueryHistory();
-    loadSavedFilters();
-  }, []);
-
-  const loadQueryHistory = async () => {
-    try {
-      const response = await fetch('/api/screener/query-history');
-      if (response.ok) {
-        const history = await response.json();
-        setQueryHistory(history.slice(0, 10)); // Show last 10 queries
-      }
-    } catch (error) {
-      console.error('Error loading query history:', error);
-    }
-  };
-
-  const loadSavedFilters = async () => {
-    try {
-      const response = await fetch('/api/screener/saved-filters');
-      if (response.ok) {
-        const filters = await response.json();
-        setSavedFilters(filters);
-      }
-    } catch (error) {
-      console.error('Error loading saved filters:', error);
-    }
-  };
+  // Removed: effects and loaders for history/saved
 
   const handleNaturalLanguageSearch = async () => {
     if (!naturalQuery.trim()) {
@@ -137,9 +94,6 @@ const SmartScreener: React.FC = () => {
       if (searchResult.stocks && searchResult.stocks.length > 0) {
         setStocks(searchResult.stocks);
         toast.success(`Found ${searchResult.stocks.length} stocks matching your query`);
-        
-        // Refresh query history
-        loadQueryHistory();
       } else {
         // No results found, try alternative search
         await handleAlternativeSearch();
@@ -194,51 +148,34 @@ const SmartScreener: React.FC = () => {
     setNaturalQuery(query);
   };
 
-  const handleHistoryQuery = (historyItem: QueryHistory) => {
-    setNaturalQuery(historyItem.query);
-    setParsedFilters(historyItem.parsedFilters);
-  };
-
   const handleAlternativeQuery = (alternative: AlternativeQuery) => {
     setNaturalQuery(alternative.query);
     setShowAlternatives(false);
   };
+  // Removed: saved filters (save/apply)
 
-  const saveCurrentFilter = async () => {
-    if (!parsedFilters || !naturalQuery.trim()) {
-      toast.error('No filter to save');
-      return;
-    }
-
-    const name = prompt('Enter a name for this filter:');
-    if (!name) return;
-
+  // Export CSV for current stocks
+  const exportCSV = () => {
     try {
-      const response = await fetch('/api/screener/saved-filters', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name,
-          description: naturalQuery,
-          filters: parsedFilters
-        })
-      });
-
-      if (response.ok) {
-        toast.success('Filter saved successfully');
-        loadSavedFilters();
-      } else {
-        throw new Error('Failed to save filter');
-      }
-    } catch (error) {
-      console.error('Error saving filter:', error);
-      toast.error('Failed to save filter');
+      const headers = [
+        'ticker','name','price','change','change_percent','volume','market_cap','sector','exchange'
+      ];
+      const rows = stocks.map(s => [
+        s.ticker ?? '', s.name ?? '', s.price ?? '', s.change ?? '', s.change_percent ?? '', s.volume ?? '', s.market_cap ?? '', s.sector ?? '', s.exchange ?? ''
+      ]);
+      const csv = [headers.join(','), ...rows.map(r => r.map(v => typeof v === 'string' && v.includes(',') ? `"${v}"` : v).join(','))].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'screener-results.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      toast.error('Failed to export CSV');
     }
-  };
-
-  const applySavedFilter = (savedFilter: SavedFilter) => {
-    setNaturalQuery(savedFilter.description || savedFilter.name);
-    setParsedFilters(savedFilter.filters);
   };
 
   return (
@@ -250,9 +187,6 @@ const SmartScreener: React.FC = () => {
           Smart Stock Screener
           <Sparkles className="h-5 w-5 text-yellow-500 hidden sm:inline" />
         </h1>
-        <p className="text-sm text-muted-foreground max-w-2xl">
-          Type what you want. Example: "find stocks priced between 100 and 1500" or "dividend stocks under 50".
-        </p>
       </div>
 
       {/* Main Search Interface */}
@@ -295,43 +229,11 @@ const SmartScreener: React.FC = () => {
                   </div>
                 )}
               </Button>
-              {parsedFilters && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={saveCurrentFilter}
-                  className="h-11 sm:h-10"
-                >
-                  <BookmarkPlus className="h-4 w-4" />
-                </Button>
-              )}
+              {/* Removed saved filter button */}
             </div>
           </div>
 
-          {/* Sample Queries (collapsible to reduce noise) */}
-          <div className="space-y-2">
-            <button
-              type="button"
-              className="text-xs text-muted-foreground hover:text-foreground"
-              onClick={() => setShowExamples((s) => !s)}
-            >
-              {showExamples ? 'Hide examples' : 'Show examples'}
-            </button>
-            {showExamples && (
-              <div className="flex flex-wrap gap-2">
-                {sampleQueries.map((query, index) => (
-                  <Badge 
-                    key={index}
-                    variant="secondary" 
-                    className="cursor-pointer hover:bg-secondary/80"
-                    onClick={() => handleSampleQuery(query)}
-                  >
-                    {query}
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Samples removed from top per request */}
         </CardContent>
       </Card>
 
@@ -387,13 +289,10 @@ const SmartScreener: React.FC = () => {
           </CardContent>
         </Card>
       )}
-
-      {/* Tabs for Results, History, and Saved Filters */}
+      {/* Results only (History and Saved removed) */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-1">
           <TabsTrigger value="search">Results</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
-          <TabsTrigger value="saved">Saved</TabsTrigger>
         </TabsList>
 
         <TabsContent value="search" className="space-y-4">
@@ -428,7 +327,7 @@ const SmartScreener: React.FC = () => {
               onLoadMore={() => {}}
               hasMore={false}
               loadingMore={false}
-              onExportCSV={() => {}}
+              onExportCSV={exportCSV}
             />
           ) : (
             <Card>
@@ -440,70 +339,24 @@ const SmartScreener: React.FC = () => {
             </Card>
           )}
         </TabsContent>
-
-        <TabsContent value="history" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <History className="h-5 w-5" />
-                Recent Queries
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {queryHistory.length > 0 ? (
-                <div className="space-y-3">
-                  {queryHistory.map((item) => (
-                    <div key={item.id} className="p-3 border rounded-lg hover:bg-muted/50 cursor-pointer"
-                         onClick={() => handleHistoryQuery(item)}>
-                      <div className="font-medium">{item.query}</div>
-                      <div className="text-sm text-muted-foreground mt-1">
-                        {item.resultCount} results • {new Date(item.createdAt).toLocaleDateString()}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  No query history yet
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="saved" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BookmarkPlus className="h-5 w-5" />
-                Saved Filters
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {savedFilters.length > 0 ? (
-                <div className="space-y-3">
-                  {savedFilters.map((filter) => (
-                    <div key={filter.id} className="p-3 border rounded-lg hover:bg-muted/50 cursor-pointer"
-                         onClick={() => applySavedFilter(filter)}>
-                      <div className="font-medium">{filter.name}</div>
-                      {filter.description && (
-                        <div className="text-sm text-muted-foreground mt-1">{filter.description}</div>
-                      )}
-                      <div className="text-xs text-muted-foreground mt-2">
-                        Saved {new Date(filter.createdAt).toLocaleDateString()}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  No saved filters yet
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
+
+      {/* Bottom prompt suggestions */}
+      <div className="pt-2">
+        <div className="text-xs text-muted-foreground mb-2">Try these prompts:</div>
+        <div className="flex flex-wrap gap-2">
+          {sampleQueries.map((query, index) => (
+            <Badge 
+              key={index}
+              variant="secondary" 
+              className="cursor-pointer hover:bg-secondary/80"
+              onClick={() => handleSampleQuery(query)}
+            >
+              {query}
+            </Badge>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };
