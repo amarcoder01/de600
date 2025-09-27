@@ -1229,7 +1229,7 @@ class PolygonApiService {
       'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA',
       'META', 'NVDA', 'NFLX', 'AMD', 'INTC',
       'ORCL', 'CRM', 'ADBE', 'PYPL', 'UBER',
-      'SPOT', 'ZOOM', 'SQ', 'TWTR', 'SNAP'
+      'SPOT', 'ZM', 'SQ', 'SNAP'
     ];
   }
 
@@ -1596,14 +1596,37 @@ export const getPopularStocks = async (): Promise<ScreenerStock[]> => {
         console.warn(`Failed to get enhanced details for ${ticker.ticker}:`, error);
       }
       
+      // Fallback fill for missing change/change_percent/market_cap to avoid N/A in default list
+      let finalPrice = priceData?.price ?? 0;
+      let finalChange = priceData?.change;
+      let finalChangePercent = priceData?.change_percent;
+      let finalVolume = priceData?.volume ?? 0;
+      let finalMarketCap = priceData?.market_cap;
+
+      if (finalChange === undefined || finalChangePercent === undefined || finalMarketCap === undefined) {
+        try {
+          const fallback = await polygonApi.getStockPrice(ticker.ticker, true);
+          if (typeof fallback.price === 'number' && fallback.price > 0) finalPrice = finalPrice || fallback.price;
+          if (fallback.change !== undefined) finalChange = finalChange ?? fallback.change;
+          if (fallback.change_percent !== undefined) finalChangePercent = finalChangePercent ?? fallback.change_percent;
+          if (fallback.volume !== undefined) finalVolume = finalVolume || fallback.volume;
+          if (fallback.market_cap !== undefined) finalMarketCap = finalMarketCap ?? fallback.market_cap;
+          // If market cap still missing but we have price, try one more lightweight details read
+          if (finalMarketCap === undefined && typeof finalPrice === 'number' && finalPrice > 0) {
+            const d2 = await polygonApi.getTickerDetails(ticker.ticker, finalPrice);
+            if (d2.market_cap !== undefined) finalMarketCap = d2.market_cap;
+          }
+        } catch {}
+      }
+      
       return {
         ticker: ticker.ticker,
         name: ticker.name,
-        price: priceData?.price ?? 0,
-        change: priceData?.change,
-        change_percent: priceData?.change_percent,
-        volume: priceData?.volume ?? 0,
-        market_cap: priceData?.market_cap,
+        price: finalPrice,
+        change: finalChange,
+        change_percent: finalChangePercent,
+        volume: finalVolume,
+        market_cap: finalMarketCap,
         sector: enhancedSector,
         exchange: enhancedExchange,
       };

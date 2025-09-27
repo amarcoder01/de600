@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
-import { Filter, X, Brain, Sparkles } from 'lucide-react';
+import { Filter, X, Brain, Sparkles, Info } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import FilterControls from './FilterControls';
 import ResultsTable from './ResultsTable';
@@ -561,6 +561,13 @@ const StockScreener: React.FC = () => {
                 <h1 className="text-xl lg:text-2xl font-bold text-foreground">
                   Stock Screener
                 </h1>
+                <div className="hidden sm:flex items-start gap-2 text-[12px] lg:text-sm text-muted-foreground">
+                  <Info className="w-4 h-4 mt-0.5" />
+                  <span>
+                    Market-wide screening fetches live data across the entire US market and may take some time to complete.
+                    You can keep working while results load.
+                  </span>
+                </div>
                 {/* AI Screener Button */}
                 <button
                   onClick={() => router.push('/smart-screener')}
@@ -578,6 +585,12 @@ const StockScreener: React.FC = () => {
                 >
                   <Brain className="w-4 h-4" />
                 </button>
+                {/* Mobile info message */}
+                <div className="sm:hidden text-[11px] text-muted-foreground">
+                  <span>
+                    Market-wide screening may take time to load full results.
+                  </span>
+                </div>
                 {/* Mobile Filter Toggle */}
                 <button
                   onClick={() => setShowFilters(!showFilters)}
