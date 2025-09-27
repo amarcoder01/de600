@@ -316,16 +316,21 @@ export class RealTimeComparisonService {
           const stockData = await this.polygonApi.getUSStockData(symbol);
           if (stockData && stockData.price) {
             const currentPrice = stockData.price;
-            const baselinePrice = this.baselinePrices.get(symbol) || (stockData.price - stockData.change);
             
-            // If we don't have a baseline price yet, calculate it from the stock data
-            if (!this.baselinePrices.has(symbol)) {
-              const previousClose = stockData.price - stockData.change;
-              this.baselinePrices.set(symbol, previousClose);
+            // Use consistent baseline price calculation
+            let baselinePrice = this.baselinePrices.get(symbol);
+            
+            // If we don't have a baseline price yet, use the API's change calculation
+            if (!baselinePrice) {
+              // Use the API's provided change to calculate previous close more accurately
+              baselinePrice = stockData.change ? (currentPrice - stockData.change) : currentPrice;
+              this.baselinePrices.set(symbol, baselinePrice);
+              console.log(`📊 Setting baseline for ${symbol}: ${baselinePrice} (current: ${currentPrice}, change: ${stockData.change})`);
             }
             
-            const change = currentPrice - baselinePrice;
-            const changePercent = baselinePrice > 0 ? (change / baselinePrice) * 100 : 0;
+            // Use API's change and changePercent when available for consistency
+            const change = stockData.change || (currentPrice - baselinePrice);
+            const changePercent = stockData.changePercent || (baselinePrice > 0 ? (change / baselinePrice) * 100 : 0);
             
             updates.push({
               symbol,
@@ -353,19 +358,50 @@ export class RealTimeComparisonService {
     }
   }
 
+  // Validate update data for consistency
+  private validateUpdate(update: RealTimeStockUpdate): boolean {
+    // Check for required fields
+    if (!update.symbol || typeof update.price !== 'number' || isNaN(update.price)) {
+      console.warn(`Invalid update for ${update.symbol}: missing or invalid price`);
+      return false;
+    }
+
+    // Check for reasonable values
+    if (update.price <= 0) {
+      console.warn(`Invalid update for ${update.symbol}: price must be positive`);
+      return false;
+    }
+
+    // Check for extreme percentage changes (likely data error)
+    if (Math.abs(update.changePercent) > 50) {
+      console.warn(`Suspicious update for ${update.symbol}: extreme change ${update.changePercent}%`);
+      // Don't reject, but log warning
+    }
+
+    return true;
+  }
+
   // Notify all subscribers of updates
   private notifySubscribers(updates: RealTimeStockUpdate[]) {
+    // Validate all updates before notifying
+    const validUpdates = updates.filter(update => this.validateUpdate(update));
+    
+    if (validUpdates.length === 0) {
+      console.warn('No valid updates to notify subscribers');
+      return;
+    }
+
     // Notify batch subscribers
     this.subscribers.forEach(callback => {
       try {
-        callback(updates);
+        callback(validUpdates);
       } catch (error) {
         console.error('Error notifying batch subscriber:', error);
       }
     });
     
     // Notify single update subscribers
-    updates.forEach(update => {
+    validUpdates.forEach(update => {
       this.singleUpdateSubscribers.forEach(callback => {
         try {
           callback(update.symbol, update);

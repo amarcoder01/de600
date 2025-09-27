@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -66,6 +66,7 @@ interface StockData {
   low52Week: number
   sector: string
   industry: string
+  lastUpdated?: number // Timestamp for data consistency tracking
   historicalData?: ChartData[]
   technicalIndicators?: any
   sentiment?: any
@@ -191,8 +192,9 @@ export default function StockComparisonAnalyzer() {
     enabled: realTimeEnabled && (activeTab === 'comparison' || activeTab === 'compare'),
     onUpdate: (symbol, data) => {
       // Update the selected stocks with real-time data while preserving all other fields
-      setSelectedStocks(prevStocks => 
-        (prevStocks || []).map(stock => 
+      // Use atomic update to prevent race conditions
+      setSelectedStocks(prevStocks => {
+        const updatedStocks = (prevStocks || []).map(stock => 
           stock.symbol === symbol 
             ? {
                 ...stock, // Preserve all existing fields (marketCap, pe, beta, etc.)
@@ -200,11 +202,22 @@ export default function StockComparisonAnalyzer() {
                 change: data.change,
                 changePercent: data.changePercent,
                 volume: data.volume || stock.volume, // Use real-time volume if available, otherwise keep existing
+                lastUpdated: data.timestamp, // Add timestamp for data consistency tracking
                 // Preserve all other fields like marketCap, pe, beta, dividendYield, etc.
               }
             : stock
         )
-      )
+        
+        // Log update for debugging consistency issues
+        console.log(`📊 Real-time update for ${symbol}:`, {
+          price: data.price,
+          change: data.change,
+          changePercent: data.changePercent,
+          timestamp: new Date(data.timestamp).toLocaleTimeString()
+        })
+        
+        return updatedStocks
+      })
     }
   })
 
@@ -215,6 +228,78 @@ export default function StockComparisonAnalyzer() {
 
   // Market insights hook
   const { insights: marketInsights, loading: insightsLoading, error: insightsError } = useMarketInsights()
+
+  // Memoized performance calculations to ensure data consistency
+  const performanceMetrics = useMemo(() => {
+    if (!safeSelectedStocks.length) {
+      return {
+        bestPerformer: null,
+        worstPerformer: null,
+        avgPerformance: 0,
+        volatilityScore: 'N/A',
+        totalValue: 0,
+        dataTimestamp: Date.now()
+      }
+    }
+
+    // Use the most recent data snapshot for consistent calculations
+    const stocksWithValidData = safeSelectedStocks.filter(stock => 
+      stock.changePercent !== undefined && stock.changePercent !== null && !isNaN(stock.changePercent)
+    )
+
+    if (stocksWithValidData.length === 0) {
+      return {
+        bestPerformer: null,
+        worstPerformer: null,
+        avgPerformance: 0,
+        volatilityScore: 'N/A',
+        totalValue: 0,
+        dataTimestamp: Date.now()
+      }
+    }
+
+    // Find best and worst performers using the same data snapshot
+    const bestPerformer = stocksWithValidData.reduce((best, current) => 
+      (current.changePercent || 0) > (best.changePercent || 0) ? current : best
+    )
+    
+    const worstPerformer = stocksWithValidData.reduce((worst, current) => 
+      (current.changePercent || 0) < (worst.changePercent || 0) ? current : worst
+    )
+
+    // Calculate average performance
+    const avgPerformance = stocksWithValidData.reduce((sum, stock) => 
+      sum + (stock.changePercent || 0), 0
+    ) / stocksWithValidData.length
+
+    // Calculate volatility score
+    const changes = stocksWithValidData.map(s => Math.abs(s.changePercent || 0))
+    const avgChange = changes.reduce((a, b) => a + b, 0) / changes.length
+    const volatilityScore = avgChange > 5 ? 'High' : avgChange > 2 ? 'Medium' : 'Low'
+
+    // Calculate total portfolio value
+    const totalValue = stocksWithValidData.reduce((sum, stock) => 
+      sum + ((stock.price || 0) * 100), 0 // Assume 100 shares for calculation
+    )
+
+    console.log('📈 Performance Metrics Calculated:', {
+      bestPerformer: bestPerformer ? `${bestPerformer.symbol} (${bestPerformer.changePercent?.toFixed(2)}%)` : null,
+      worstPerformer: worstPerformer ? `${worstPerformer.symbol} (${worstPerformer.changePercent?.toFixed(2)}%)` : null,
+      avgPerformance: avgPerformance.toFixed(2),
+      volatilityScore,
+      stockCount: stocksWithValidData.length,
+      timestamp: new Date().toLocaleTimeString()
+    })
+
+    return {
+      bestPerformer,
+      worstPerformer,
+      avgPerformance,
+      volatilityScore,
+      totalValue,
+      dataTimestamp: Date.now()
+    }
+  }, [safeSelectedStocks, lastUpdateTime]) // Recalculate when stocks or real-time data changes
 
   // Load saved sessions from database on component mount
   useEffect(() => {
@@ -1734,13 +1819,8 @@ Generated by AI-Powered Stock Analysis Tool
                     <div className="flex justify-between">
                       <span>Best Performer:</span>
                       <span className="font-medium text-green-600">
-                        {safeSelectedStocks.length > 0 
-                          ? (() => {
-                              const best = safeSelectedStocks.reduce((best, current) => 
-                                (current.changePercent || 0) > (best.changePercent || 0) ? current : best
-                              )
-                              return `${best.symbol} (${best.changePercent > 0 ? '+' : ''}${best.changePercent?.toFixed(2)}%)`
-                            })()
+                        {performanceMetrics.bestPerformer 
+                          ? `${performanceMetrics.bestPerformer.symbol} (${performanceMetrics.bestPerformer.changePercent > 0 ? '+' : ''}${performanceMetrics.bestPerformer.changePercent?.toFixed(2)}%)`
                           : 'N/A'
                         }
                       </span>
@@ -1748,13 +1828,8 @@ Generated by AI-Powered Stock Analysis Tool
                     <div className="flex justify-between">
                       <span>Worst Performer:</span>
                       <span className="font-medium text-red-600">
-                        {safeSelectedStocks.length > 0 
-                          ? (() => {
-                              const worst = safeSelectedStocks.reduce((worst, current) => 
-                                (current.changePercent || 0) < (worst.changePercent || 0) ? current : worst
-                              )
-                              return `${worst.symbol} (${worst.changePercent > 0 ? '+' : ''}${worst.changePercent?.toFixed(2)}%)`
-                            })()
+                        {performanceMetrics.worstPerformer 
+                          ? `${performanceMetrics.worstPerformer.symbol} (${performanceMetrics.worstPerformer.changePercent > 0 ? '+' : ''}${performanceMetrics.worstPerformer.changePercent?.toFixed(2)}%)`
                           : 'N/A'
                         }
                       </span>
@@ -1762,16 +1837,7 @@ Generated by AI-Powered Stock Analysis Tool
                     <div className="flex justify-between">
                       <span>Volatility Score:</span>
                       <span className="font-medium">
-                        {safeSelectedStocks.length > 0 
-                          ? (() => {
-                              const changes = safeSelectedStocks.map(s => Math.abs(s.changePercent || 0))
-                              const avgChange = changes.reduce((a, b) => a + b, 0) / changes.length
-                              if (avgChange > 5) return 'High'
-                              if (avgChange > 2) return 'Medium'
-                              return 'Low'
-                            })()
-                          : 'N/A'
-                        }
+                        {performanceMetrics.volatilityScore}
                       </span>
                     </div>
                   </div>
