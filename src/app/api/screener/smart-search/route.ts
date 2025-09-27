@@ -4,6 +4,7 @@ import { OpenAIService } from '@/lib/services/openai-service'
 import { PolygonApiService } from '@/lib/screener/polygonApi'
 import { ScreenerDataService } from '@/lib/screener/ScreenerDataService'
 import { WebSearchScreenerService } from '@/lib/screener/WebSearchScreenerService'
+import { IntelligentStockSearch } from '@/lib/services/IntelligentStockSearch'
 import { prisma } from '@/lib/db';
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -27,7 +28,7 @@ export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     const body = await req.json().catch(() => ({}))
-    const { query, limit = 200, useCache = true } = body
+    const { query, limit = 200, useCache = true, page = 1, pageSize = 20 } = body
 
     if (!query || typeof query !== 'string') {
       return NextResponse.json(
@@ -47,28 +48,71 @@ export async function POST(req: NextRequest) {
       const parsedCriteria: FilterCriteria = parseResult.filters
       const queryHash = generateQueryHash(parsedCriteria)
 
-      // Step 1.5: If Google web search is configured, try enhanced web-search-first flow
+      // Step 1.5: Try intelligent search first (no API quota limits)
+      try {
+        console.log('🧠 Trying intelligent search (ChatGPT-like, no quota limits)')
+        const intelligentSearch = new IntelligentStockSearch()
+        const intelligentResult = await intelligentSearch.universalSearch(query)
+        
+        if (intelligentResult.stocks.length > 0) {
+          // Log success
+          try {
+            await prisma.queryHistory.create({
+              data: {
+                userId: session?.user?.id || null,
+                naturalQuery: `[INTELLIGENT] ${query}`,
+                parsedCriteria: { search: query } as any,
+                resultCount: intelligentResult.totalFound,
+                executionTime: intelligentResult.searchTime,
+                success: true,
+              },
+            })
+          } catch (dbErr) {
+            console.warn('Failed to log intelligent search history:', dbErr)
+          }
+
+          return NextResponse.json({
+            success: true,
+            stocks: intelligentResult.stocks,
+            totalCount: intelligentResult.totalFound,
+            hasMore: false,
+            parsedCriteria: { search: query },
+            originalQuery: query,
+            cached: false,
+            executionTime: intelligentResult.searchTime,
+            tradingDate: getTradingDateISO(),
+            usedIntelligentSearch: true,
+            query_interpretation: intelligentResult.query_interpretation,
+            suggestions: intelligentResult.suggestions,
+            confidence: intelligentResult.confidence
+          })
+        }
+      } catch (intelligentErr) {
+        console.warn('Intelligent search failed, trying web search:', intelligentErr)
+      }
+
+      // Step 1.6: Fallback to web search if available
       try {
         const hasGoogleSearch = !!(process.env.GOOGLE_SEARCH_API_KEY || process.env.GOOGLE_API_KEY)
         const hasSearchEngine = !!(process.env.GOOGLE_SEARCH_ENGINE_ID || process.env.SEARCH_ENGINE_ID)
         if (hasGoogleSearch && hasSearchEngine) {
           const webService = new WebSearchScreenerService()
           
-          // Try enhanced search first for better results
+          // Try universal search with reduced queries to conserve quota
           let webResult
           try {
-            webResult = await webService.enhancedWebSearch(query, { 
-              limit, 
+            console.log('🔍 Using web search (quota-aware)')
+            webResult = await webService.universalSmartSearch(query, { 
+              limit: Math.min(limit, 20), // Reduce load
               skipEnrichment: false, 
-              maxTickersToEnrich: 60,
-              useMultiSource: true,
-              enableSynthesis: true,
-              maxSources: 3
+              maxTickersToEnrich: 10, // Reduced for quota conservation
+              page,
+              pageSize
             })
           } catch (enhancedErr) {
-            console.warn('Enhanced search failed, falling back to basic web search:', enhancedErr)
-            // Fallback to basic web search
-            webResult = await webService.webSmartSearch(query, { limit, skipEnrichment: false, maxTickersToEnrich: 60 })
+            console.warn('Web search failed (likely quota exceeded):', enhancedErr)
+            // Don't fallback to basic web search - it will also fail
+            throw enhancedErr
           }
           
           if ((webResult?.stocks?.length || 0) > 0) {
@@ -99,6 +143,11 @@ export async function POST(req: NextRequest) {
               executionTime: Date.now() - startTime,
               tradingDate: getTradingDateISO(),
               usedWebSearch: true,
+              // Pagination fields
+              totalPages: webResult.totalPages,
+              currentPage: webResult.currentPage,
+              page,
+              pageSize,
               // Enhanced fields (if available)
               ...(webResult.enhanced && {
                 synthesizedData: webResult.synthesizedData,
@@ -111,7 +160,35 @@ export async function POST(req: NextRequest) {
           }
         }
       } catch (webErr) {
-        console.warn('Web smart search failed, continuing with Polygon flow:', webErr)
+        console.warn('Web search failed (quota exceeded), using intelligent fallback:', webErr)
+        
+        // Final fallback: Use intelligent search
+        try {
+          console.log('🧠 Final fallback: Using intelligent search')
+          const intelligentSearch = new IntelligentStockSearch()
+          const intelligentResult = await intelligentSearch.universalSearch(query)
+          
+          if (intelligentResult.stocks.length > 0) {
+            return NextResponse.json({
+              success: true,
+              stocks: intelligentResult.stocks,
+              totalCount: intelligentResult.totalFound,
+              hasMore: false,
+              parsedCriteria: { search: query },
+              originalQuery: query,
+              cached: false,
+              executionTime: intelligentResult.searchTime,
+              tradingDate: getTradingDateISO(),
+              usedIntelligentSearch: true,
+              fallbackReason: 'Google API quota exceeded',
+              query_interpretation: intelligentResult.query_interpretation,
+              suggestions: intelligentResult.suggestions,
+              confidence: intelligentResult.confidence
+            })
+          }
+        } catch (finalErr) {
+          console.error('Final intelligent fallback also failed:', finalErr)
+        }
       }
 
       // Step 2: Check cache if enabled

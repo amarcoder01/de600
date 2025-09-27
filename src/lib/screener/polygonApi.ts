@@ -383,6 +383,17 @@ class PolygonApiService {
         has_change: typeof change === 'number' && typeof changePercent === 'number'
       };
     } catch (error) {
+      // Silently handle invalid tickers to reduce log spam
+      if (error instanceof Error && (
+        error.message.includes('No price data available') ||
+        error.message.includes('Unable to get price data') ||
+        error.message.includes('404') ||
+        error.message.includes('not found')
+      )) {
+        throw new Error(`No price data available for ${ticker}`);
+      }
+      
+      // Only log unexpected errors
       console.error(`Error fetching price for ${ticker}:`, error);
       throw error;
     }
@@ -543,10 +554,43 @@ class PolygonApiService {
         has_change: typeof change === 'number' && typeof change_percent === 'number'
       } as StockPrice;
     } catch (error) {
-      console.error(`Error in getStockSnapshot for ${ticker}:`, error);
+      // Silently handle invalid tickers to reduce log spam
+      if (error instanceof Error && (
+        error.message.includes('No price data available') ||
+        error.message.includes('Unable to get price data') ||
+        error.message.includes('404') ||
+        error.message.includes('not found')
+      )) {
+        // Try fallback but don't log if it fails
+        try {
+          const prev = await this.getStockPrice(ticker, includeFinancials);
+          return prev as StockPrice;
+        } catch (fallbackError) {
+          // Return minimal data for invalid tickers instead of throwing
+          return {
+            ticker,
+            price: 0,
+            change: 0,
+            change_percent: 0,
+            volume: 0,
+            market_cap: 0,
+            previous_close: 0,
+            open: 0,
+            high: 0,
+            low: 0
+          } as StockPrice;
+        }
+      }
+      
+      // Only log unexpected errors
+      console.error(`Unexpected error in getStockSnapshot for ${ticker}:`, error);
       // Fallback to previous session data (will include proper change vs open)
-      const prev = await this.getStockPrice(ticker, includeFinancials);
-      return prev as StockPrice;
+      try {
+        const prev = await this.getStockPrice(ticker, includeFinancials);
+        return prev as StockPrice;
+      } catch (fallbackError) {
+        throw new Error(`Unable to get price data for ${ticker}`);
+      }
     }
   }
 
@@ -947,6 +991,12 @@ class PolygonApiService {
     let nextUrl: string | undefined = undefined;
     let safetyPages = 0;
     const maxPages = 200;
+    
+    // List of problematic tickers to exclude
+    const excludeTickers = new Set([
+      'AEXA', 'FCRS.U', 'FCRD.U', 'FCRW.U', 'FCRX.U', 'FCRY.U', 'FCRZ.U',
+      // Add more problematic tickers here as needed
+    ]);
 
     while (safetyPages++ < maxPages) {
       let response: any;
@@ -983,7 +1033,13 @@ class PolygonApiService {
       }
       const results = response?.data?.results || [];
       if (!results.length) break;
-      all.push(...results);
+      
+      // Filter out problematic tickers
+      const validResults = results.filter((stock: any) => 
+        stock.ticker && !excludeTickers.has(stock.ticker)
+      );
+      
+      all.push(...validResults);
       nextUrl = response.data.next_url;
       if (!nextUrl) break;
     }
