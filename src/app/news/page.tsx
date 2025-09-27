@@ -299,10 +299,16 @@ export default function NewsPage() {
     setLoading(false)
   }, [markAsRead])
 
-  // Filter news based on sentiment
-  const filteredNews = news.filter(item => {
-    const matchesSentiment = selectedSentiment === 'all' || item.sentiment === selectedSentiment
-    return matchesSentiment
+  // Filter news based on selected category and sentiment (client-side safety net)
+  const filteredNews = news.filter((item) => {
+    const matchesCategory =
+      selectedCategory === 'all' ||
+      (item.category && item.category.toLowerCase() === selectedCategory.toLowerCase())
+
+    const matchesSentiment =
+      selectedSentiment === 'all' || item.sentiment === selectedSentiment
+
+    return matchesCategory && matchesSentiment
   })
 
   const toggleBookmark = (newsId: string) => {
@@ -402,9 +408,6 @@ export default function NewsPage() {
                    <h4 className="font-semibold text-sm mb-1">{update.symbol}</h4>
                    <p className="text-sm text-muted-foreground">{update.message}</p>
                  </div>
-                 <Button variant="ghost" size="sm">
-                   <Eye className="w-4 h-4" />
-                 </Button>
                </div>
              </CardContent>
            </Card>
@@ -867,40 +870,34 @@ export default function NewsPage() {
                </div>
              </div>
 
-             <div className="space-y-3">
-               <h4 className="font-medium text-sm">Market Impact</h4>
-               <div className="space-y-2">
-                 <div className="flex items-center space-x-2">
-                   <div className={`w-3 h-3 rounded-full ${
-                     selectedMarketUpdate.priority === 'high' ? 'bg-red-500' : 
-                     selectedMarketUpdate.priority === 'medium' ? 'bg-yellow-500' : 'bg-green-500'
-                   }`}></div>
-                   <span className="text-sm">Impact Level: {selectedMarketUpdate.priority.toUpperCase()}</span>
-                 </div>
-                 <div className="text-sm text-muted-foreground">
-                   This update may affect trading decisions and market sentiment for {selectedMarketUpdate.symbol} and related securities.
-                 </div>
-               </div>
-             </div>
-           </div>
+            <div className="space-y-3">
+              <h4 className="font-medium text-sm">Market Impact</h4>
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <div className={`w-3 h-3 rounded-full ${
+                    selectedMarketUpdate.priority === 'high' ? 'bg-red-500' : 
+                    selectedMarketUpdate.priority === 'medium' ? 'bg-yellow-500' : 'bg-green-500'
+                  }`}></div>
+                  <span className="text-sm">Impact Level: {selectedMarketUpdate.priority.toUpperCase()}</span>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  This update may affect trading decisions and market sentiment for {selectedMarketUpdate.symbol} and related securities.
+                </div>
+              </div>
+            </div>
+          </div>
 
-           {/* Action Buttons */}
-           <div className="flex justify-end space-x-2 pt-4 border-t">
-             <Button variant="outline" onClick={handleCloseMarketUpdateModal}>
-               Close
-             </Button>
-             <Button onClick={() => {
-               // Here you could add functionality to track this update or add to watchlist
-               toast.success(`Added ${selectedMarketUpdate.symbol} to watchlist`)
-               handleCloseMarketUpdateModal()
-             }}>
-               Track {selectedMarketUpdate.symbol}
-             </Button>
-           </div>
-         </div>
-       )}
-     </DialogContent>
-   </Dialog>
- </div>
+          {/* Action Buttons */}
+          <div className="flex justify-end space-x-2 pt-4 border-t">
+            <Button variant="outline" onClick={handleCloseMarketUpdateModal}>
+              Close
+            </Button>
+          </div>
+        </div>
+      )}
+    </DialogContent>
+  </Dialog>
+</div>
+
 )
 }
