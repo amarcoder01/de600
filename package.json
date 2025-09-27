@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "cross-env NODE_ENV=production next build",
-    "start": "PORT=10000 next start",
+    "start": "next start -p ${PORT:-10000}",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "test": "jest",
