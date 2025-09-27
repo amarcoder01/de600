@@ -331,19 +331,9 @@ export function StockDetailModal({ stock, isOpen, onClose }: StockDetailModalPro
       <Dialog open={isFullScreenChart} onOpenChange={setIsFullScreenChart}>
         <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-2" data-testid="fullscreen-chart-modal">
           <DialogHeader className="px-4 py-2">
-            <DialogTitle className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <BarChart3 className="w-5 h-5" />
-                <span>{stock.name} ({stock.symbol}) - Interactive Chart</span>
-              </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setIsFullScreenChart(false)}
-                data-testid={`close-fullscreen-chart-${stock.symbol}`}
-              >
-                Close
-              </Button>
+            <DialogTitle className="flex items-center space-x-2">
+              <BarChart3 className="w-5 h-5" />
+              <span>{stock.name} ({stock.symbol}) - Interactive Chart</span>
             </DialogTitle>
           </DialogHeader>
           <div className="flex-1 px-2 pb-2">
@@ -352,6 +342,7 @@ export function StockDetailModal({ stock, isOpen, onClose }: StockDetailModalPro
               currentPrice={stock.currentPrice}
               width={Math.max(windowSize.width - 50, 800)}
               height={Math.max(windowSize.height - 150, 500)}
+              hideControls={true}
             />
           </div>
         </DialogContent>

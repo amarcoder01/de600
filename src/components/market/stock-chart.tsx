@@ -6,6 +6,7 @@ interface StockChartProps {
   currentPrice: number;
   width?: number;
   height?: number;
+  hideControls?: boolean; // Hide tip message and internal chart button
 }
 
 declare global {
@@ -14,7 +15,7 @@ declare global {
   }
 }
 
-export function StockChart({ symbol, currentPrice, width = 700, height = 400 }: StockChartProps) {
+export function StockChart({ symbol, currentPrice, width = 700, height = 400, hideControls = false }: StockChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetRef = useRef<any>(null);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -259,25 +260,35 @@ export function StockChart({ symbol, currentPrice, width = 700, height = 400 }: 
         />
       </div>
 
-      {/* Chart type selector - always visible for users */}
-      {!showInternalChart && (
-        <div className="mt-3 p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between">
-          <div className="text-sm text-gray-700 dark:text-gray-300">
-            Want a different chart view for <strong>{symbol}</strong>?
+      {/* Chart type selector and helpful message - only show when not hiding controls */}
+      {!showInternalChart && !hideControls && (
+        <div className="mt-3 space-y-2">
+          {/* Helpful tip message */}
+          <div className="p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
+            <div className="text-xs text-blue-700 dark:text-blue-300">
+              💡 <strong>Tip:</strong> If the chart above doesn't load or appears blank, try our internal chart for reliable data visualization.
+            </div>
           </div>
-          <button
-            className="ml-3 px-4 py-2 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm"
-            onClick={() => {
-              setShowInternalChart(true);
-              // If we don't have fallback data, try to fetch it
-              if (!fallbackData || !fallbackData.data || fallbackData.data.length === 0) {
-                fetchFallbackChartData(symbol);
-              }
-            }}
-            data-testid={`btn-internal-chart-${symbol}`}
-          >
-            Load Internal Chart
-          </button>
+          
+          {/* Chart selector */}
+          <div className="p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between">
+            <div className="text-sm text-gray-700 dark:text-gray-300">
+              Want a different chart view for <strong>{symbol}</strong>?
+            </div>
+            <button
+              className="ml-3 px-4 py-2 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm"
+              onClick={() => {
+                setShowInternalChart(true);
+                // If we don't have fallback data, try to fetch it
+                if (!fallbackData || !fallbackData.data || fallbackData.data.length === 0) {
+                  fetchFallbackChartData(symbol);
+                }
+              }}
+              data-testid={`btn-internal-chart-${symbol}`}
+            >
+              Load Internal Chart
+            </button>
+          </div>
         </div>
       )}
 

@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown, BarChart3, Activity } from 'lucide-react';
+import { TrendingUp, TrendingDown } from 'lucide-react';
 import { useTopGainersLosersStore } from '@/store/topGainersLosersStore';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -26,25 +26,21 @@ export default function MarketOverview() {
     {
       key: 'sp500',
       label: 'S&P 500',
-      icon: BarChart3,
       data: indices.sp500,
     },
     {
       key: 'nasdaq',
       label: 'NASDAQ',
-      icon: TrendingUp,
       data: indices.nasdaq,
     },
     {
       key: 'dow',
       label: 'DOW',
-      icon: BarChart3,
       data: indices.dow,
     },
     {
       key: 'vix',
       label: 'VIX',
-      icon: Activity,
       data: indices.vix,
     },
   ];
@@ -52,7 +48,7 @@ export default function MarketOverview() {
   return (
     <section className="mb-8">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {indexData.map(({ key, label, icon: Icon, data }) => {
+        {indexData.map(({ key, label, data }) => {
           const isPositive = (data?.change || 0) >= 0;
           const isVix = key === 'vix';
           
@@ -77,7 +73,6 @@ export default function MarketOverview() {
                       </p>
                     )}
                   </div>
-                  <Icon className={`text-2xl ${isVix ? 'text-amber-500' : 'text-primary'}`} />
                 </div>
               </CardContent>
             </Card>
