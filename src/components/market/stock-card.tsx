@@ -9,7 +9,12 @@ interface StockCardProps {
 }
 
 export function StockCard({ stock, onClick, className }: StockCardProps) {
-  const isPositive = stock.change >= 0;
+  // Compute change locally to ensure correctness even if backend-provided fields are missing/stale
+  const computedChange = (stock.currentPrice ?? 0) - (stock.previousClose ?? 0);
+  const computedChangePercent = (stock.previousClose ?? 0) > 0
+    ? (computedChange / stock.previousClose) * 100
+    : 0;
+  const isPositive = computedChange >= 0;
 
   const formatVolume = (volume: number): string => {
     if (volume >= 1000000) {
@@ -63,7 +68,7 @@ export function StockCard({ stock, onClick, className }: StockCardProps) {
                   }`}
                   data-testid={`stock-change-${stock.symbol}`}
                 >
-                  {isPositive ? '+' : ''}${stock.change.toFixed(2)}
+                  {isPositive ? '+' : ''}${computedChange.toFixed(2)}
                 </span>
               </div>
               <div 
@@ -74,7 +79,7 @@ export function StockCard({ stock, onClick, className }: StockCardProps) {
                 }`}
                 data-testid={`stock-change-percent-${stock.symbol}`}
               >
-                {isPositive ? '+' : ''}{stock.changePercent.toFixed(2)}%
+                {isPositive ? '+' : ''}{computedChangePercent.toFixed(2)}%
               </div>
             </div>
             
@@ -95,3 +100,4 @@ export function StockCard({ stock, onClick, className }: StockCardProps) {
     </Card>
   );
 }
+

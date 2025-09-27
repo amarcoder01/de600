@@ -24,7 +24,12 @@ export function StockDetailModal({ stock, isOpen, onClose }: StockDetailModalPro
 
   const [isFullScreenChart, setIsFullScreenChart] = useState(false);
   const [windowSize, setWindowSize] = useState({ width: 1200, height: 800 });
-  const isPositive = stock.change >= 0;
+  // Compute change locally to ensure UI reflects accurate delta even if backend fields are zero
+  const computedChange = (stock.currentPrice ?? 0) - (stock.previousClose ?? 0);
+  const computedChangePercent = (stock.previousClose ?? 0) > 0
+    ? (computedChange / stock.previousClose) * 100
+    : 0;
+  const isPositive = computedChange >= 0;
 
   useEffect(() => {
     if (typeof window !== 'undefined') {

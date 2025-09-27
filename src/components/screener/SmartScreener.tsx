@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
-import { Brain, Search, Sparkles, Filter, Lock, Crown } from 'lucide-react';
+import { Brain, Search, Filter } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
@@ -44,9 +44,8 @@ const SmartScreener: React.FC = () => {
   const hasAccess = false;
 
   const handleRestrictedAccess = () => {
-    toast.error('Smart Screener is only available for selected users', {
-      description: 'User access will be added later. Contact support for more info.',
-      duration: 5000,
+    toast.error('Smart Screener is available to selected users only.', {
+      duration: 4000,
     });
   };
 
@@ -203,20 +202,9 @@ const SmartScreener: React.FC = () => {
         <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
           <Brain className="h-6 w-6 text-blue-600 hidden sm:inline" />
           Smart Stock Screener
-          {hasAccess ? (
-            <Sparkles className="h-5 w-5 text-yellow-500 hidden sm:inline" />
-          ) : (
-            <div className="flex items-center gap-1">
-              <Lock className="h-4 w-4 text-orange-500" />
-              <Crown className="h-4 w-4 text-yellow-500" />
-              <Badge variant="outline" className="text-xs">Premium</Badge>
-            </div>
-          )}
         </h1>
         {!hasAccess && (
-          <p className="text-sm text-muted-foreground">
-            This feature is available for selected users only. User access will be added later.
-          </p>
+          <p className="text-sm text-muted-foreground">Available to selected users only.</p>
         )}
       </div>
 
@@ -224,19 +212,7 @@ const SmartScreener: React.FC = () => {
       {!hasAccess && (
         <Card className="border-orange-200 bg-orange-50/50">
           <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 text-orange-600">
-                <Lock className="h-5 w-5" />
-                <Crown className="h-5 w-5" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-orange-800">Premium Feature</h3>
-                <p className="text-sm text-orange-700 mt-1">
-                  Smart Screener is available for selected users only. 
-                  User access management will be implemented later.
-                </p>
-              </div>
-            </div>
+            <p className="text-sm text-orange-700">Available to selected users only.</p>
           </CardContent>
         </Card>
       )}
@@ -247,7 +223,6 @@ const SmartScreener: React.FC = () => {
           <CardTitle className="flex items-center gap-2">
             <Search className="h-5 w-5" />
             Search
-            {!hasAccess && <Lock className="h-4 w-4 text-muted-foreground" />}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -255,7 +230,7 @@ const SmartScreener: React.FC = () => {
             <Textarea
               placeholder={hasAccess ? 
                 "e.g., find stocks priced between 100 and 1500, dividend stocks under 50, high volume tech..." :
-                "Premium feature - User access will be added later"
+                "Selected users only"
               }
               value={naturalQuery}
               onChange={(e) => hasAccess && setNaturalQuery(e.target.value)}
@@ -272,7 +247,6 @@ const SmartScreener: React.FC = () => {
               <Button 
                 onClick={hasAccess ? handleNaturalLanguageSearch : handleRestrictedAccess}
                 disabled={isProcessing || !naturalQuery.trim()}
-                className="sm:h-20 h-11"
                 variant={hasAccess ? "default" : "outline"}
               >
                 {isProcessing ? (
@@ -287,8 +261,7 @@ const SmartScreener: React.FC = () => {
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <Lock className="h-4 w-4" />
-                    Premium Only
+                    Selected Users Only
                   </div>
                 )}
               </Button>

@@ -417,25 +417,21 @@ export class MarketStatusService {
    * Get the previous trading date
    */
   getPreviousTradingDate(daysBack: number = 1): string {
-    const marketTime = this.getMarketTime()
-    let tradingDate = new Date(marketTime)
-    
-    // If it's before 4 AM ET, use previous day as starting point
-    if (marketTime.getHours() < 4) {
-      tradingDate.setDate(tradingDate.getDate() - 1)
-    }
-    
+    // Start from the current trading date to avoid weekend/holiday duplication
+    const currentTradingDateStr = this.getCurrentTradingDate()
+    let tradingDate = new Date(currentTradingDateStr)
+
     let tradingDaysBack = 0
-    
     while (tradingDaysBack < daysBack) {
+      // Move back one calendar day
       tradingDate.setDate(tradingDate.getDate() - 1)
       
-      // Skip weekends and holidays
+      // Count only valid trading days (skip weekends/holidays)
       if (!this.isWeekend(tradingDate) && !this.isMarketHoliday(this.formatDate(tradingDate))) {
         tradingDaysBack++
       }
     }
-    
+
     return this.formatDate(tradingDate)
   }
 }
