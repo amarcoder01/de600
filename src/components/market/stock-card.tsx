@@ -25,13 +25,27 @@ export function StockCard({ stock, onClick, className }: StockCardProps) {
     return volume.toString();
   };
 
+  // Determine a font-size class that keeps the ticker inside the 48x48 avatar
+  const getSymbolSizeClass = (len: number) => {
+    if (len <= 3) return 'text-2xl';
+    if (len === 4) return 'text-lg';
+    if (len === 5) return 'text-base';
+    return 'text-sm';
+  };
+
+  const symbolSizeClass = getSymbolSizeClass(stock.symbol?.length || 0);
+
   return (
     <Card className={`hover:shadow-md transition-shadow cursor-pointer ${className}`} onClick={() => onClick?.(stock)}>
       <CardContent className="p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
           <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-              <span className="text-primary font-bold text-lg" data-testid={`stock-symbol-${stock.symbol}`}>
+            <div className="w-14 h-14 md:w-16 md:h-16 rounded-lg bg-primary/10 flex items-center justify-center overflow-hidden">
+              <span
+                className={`text-primary font-bold leading-none text-center whitespace-nowrap ${symbolSizeClass}`}
+                data-testid={`stock-symbol-${stock.symbol}`}
+                title={stock.symbol}
+              >
                 {stock.symbol}
               </span>
             </div>

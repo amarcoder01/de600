@@ -76,14 +76,24 @@ export function StockDetailModal({ stock, isOpen, onClose }: StockDetailModalPro
     return volume.toString();
   };
 
+  // Determine a font-size class that keeps the ticker inside the avatar
+  const getSymbolSizeClass = (len: number) => {
+    if (len <= 3) return 'text-xl';
+    if (len === 4) return 'text-base';
+    if (len === 5) return 'text-sm';
+    return 'text-xs';
+  };
+
+  const symbolSizeClass = getSymbolSizeClass(stock.symbol?.length || 0);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" data-testid="stock-detail-modal">
         <DialogHeader>
           <DialogTitle className="flex items-center">
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                <span className="text-primary font-bold text-lg">{stock.symbol}</span>
+              <div className="w-12 h-12 md:w-14 md:h-14 rounded-lg bg-primary/10 flex items-center justify-center overflow-hidden">
+                <span className={`text-primary font-bold leading-none text-center whitespace-nowrap ${symbolSizeClass}`}>{stock.symbol}</span>
               </div>
               <div>
                 <h2 className="text-2xl font-bold" data-testid={`modal-stock-name-${stock.symbol}`}>
