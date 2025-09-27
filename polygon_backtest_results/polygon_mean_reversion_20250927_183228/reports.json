@@ -1,0 +1,31 @@
+{
+  "summary": {
+    "total_trades": 38,
+    "winning_trades": 18,
+    "losing_trades": 20,
+    "win_rate": 0.47368421052631576,
+    "total_pnl": 1670.8915857386837,
+    "total_return": 0.016708915857387038,
+    "avg_win": 375.99694937285545,
+    "avg_loss": -254.8526751486357,
+    "profit_factor": 1.327815194555871,
+    "volatility": 0.02170928948195555,
+    "sharpe_ratio": 0.26662961724559076,
+    "max_drawdown": -0.02157459217499902,
+    "avg_trade_duration": 10.631578947368421,
+    "final_portfolio_value": 101670.8915857387,
+    "initial_capital": 100000
+  },
+  "charts": {},
+  "trades_analysis": {
+    "total_trades": 38,
+    "avg_trade_pnl": 43.970831203649574,
+    "best_trade": 753.7920946406975,
+    "worst_trade": -914.8171784668484,
+    "avg_trade_duration": 10.631578947368421,
+    "top_symbols": {
+      "AAPL": 2154.7268407497195,
+      "MSFT": -483.83525501103577
+    }
+  }
+}

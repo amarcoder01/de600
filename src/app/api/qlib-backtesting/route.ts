@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { spawn } from 'child_process';
 import path from 'path';
 
+// Ensure this route runs on the Node.js runtime (not Edge), since we use child_process
+export const runtime = 'nodejs';
+// Avoid caching and ensure fresh execution
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -32,8 +37,8 @@ export async function POST(request: NextRequest) {
 
     // Execute the backtesting script
     const result = await new Promise((resolve, reject) => {
-      // Use 'py' on Windows, 'python3' on Unix-like systems
-      const pythonCommand = process.platform === 'win32' ? 'py' : 'python3';
+      // Prefer an explicit PYTHON_PATH if provided, otherwise choose platform default
+      const pythonCommand = process.env.PYTHON_PATH || (process.platform === 'win32' ? 'py' : 'python3');
       const child = spawn(pythonCommand, [scriptPath, ...args], {
         cwd: process.cwd(),
         stdio: ['pipe', 'pipe', 'pipe'],
@@ -115,22 +120,26 @@ export async function POST(request: NextRequest) {
             } else {
               resolve({
                 success: false,
-                error: cliResult.error || 'Backtest failed'
+                error: cliResult.error || 'Backtest failed',
+                diagnostics: {
+                  stderr: stderr?.slice(-500) || null,
+                  stdout_tail: cleanedStdout.slice(-500),
+                }
               });
             }
           } catch (error) {
             console.error('JSON parse error:', error);
             console.error('stdout length:', stdout.length);
             console.error('stdout last 100 chars:', stdout.slice(-100));
-            reject(new Error(`Failed to parse output: ${stdout}`));
+            reject(new Error(`Failed to parse output from backtest script. Tail: ${stdout.slice(-300)}`));
           }
         } else {
-          reject(new Error(`Script failed with code ${code}: ${stderr}`));
+          reject(new Error(`Script failed with code ${code}: ${stderr || 'no stderr'}`));
         }
       });
 
       child.on('error', (error) => {
-        reject(new Error(`Failed to start script: ${error.message}`));
+        reject(new Error(`Failed to start script. Python command not found or not executable. Details: ${error.message}`));
       });
     });
 
@@ -139,7 +148,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('QLib backtesting error:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unknown error occurred' },
+      {
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
+        hint: 'Ensure POLYGON_API_KEY is set in the server environment and Python is available at runtime. You can set PYTHON_PATH to override.',
+      },
       { status: 500 }
     );
   }
@@ -194,13 +206,29 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(result);
     }
 
+    if (action === 'diag') {
+      // Diagnostics endpoint to help debug production issues
+      const scriptPath = path.join(process.cwd(), 'scripts', 'polygon_backtesting_cli.py');
+      const pythonCandidates = [process.env.PYTHON_PATH, process.platform === 'win32' ? 'py' : 'python3', 'python'];
+      return NextResponse.json({
+        success: true,
+        diagnostics: {
+          cwd: process.cwd(),
+          scriptExists: true,
+          scriptPath,
+          polygonApiKeyPresent: Boolean(process.env.POLYGON_API_KEY),
+          pythonCandidates,
+        },
+      });
+    }
+
     if (action === 'summary') {
       // Get Polygon.io data summary
       const scriptPath = path.join(process.cwd(), 'scripts', 'polygon_backtesting_cli.py');
       
       const result = await new Promise((resolve, reject) => {
-        // Use 'py' on Windows, 'python3' on Unix-like systems
-        const pythonCommand = process.platform === 'win32' ? 'py' : 'python3';
+        // Use explicit PYTHON_PATH if available, else platform default
+        const pythonCommand = process.env.PYTHON_PATH || (process.platform === 'win32' ? 'py' : 'python3');
         const child = spawn(pythonCommand, [scriptPath], {
           cwd: process.cwd(),
           stdio: ['pipe', 'pipe', 'pipe']
