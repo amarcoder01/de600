@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db'
 import sgMail from '@sendgrid/mail'
 import crypto from 'crypto'
 import { AUTH_MESSAGES } from '@/lib/auth-messages'
+import { resolveBaseUrl } from '@/lib/url'
 
 // Enhanced SendGrid configuration with detailed logging
 const configureSendGrid = () => {
@@ -81,37 +82,16 @@ export async function POST(request: NextRequest) {
 
     console.log('💾 Reset token saved to database')
 
-    // Create reset URL - debug environment variables
-    console.log('🔧 Environment Variables Debug:')
-    console.log(`   NEXT_PUBLIC_BASE_URL: ${process.env.NEXT_PUBLIC_BASE_URL}`)
-    console.log(`   NODE_ENV: ${process.env.NODE_ENV}`)
-    console.log(`   RENDER: ${process.env.RENDER}`)
-    console.log(`   RENDER_EXTERNAL_URL: ${process.env.RENDER_EXTERNAL_URL}`)
-    console.log(`   RENDER_EXTERNAL_HOSTNAME: ${process.env.RENDER_EXTERNAL_HOSTNAME}`)
-    
-    // Determine the base URL with multiple fallback strategies
-    let baseUrl = 'http://localhost:3000' // default fallback
-    
-    if (process.env.NEXT_PUBLIC_BASE_URL) {
-      baseUrl = process.env.NEXT_PUBLIC_BASE_URL
-      console.log('🔧 Using NEXT_PUBLIC_BASE_URL:', baseUrl)
-    } else if (process.env.RENDER_EXTERNAL_URL) {
-      baseUrl = process.env.RENDER_EXTERNAL_URL
-      console.log('🔧 Using RENDER_EXTERNAL_URL:', baseUrl)
-    } else if (process.env.RENDER_EXTERNAL_HOSTNAME) {
-      baseUrl = `https://${process.env.RENDER_EXTERNAL_HOSTNAME}`
-      console.log('🔧 Using RENDER_EXTERNAL_HOSTNAME:', baseUrl)
-    } else if (process.env.RENDER) {
-      // If we're on Render but no specific URL is set, use the correct domain
-      baseUrl = 'https://vidality.com'
-      console.log('🔧 Using hardcoded production URL:', baseUrl)
-    }
-    
+    // Create reset URL using robust resolver
+    const baseUrl = resolveBaseUrl(request)
     const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`
     console.log(`🔗 Reset URL: ${resetUrl}`)
 
     // Check SendGrid configuration
     const sendGridConfigured = configureSendGrid()
+    if (!process.env.SENDGRID_FROM_EMAIL || !/^[^@]+@[^@]+\.[^@]+$/.test(process.env.SENDGRID_FROM_EMAIL)) {
+      console.error('❌ Invalid or missing SENDGRID_FROM_EMAIL. Please set a verified sender email in environment.')
+    }
 
     if (!sendGridConfigured) {
       console.log('📧 SendGrid not properly configured')
