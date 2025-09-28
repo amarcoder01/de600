@@ -48,10 +48,11 @@ export async function POST(request: NextRequest) {
         request,
         { reason: 'Email already verified', userId: user.id, email: user.email }
       )
-      // Return generic success message even if already verified
+      // Return success but indicate email is already verified
       return NextResponse.json({
         success: true,
-        message: AUTH_MESSAGES.EMAIL_VERIFICATION.GENERIC_SUCCESS
+        alreadyVerified: true,
+        message: AUTH_MESSAGES.EMAIL_VERIFICATION.ALREADY_VERIFIED
       })
     }
 

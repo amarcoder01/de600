@@ -330,21 +330,29 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalPr
       const data = await response.json()
 
       if (data.success) {
-        setVerificationRequestSuccess(true)
-        // Show the verification step
-        setVerificationUserData({
-          userId: data.userId,
-          email: data.email,
-          name: email.trim()
-        })
-        setShowEmailVerification(true)
-        setShowVerifyEmailOption(false)
-        
-        // Reset verification state
-        setVerificationCode('')
-        setVerificationError('')
-        setVerificationSuccess(false)
-        setTimeLeft(15 * 60)
+        if (data.alreadyVerified) {
+          // Email is already verified, show appropriate message
+          setVerificationRequestSuccess(false)
+          setVerificationRequestError('Your email is already verified. Please try signing in with your password.')
+          setShowVerifyEmailOption(false)
+        } else {
+          // Email verification code was sent
+          setVerificationRequestSuccess(true)
+          // Show the verification step
+          setVerificationUserData({
+            userId: data.userId,
+            email: data.email,
+            name: email.trim()
+          })
+          setShowEmailVerification(true)
+          setShowVerifyEmailOption(false)
+          
+          // Reset verification state
+          setVerificationCode('')
+          setVerificationError('')
+          setVerificationSuccess(false)
+          setTimeLeft(15 * 60)
+        }
       } else {
         setVerificationRequestError(data.error || 'Failed to send verification email')
       }

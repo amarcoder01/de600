@@ -56,14 +56,22 @@ export default function LoginPage() {
       })
       const data = await res.json()
       if (res.ok && data.success) {
-        setVerificationRequestSuccess(true)
-        setVerificationRequestError('')
-        // Prepare inline verification UI
-        setVerificationUser({ userId: data.userId, email: data.email })
-        setVerificationCode('')
-        setVerificationError('')
-        setVerificationSuccess(false)
-        setShowVerification(true)
+        if (data.alreadyVerified) {
+          // Email is already verified, show appropriate message
+          setVerificationRequestSuccess(false)
+          setVerificationRequestError('Your email is already verified. Please try signing in with your password.')
+          setShowVerification(false)
+        } else {
+          // Email verification code was sent
+          setVerificationRequestSuccess(true)
+          setVerificationRequestError('')
+          // Prepare inline verification UI
+          setVerificationUser({ userId: data.userId, email: data.email })
+          setVerificationCode('')
+          setVerificationError('')
+          setVerificationSuccess(false)
+          setShowVerification(true)
+        }
       } else {
         setVerificationRequestError(data.error || 'Failed to send verification email')
       }

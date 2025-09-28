@@ -17,7 +17,7 @@ export const AUTH_MESSAGES = {
   EMAIL_VERIFICATION: {
     GENERIC_SUCCESS: 'If an account with that email exists and requires verification, a verification code has been sent.',
     CODE_SENT: 'A verification code has been sent to your email address.',
-    ALREADY_VERIFIED: 'Your email has already been verified.',
+    ALREADY_VERIFIED: 'Your email address has already been verified. You can sign in directly.',
     SUCCESS: 'Your email has been successfully verified.',
     CODE_EXPIRED: 'The verification code has expired. Please request a new one.',
     CODE_INVALID: 'The verification code is invalid. Please check and try again.',
