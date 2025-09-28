@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { spawn } from 'child_process';
 import path from 'path';
+import fs from 'fs';
 
 // Ensure this route runs on the Node.js runtime (not Edge), since we use child_process
 export const runtime = 'nodejs';
@@ -37,14 +38,29 @@ export async function POST(request: NextRequest) {
 
     // Execute the backtesting script
     const result = await new Promise((resolve, reject) => {
-      // Prefer an explicit PYTHON_PATH if provided, otherwise choose platform default
-      const pythonCommand = process.env.PYTHON_PATH || (process.platform === 'win32' ? 'py' : 'python3');
+      // Prefer project virtualenv Python if present, then PYTHON_PATH, else platform default
+      const venvPython = process.platform === 'win32'
+        ? path.join(process.cwd(), '.venv', 'Scripts', 'python.exe')
+        : path.join(process.cwd(), '.venv', 'bin', 'python3');
+      const venvExists = fs.existsSync(venvPython);
+      const pythonCommand = venvExists
+        ? venvPython
+        : (process.env.PYTHON_PATH || (process.platform === 'win32' ? 'py' : 'python3'));
+      // Prepare env: if venv exists, set VIRTUAL_ENV and prepend its bin to PATH
+      const env = { ...process.env } as NodeJS.ProcessEnv;
+      if (venvExists) {
+        const venvBin = process.platform === 'win32'
+          ? path.join(process.cwd(), '.venv', 'Scripts')
+          : path.join(process.cwd(), '.venv', 'bin');
+        env.VIRTUAL_ENV = path.join(process.cwd(), '.venv');
+        env.PATH = `${venvBin}${process.platform === 'win32' ? ';' : ':'}${env.PATH || ''}`;
+      }
       const child = spawn(pythonCommand, [scriptPath, ...args], {
         cwd: process.cwd(),
         stdio: ['pipe', 'pipe', 'pipe'],
         env: {
-          ...process.env,
-          PYTHONPATH: process.cwd() + (process.platform === 'win32' ? ';' : ':') + (process.env.PYTHONPATH || '')
+          ...env,
+          PYTHONPATH: process.cwd() + (process.platform === 'win32' ? ';' : ':') + (env.PYTHONPATH || '')
         }
       });
 
@@ -128,20 +144,19 @@ export async function POST(request: NextRequest) {
               });
             }
           } catch (error) {
-            console.error('JSON parse error:', error);
             console.error('stdout length:', stdout.length);
             console.error('stdout last 100 chars:', stdout.slice(-100));
-            reject(new Error(`Failed to parse output from backtest script. Tail: ${stdout.slice(-300)}`));
+            reject(new Error(`Failed to parse output from backtest script. Tail: ${stdout.slice(-300)}\n[diag] used_python=${pythonCommand} venv_exists=${venvExists} venv_path=${venvPython ? venvPython : 'not found'}`));
           }
         } else {
-          reject(new Error(`Script failed with code ${code}: ${stderr || 'no stderr'}`));
-        }
+          reject(new Error(`Script failed with code ${code}: ${stderr || 'no stderr'}\n[diag] used_python=${pythonCommand} venv_exists=${venvExists} venv_path=${venvPython ? venvPython : 'not found'}`));
+      }
       });
 
       child.on('error', (error) => {
-        reject(new Error(`Failed to start script. Python command not found or not executable. Details: ${error.message}`));
+        reject(new Error(`Failed to start script. Python command not found or not executable. Details: ${error.message}\n[diag] used_python=${pythonCommand} venv_exists=${venvExists} venv_path=${venvPython ? venvPython : 'not found'}`));
       });
-    });
+{{ ... }}
 
     return NextResponse.json(result);
 
@@ -209,7 +224,11 @@ export async function GET(request: NextRequest) {
     if (action === 'diag') {
       // Diagnostics endpoint to help debug production issues
       const scriptPath = path.join(process.cwd(), 'scripts', 'polygon_backtesting_cli.py');
-      const pythonCandidates = [process.env.PYTHON_PATH, process.platform === 'win32' ? 'py' : 'python3', 'python'];
+      const venvPython = process.platform === 'win32'
+        ? path.join(process.cwd(), '.venv', 'Scripts', 'python.exe')
+        : path.join(process.cwd(), '.venv', 'bin', 'python3');
+      const venvExists = fs.existsSync(venvPython);
+      const pythonCandidates = [venvExists ? venvPython : null, process.env.PYTHON_PATH, process.platform === 'win32' ? 'py' : 'python3', 'python'].filter(Boolean);
       return NextResponse.json({
         success: true,
         diagnostics: {
@@ -218,6 +237,8 @@ export async function GET(request: NextRequest) {
           scriptPath,
           polygonApiKeyPresent: Boolean(process.env.POLYGON_API_KEY),
           pythonCandidates,
+          venvPython,
+          venvExists,
         },
       });
     }
@@ -227,11 +248,24 @@ export async function GET(request: NextRequest) {
       const scriptPath = path.join(process.cwd(), 'scripts', 'polygon_backtesting_cli.py');
       
       const result = await new Promise((resolve, reject) => {
-        // Use explicit PYTHON_PATH if available, else platform default
-        const pythonCommand = process.env.PYTHON_PATH || (process.platform === 'win32' ? 'py' : 'python3');
+        // Prefer project virtualenv Python if present, then PYTHON_PATH, else platform default
+        const venvPython = process.platform === 'win32'
+          ? path.join(process.cwd(), '.venv', 'Scripts', 'python.exe')
+          : path.join(process.cwd(), '.venv', 'bin', 'python3');
+        const venvExists = fs.existsSync(venvPython);
+        const pythonCommand = venvExists ? venvPython : (process.env.PYTHON_PATH || (process.platform === 'win32' ? 'py' : 'python3'));
+        const env = { ...process.env } as NodeJS.ProcessEnv;
+        if (venvExists) {
+          const venvBin = process.platform === 'win32'
+            ? path.join(process.cwd(), '.venv', 'Scripts')
+            : path.join(process.cwd(), '.venv', 'bin');
+          env.VIRTUAL_ENV = path.join(process.cwd(), '.venv');
+          env.PATH = `${venvBin}${process.platform === 'win32' ? ';' : ':'}${env.PATH || ''}`;
+        }
         const child = spawn(pythonCommand, [scriptPath], {
           cwd: process.cwd(),
-          stdio: ['pipe', 'pipe', 'pipe']
+          stdio: ['pipe', 'pipe', 'pipe'],
+          env,
         });
 
         let stdout = '';
