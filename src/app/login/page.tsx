@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label'
 import { motion } from 'framer-motion'
 import { VidalityLogo } from '@/components/ui/VidalityLogo'
 import { ForgotPasswordModal } from '@/components/auth/ForgotPasswordModal'
-import { Mail, Lock } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -19,6 +19,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+  const [showPassword, setShowPassword] = useState(false)
   const [showForgot, setShowForgot] = useState(false)
   // Verify email request state (for users who need verification before sign-in)
   const [isRequestingVerification, setIsRequestingVerification] = useState(false)
@@ -155,7 +156,7 @@ export default function LoginPage() {
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   id="password"
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value)
@@ -163,8 +164,16 @@ export default function LoginPage() {
                     if (error) clearError()
                   }}
                   placeholder="••••••••"
-                  className={`pl-9 ${validationErrors.password ? 'border-red-500' : ''}`}
+                  className={`pl-9 pr-10 ${validationErrors.password ? 'border-red-500' : ''}`}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
               {validationErrors.password && (
                 <p className="text-xs text-red-400">{validationErrors.password}</p>
