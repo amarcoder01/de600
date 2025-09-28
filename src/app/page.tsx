@@ -245,7 +245,7 @@ const HeroSection = ({ onOpenLogin, onOpenRegister }: {
           onClick={onOpenLogin}
           variant="outline"
           size="lg"
-          className="border-2 border-white/20 text-white hover:bg-white/10 px-8 py-4 text-lg font-semibold rounded-xl backdrop-blur-sm transition-all duration-300"
+          className="border-2 border-foreground/20 text-foreground hover:bg-foreground/10 px-8 py-4 text-lg font-semibold rounded-xl backdrop-blur-sm transition-all duration-300"
         >
           Sign In
         </Button>
@@ -257,7 +257,7 @@ const HeroSection = ({ onOpenLogin, onOpenRegister }: {
           <Button
             variant="outline"
             size="lg"
-            className="border-2 border-white/20 text-white hover:bg-white/10 px-8 py-4 text-lg font-semibold rounded-xl backdrop-blur-sm transition-all duration-300"
+            className="border-2 border-foreground/20 text-foreground hover:bg-foreground/10 px-8 py-4 text-lg font-semibold rounded-xl backdrop-blur-sm transition-all duration-300"
             aria-label="Follow Vidality Pulse on Telegram"
           >
             Follow on Telegram
@@ -736,15 +736,15 @@ function LandingPageContent() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-black/20 backdrop-blur-md border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <VidalityLogo className="h-8 w-auto text-white" />
+            <VidalityLogo className="h-8 w-auto text-foreground" />
             <div className="flex items-center space-x-4">
-              <Link href="/how-it-works" className="hidden md:inline-block text-white/80 hover:text-white text-sm">
+              <Link href="/how-it-works" className="hidden md:inline-block text-foreground/80 hover:text-foreground text-sm">
                 How It Works
               </Link>
               <Button
                 onClick={handleOpenLogin}
                 variant="ghost"
-                className="text-white hover:bg-white/10"
+                className="text-foreground hover:bg-foreground/10"
               >
                 Sign In
               </Button>

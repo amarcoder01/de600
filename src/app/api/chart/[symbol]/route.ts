@@ -40,7 +40,7 @@ export async function GET(
       
       if (result.success && result.data) {
         // Convert Yahoo Finance data to chart format
-        const chartData = convertYahooFinanceToChartData(result.data, symbol)
+        const chartData = convertYahooFinanceToChartData(result.data, symbol, range)
         console.log(`✅ Successfully fetched ${chartData.length} real data points for ${symbol}`)
         return NextResponse.json({
           success: true,
@@ -109,14 +109,14 @@ export async function GET(
 }
 
 // Convert Yahoo Finance data to chart format
-function convertYahooFinanceToChartData(yahooData: any, symbol: string): ChartDataPoint[] {
+function convertYahooFinanceToChartData(yahooData: any, symbol: string, range: string = '1d'): ChartDataPoint[] {
   try {
     const chartData = yahooData.chart
     if (!chartData || !chartData.result || !chartData.result[0]) {
       console.warn('Invalid Yahoo Finance data structure')
       return DataSourceService.generateChartFallbackData({
         symbol,
-        timeframe: '1d',
+        timeframe: range,
         dataType: 'chart'
       })
     }
@@ -124,15 +124,22 @@ function convertYahooFinanceToChartData(yahooData: any, symbol: string): ChartDa
     const result = chartData.result[0]
     const timestamps = result.timestamp
     const quotes = result.indicators.quote[0]
+    const meta = result.meta
     
     if (!timestamps || !quotes) {
       console.warn('Missing timestamp or quote data')
       return DataSourceService.generateChartFallbackData({
         symbol,
-        timeframe: '1d',
+        timeframe: range,
         dataType: 'chart'
       })
     }
+
+    // Get previous close from meta data for intraday calculations
+    const previousClose = meta?.previousClose || meta?.chartPreviousClose
+    const isIntradayRange = ['1d', '5d'].includes(range)
+    
+    console.log(`📊 Processing ${timestamps.length} data points for ${symbol} (${range}), previousClose: ${previousClose}`)
 
     const chartPoints: ChartDataPoint[] = []
     
@@ -145,6 +152,27 @@ function convertYahooFinanceToChartData(yahooData: any, symbol: string): ChartDa
       const volume = quotes.volume[i] || 0
 
       if (open > 0 && high > 0 && low > 0 && close > 0) {
+        // Calculate change based on timeframe
+        let change = 0
+        let changePercent = 0
+        
+        if (isIntradayRange && previousClose && previousClose > 0) {
+          // For intraday data, always compare against previous day's close
+          change = close - previousClose
+          changePercent = (change / previousClose) * 100
+        } else if (i > 0 && chartPoints.length > 0) {
+          // For longer timeframes, compare against previous period
+          const previousClose = chartPoints[chartPoints.length - 1].close
+          if (previousClose > 0) {
+            change = close - previousClose
+            changePercent = (change / previousClose) * 100
+          }
+        } else {
+          // For first data point, compare close vs open
+          change = close - open
+          changePercent = open > 0 ? ((close - open) / open) * 100 : 0
+        }
+
         chartPoints.push({
           time: timestamp * 1000, // Convert to milliseconds
           open,
@@ -152,19 +180,25 @@ function convertYahooFinanceToChartData(yahooData: any, symbol: string): ChartDa
           low,
           close,
           volume,
-          change: close - open,
-          changePercent: ((close - open) / open) * 100
+          change,
+          changePercent
         })
       }
     }
 
-    console.log(`Converted ${chartPoints.length} data points from Yahoo Finance`)
+    console.log(`✅ Converted ${chartPoints.length} data points from Yahoo Finance for ${symbol} (${range})`)
+    if (chartPoints.length > 0) {
+      const latest = chartPoints[chartPoints.length - 1]
+      const changePercent = latest.changePercent || 0
+      console.log(`📈 Latest data point: $${latest.close.toFixed(2)} (${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(2)}%)`)
+    }
+    
     return chartPoints
   } catch (error) {
     console.error('Error converting Yahoo Finance data:', error)
     return DataSourceService.generateChartFallbackData({
       symbol,
-      timeframe: '1d',
+      timeframe: range,
       dataType: 'chart'
     })
   }

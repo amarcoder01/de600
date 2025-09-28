@@ -14,8 +14,6 @@ import {
   Loader2,
   AlertTriangle,
   RefreshCw,
-  Maximize2,
-  Minimize2,
   Download,
   Share2,
   Target,
@@ -224,7 +222,7 @@ export function AdvancedChartingComponent({
       chartRef.current = chart
       isInitializedRef.current = true
 
-      // Add candlestick series ONLY if chart type is candlestick
+      // Add primary series based on chart type
       if (chartType === 'candlestick') {
         const candlestickSeries = chart.addCandlestickSeries({
           upColor: currentTheme.upColor,
@@ -251,15 +249,49 @@ export function AdvancedChartingComponent({
           
           candlestickSeries.setData(uniqueData)
         }
+      } else if (chartType === 'area') {
+        // Area chart
+        const areaSeries = chart.addAreaSeries({
+          topColor: `${currentTheme.upColor}55` as any,
+          bottomColor: `${currentTheme.upColor}11` as any,
+          lineColor: currentTheme.upColor,
+          lineWidth: 2,
+        })
+        candlestickSeriesRef.current = areaSeries as any
+
+        if (chartData.length > 0) {
+          const areaData = chartData.map(d => ({
+            time: d.time as Time,
+            value: Number(d.close)
+          }))
+          areaSeries.setData(areaData)
+        }
+      } else if (chartType === 'bar') {
+        // Bar chart (OHLC)
+        const barSeries = chart.addBarSeries({
+          upColor: currentTheme.upColor,
+          downColor: currentTheme.downColor,
+        })
+        candlestickSeriesRef.current = barSeries as any
+
+        if (chartData.length > 0) {
+          const barData = chartData.map(d => ({
+            time: d.time as Time,
+            open: Number(d.open),
+            high: Number(d.high),
+            low: Number(d.low),
+            close: Number(d.close),
+          }))
+          barSeries.setData(barData)
+        }
       } else {
-        // For other chart types, add line series
+        // Default to line for unsupported/custom types like renko/heikin-ashi (without transformation)
         const lineSeries = chart.addLineSeries({
           color: currentTheme.upColor,
           lineWidth: 2,
         })
         candlestickSeriesRef.current = lineSeries as any
 
-        // Convert OHLCV data to line data
         if (chartData.length > 0) {
           const lineData = chartData.map(d => ({
             time: d.time as Time,
@@ -269,8 +301,8 @@ export function AdvancedChartingComponent({
         }
       }
 
-      // Add volume series if enabled (only for candlestick charts)
-      if (showVolume && chartType === 'candlestick') {
+      // Add volume series if enabled (only for candlestick and bar charts)
+      if (showVolume && (chartType === 'candlestick' || chartType === 'bar')) {
         const volumeSeries = chart.addHistogramSeries({
           color: currentTheme.volumeColor,
           priceFormat: {
@@ -358,12 +390,14 @@ export function AdvancedChartingComponent({
 
       const data = result.data.map((item: any) => ({
         time: item.time,
-        open: item.open,
-        high: item.high,
-        low: item.low,
-        close: item.close,
-        volume: item.volume || 0
-      }))
+        open: Number(item.open) || 0,
+        high: Number(item.high) || 0,
+        low: Number(item.low) || 0,
+        close: Number(item.close) || 0,
+        volume: Number(item.volume) || 0,
+        change: Number(item.change) || 0,
+        changePercent: Number(item.changePercent) || 0
+      })).filter((item: any) => item.open > 0 && item.high > 0 && item.low > 0 && item.close > 0)
 
       const uniqueData = data.filter((item: any, index: number, self: any[]) => 
         index === self.findIndex(t => t.time === item.time)
@@ -372,13 +406,50 @@ export function AdvancedChartingComponent({
       setChartData(uniqueData)
 
       // Calculate current price and change
-      if (data.length > 0) {
-        const latest = data[data.length - 1]
-        const previous = data[data.length - 2]
-        
+      if (uniqueData.length > 0) {
+        const latest = uniqueData[uniqueData.length - 1]
         setCurrentPrice(latest.close)
-        if (previous) {
-          setPriceChange(((latest.close - previous.close) / previous.close) * 100)
+        
+        const isIntradayTimeframe = ['1m', '5m', '15m', '30m', '1h', '4h', '1d'].includes(timeframe)
+        
+        console.log(`📊 Price calculation for ${symbol} (${timeframe}):`, {
+          latestClose: latest.close,
+          apiChangePercent: latest.changePercent,
+          dataPoints: uniqueData.length,
+          isIntraday: isIntradayTimeframe
+        })
+        
+        // Use the API's calculated change if available and valid
+        if (latest.changePercent !== undefined && !isNaN(latest.changePercent)) {
+          // For intraday, accept even small changes; for longer timeframes, filter very small changes
+          const changeThreshold = isIntradayTimeframe ? 0.0001 : 0.001
+          
+          if (Math.abs(latest.changePercent) > changeThreshold) {
+            setPriceChange(latest.changePercent)
+            console.log(`✅ Using API change: ${latest.changePercent.toFixed(4)}%`)
+          } else if (isIntradayTimeframe && Math.abs(latest.changePercent) > 0) {
+            // For intraday, show even tiny changes
+            setPriceChange(latest.changePercent)
+            console.log(`📊 Using small intraday change: ${latest.changePercent.toFixed(4)}%`)
+          } else {
+            setPriceChange(0)
+            console.log(`📊 Change too small to display: ${latest.changePercent.toFixed(6)}%`)
+          }
+        } else if (uniqueData.length > 1) {
+          const previous = uniqueData[uniqueData.length - 2]
+          if (previous && previous.close > 0) {
+            const calculatedChange = ((latest.close - previous.close) / previous.close) * 100
+            setPriceChange(calculatedChange)
+            console.log(`🔄 Calculated change: ${calculatedChange.toFixed(4)}% (${latest.close} vs ${previous.close})`)
+          } else {
+            // Fallback: use intraday change (close vs open)
+            const intradayChange = ((latest.close - latest.open) / latest.open) * 100
+            setPriceChange(intradayChange)
+            console.log(`📈 Using intraday change: ${intradayChange.toFixed(4)}% (${latest.close} vs ${latest.open})`)
+          }
+        } else {
+          console.warn(`⚠️ Insufficient data for change calculation: ${uniqueData.length} points`)
+          setPriceChange(0)
         }
       }
 
@@ -914,6 +985,17 @@ export function AdvancedChartingComponent({
     }
   }, [chartData, initializeChart])
 
+  // Reinitialize chart when key visual options change (chartType/theme/grid/volume)
+  useEffect(() => {
+    if (chartData.length > 0) {
+      // Cleanup and re-init to apply new series type and theme
+      safeCleanup()
+      isInitializedRef.current = false
+      initializeChart()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chartType, theme, showVolume, showGrid])
+
   // Update indicators when they change
   useEffect(() => {
     if (chartData.length > 0) {
@@ -956,10 +1038,6 @@ export function AdvancedChartingComponent({
           {currentPrice && (
             <div className="flex items-center gap-2">
               <span className="text-xl font-bold">${currentPrice.toFixed(2)}</span>
-              <Badge variant={priceChange >= 0 ? 'default' : 'destructive'} className="flex items-center gap-1">
-                {priceChange >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                {priceChange >= 0 ? '+' : ''}{priceChange.toFixed(2)}%
-              </Badge>
             </div>
           )}
         </div>
@@ -978,14 +1056,6 @@ export function AdvancedChartingComponent({
               ))}
             </div>
           )}
-          
-          <Button
-            onClick={() => setIsFullscreen(!isFullscreen)}
-            variant="outline"
-            size="sm"
-          >
-            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-          </Button>
         </div>
       </div>
 
@@ -1011,14 +1081,6 @@ export function AdvancedChartingComponent({
           <span>Theme: {theme}</span>
           {showVolume && <span>Volume: Enabled</span>}
           {showGrid && <span>Grid: Enabled</span>}
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="flex items-center gap-1">
-            <Crown className="h-3 w-3" />
-            PRO
-          </Badge>
-          <span>Powered by Lightweight Charts</span>
         </div>
       </div>
     </div>

@@ -32,12 +32,11 @@ import {
   Crown,
   Sun,
   Moon,
-  Sparkles
+  Sparkles,
+  Monitor
 } from 'lucide-react'
 import { AdvancedChartingComponent } from '@/components/charts/AdvancedChartingComponent'
-import { PatternRecognitionComponent } from '@/components/charts/PatternRecognitionComponent'
 import { DrawingToolsComponent } from '@/components/charts/DrawingToolsComponent'
-import { AIChartAnalysis } from '@/components/charts/AIChartAnalysis'
 
 import { ErrorBoundary } from '@/components/charts/ErrorBoundary'
 
@@ -88,8 +87,6 @@ export default function AdvancedChartsPage() {
   const [activeTab, setActiveTab] = useState('chart')
   const [chartData, setChartData] = useState<any[]>([])
   const [chartKey, setChartKey] = useState(0) // For forcing chart refresh
-  const [currentPrice, setCurrentPrice] = useState<number>(0)
-  const [priceChange, setPriceChange] = useState<number>(0)
 
   // Technical Indicators
   const [indicators, setIndicators] = useState<TechnicalIndicator[]>([
@@ -337,7 +334,7 @@ export default function AdvancedChartsPage() {
     }
   }
 
-  // Fetch chart data and update price information
+  // Fetch chart data (retained for potential future features)
   const fetchChartData = async () => {
     try {
       console.log('📊 Advanced Charts: Fetching chart data...', { 
@@ -359,22 +356,6 @@ export default function AdvancedChartsPage() {
         
         if (result.success && result.data) {
           setChartData(result.data)
-          
-          // Update price information
-          if (result.data.length > 0) {
-            const latest = result.data[result.data.length - 1]
-            const previous = result.data[result.data.length - 2]
-            
-            setCurrentPrice(latest.close)
-            if (previous) {
-              setPriceChange(((latest.close - previous.close) / previous.close) * 100)
-            }
-            
-            console.log('📊 Advanced Charts: Updated price info:', { 
-              currentPrice: latest.close, 
-              priceChange: previous ? ((latest.close - previous.close) / previous.close) * 100 : 0 
-            })
-          }
         } else {
           console.warn('📊 Advanced Charts: No data in response')
         }
@@ -408,6 +389,24 @@ export default function AdvancedChartsPage() {
     })
   }
 
+  // Add keyboard shortcut for fullscreen toggle (F11 or F)
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.key === 'F11' || (event.key === 'f' && event.ctrlKey)) {
+        event.preventDefault()
+        setIsFullscreen(prev => !prev)
+      }
+      if (event.key === 'Escape' && isFullscreen) {
+        setIsFullscreen(false)
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyPress)
+    return () => {
+      document.removeEventListener('keydown', handleKeyPress)
+    }
+  }, [isFullscreen])
+
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -416,32 +415,53 @@ export default function AdvancedChartsPage() {
           <div>
             <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
               <TrendingUp className="h-8 w-8 text-primary" />
-              Advanced Charting Platform
+              Professional Chart Analysis
             </h1>
             <p className="text-muted-foreground mt-2">
-              Professional charting with 50+ technical indicators and advanced drawing tools
+              Advanced charting tools with 50+ technical indicators and professional analysis features
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Badge variant="secondary" className="flex items-center gap-1">
-              <Crown className="h-3 w-3" />
-              PRO
-            </Badge>
-            <Button
-              onClick={() => setIsFullscreen(!isFullscreen)}
-              variant="outline"
-              size="sm"
-            >
-              {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-            </Button>
+            <div className="flex items-center gap-2">
+              {!isFullscreen ? (
+                <Button
+                  onClick={() => setIsFullscreen(true)}
+                  variant="outline"
+                  size="sm"
+                  title="Maximize chart to fullscreen"
+                >
+                  <Maximize2 className="h-4 w-4 mr-1" />
+                  Fullscreen
+                </Button>
+              ) : (
+                <div className="flex items-center gap-1">
+                  <Button
+                    onClick={() => setIsFullscreen(false)}
+                    variant="outline"
+                    size="sm"
+                    title="Return to normal size"
+                  >
+                    <Monitor className="h-4 w-4 mr-1" />
+                    Normal Size
+                  </Button>
+                  <Button
+                    onClick={() => setIsFullscreen(false)}
+                    variant="outline"
+                    size="sm"
+                    title="Minimize chart"
+                  >
+                    <Minimize2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Chart Controls */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Settings className="h-5 w-5" />
+            <CardTitle>
               Chart Controls
             </CardTitle>
           </CardHeader>
@@ -549,7 +569,7 @@ export default function AdvancedChartsPage() {
 
         {/* Main Chart Area */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-                   <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-3">
            <TabsTrigger value="chart" className="flex items-center gap-2">
              <BarChart3 className="h-4 w-4" />
              Chart
@@ -562,26 +582,33 @@ export default function AdvancedChartsPage() {
              <Ruler className="h-4 w-4" />
              Drawing Tools
            </TabsTrigger>
-           <TabsTrigger value="analysis" className="flex items-center gap-2">
-             <Brain className="h-4 w-4" />
-             Analysis
-           </TabsTrigger>
-           <TabsTrigger value="ai" className="flex items-center gap-2">
-             <Sparkles className="h-4 w-4" />
-             AI Analysis
-           </TabsTrigger>
-           
-         </TabsList>
+          </TabsList>
 
           <TabsContent value="chart" className="space-y-4">
-            <Card className={isFullscreen ? 'fixed inset-4 z-50' : ''}>
+            <Card className={isFullscreen ? 'fixed inset-4 z-50 bg-background shadow-2xl border-2' : ''}>
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2">
                     <BarChart3 className="h-5 w-5" />
                     {chartSettings.symbol} - {chartSettings.timeframe.toUpperCase()}
+                    {isFullscreen && (
+                      <Badge variant="secondary" className="ml-2 text-xs">
+                        Fullscreen Mode
+                      </Badge>
+                    )}
                   </CardTitle>
                   <div className="flex items-center gap-2">
+                    {isFullscreen && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setIsFullscreen(false)}
+                        title="Return to normal size"
+                      >
+                        <Monitor className="h-4 w-4 mr-1" />
+                        Normal Size
+                      </Button>
+                    )}
                     <Button variant="outline" size="sm" onClick={handleExportChart}>
                       <Download className="h-4 w-4 mr-2" />
                       Export
@@ -597,7 +624,7 @@ export default function AdvancedChartsPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="h-[600px] w-full relative" data-chart-container>
+                <div className={`w-full relative ${isFullscreen ? 'h-[calc(100vh-200px)]' : 'h-[600px]'}`} data-chart-container>
                   <ErrorBoundary>
                     <AdvancedChartingComponent
                       key={`chart-${chartSettings.symbol}-${chartSettings.timeframe}-${chartSettings.chartType}-${chartSettings.theme}-${chartKey}`}
@@ -654,31 +681,13 @@ export default function AdvancedChartsPage() {
             </Card>
           </TabsContent>
 
-                     <TabsContent value="drawing" className="space-y-4">
-             <DrawingToolsComponent />
-           </TabsContent>
+          <TabsContent value="drawing" className="space-y-4">
+            <DrawingToolsComponent />
+          </TabsContent>
 
-                                <TabsContent value="analysis" className="space-y-4">
-             <PatternRecognitionComponent 
-               data={chartData}
-               symbol={chartSettings.symbol}
-               timeframe={chartSettings.timeframe}
-             />
-           </TabsContent>
-
-           <TabsContent value="ai" className="space-y-4">
-             <AIChartAnalysis
-               symbol={chartSettings.symbol}
-               timeframe={chartSettings.timeframe}
-               chartData={chartData}
-               currentPrice={currentPrice || 0}
-               priceChange={priceChange || 0}
-             />
-           </TabsContent>
-
-           
-         </Tabs>
+        </Tabs>
       </div>
     </div>
   )
 }
+
