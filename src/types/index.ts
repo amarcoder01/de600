@@ -34,6 +34,7 @@ export interface User {
   createdAt: string
   updatedAt: string
   lastLoginAt?: string
+  lastPasswordChange?: string
   preferences: {
     theme: 'light' | 'dark' | 'system'
     currency: string
