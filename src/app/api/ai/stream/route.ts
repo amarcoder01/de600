@@ -10,6 +10,13 @@ const openai = new OpenAI({
 })
 
 // Dynamic system prompts based on conversation type
+const OUTPUT_POLICY = `
+
+OUTPUT POLICY:
+- Respond in plain text only (no Markdown, emojis, or asterisks).
+- Use 'Metric / Value' sections for key facts.
+- Use simple dash bullets for lists.
+- Keep structure consistent and concise.`
 const SYSTEM_PROMPTS = {
   default: `You are TreadGPT, an elite AI trading expert with advanced analytical capabilities and real-time market intelligence. You provide definitive, actionable trading recommendations with institutional-quality analysis. 
 
@@ -316,7 +323,7 @@ export async function POST(request: NextRequest) {
     console.log('AI Stream: Processing request with', messages.length, 'messages')
 
     // Get dynamic system prompt based on conversation
-    const systemPrompt = getSystemPrompt(messages)
+    const systemPrompt = getSystemPrompt(messages) + OUTPUT_POLICY
 
     // Prepare messages for OpenAI
     const openaiMessages = [

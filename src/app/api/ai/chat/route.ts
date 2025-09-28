@@ -14,6 +14,14 @@ const openai = new OpenAI({
 })
 
 // Enhanced system prompts with memory and context awareness
+const OUTPUT_POLICY = `
+
+OUTPUT POLICY:
+- Respond in plain text only (no Markdown, emojis, or asterisks).
+- Use 'Metric / Value' sections for key facts.
+- Use simple dash bullets for lists.
+- Keep structure consistent and concise.`
+
 const SYSTEM_PROMPTS = {
   default: `You are TradeGPT, an advanced AI trading assistant with real-time market data access, memory, and intelligent guardrails. You provide personalized, safe, and compliant trading insights.
 
@@ -310,12 +318,15 @@ async function generateEarningsInsights(earnings: any[], memoryContext: any): Pr
     const upcomingEarnings = earnings.filter(earning => new Date(earning.reportDate) > new Date())
     const recentEarnings = earnings.filter(earning => new Date(earning.reportDate) <= new Date())
     
-    let insights = `📅 Earnings Calendar Analysis:\n\n`
+    let insights = `Earnings Calendar Analysis\n\n`
+    insights += `Metric / Value:\n`
+    insights += `- Upcoming Count: ${upcomingEarnings.length}\n`
+    insights += `- Recent Count: ${recentEarnings.length}\n\n`
     
     if (upcomingEarnings.length > 0) {
-      insights += `🔮 **Upcoming Earnings (${upcomingEarnings.length}):**\n`
+      insights += `Upcoming:\n`
       upcomingEarnings.slice(0, 5).forEach((earning: any) => {
-        insights += `• ${earning.symbol} (${earning.companyName}) - ${new Date(earning.reportDate).toLocaleDateString()}\n`
+        insights += `- ${earning.symbol} (${earning.companyName}) - ${new Date(earning.reportDate).toLocaleDateString()}\n`
         if (earning.prediction) {
           insights += `  Expected: $${earning.prediction.toFixed(2)}\n`
         }
@@ -324,9 +335,9 @@ async function generateEarningsInsights(earnings: any[], memoryContext: any): Pr
     }
     
     if (recentEarnings.length > 0) {
-      insights += `📊 **Recent Earnings (${recentEarnings.length}):**\n`
+      insights += `Recent:\n`
       recentEarnings.slice(0, 3).forEach((earning: any) => {
-        insights += `• ${earning.symbol} - ${earning.actual ? `$${earning.actual.toFixed(2)}` : 'Pending'}\n`
+        insights += `- ${earning.symbol} - ${earning.actual ? `$${earning.actual.toFixed(2)}` : 'Pending'}\n`
       })
     }
     
@@ -339,27 +350,32 @@ async function generateEarningsInsights(earnings: any[], memoryContext: any): Pr
 
 async function generateSentimentInsights(symbol: string, sentiment: number, memoryContext: any): Promise<string> {
   try {
-    let insights = `📊 **Sentiment Analysis for ${symbol}:**\n\n`
+    let insights = `Sentiment Analysis for ${symbol}\n\n`
+    insights += `Metric / Value:\n`
+    insights += `- Score: ${(sentiment * 100).toFixed(1)}%\n`
     
     if (sentiment > 0.3) {
-      insights += `✅ **Positive Sentiment** (${(sentiment * 100).toFixed(1)}%)\n`
-      insights += `• Market sentiment is bullish for ${symbol}\n`
-      insights += `• Consider this as a positive factor in your analysis\n`
+      insights += `- Sentiment: Positive\n\n`
+      insights += `Insights:\n`
+      insights += `- Market sentiment is bullish for ${symbol}\n`
+      insights += `- Consider this as a positive factor in your analysis\n`
     } else if (sentiment < -0.3) {
-      insights += `❌ **Negative Sentiment** (${(sentiment * 100).toFixed(1)}%)\n`
-      insights += `• Market sentiment is bearish for ${symbol}\n`
-      insights += `• Exercise caution and consider risk management\n`
+      insights += `- Sentiment: Negative\n\n`
+      insights += `Insights:\n`
+      insights += `- Market sentiment is bearish for ${symbol}\n`
+      insights += `- Exercise caution and consider risk management\n`
     } else {
-      insights += `➖ **Neutral Sentiment** (${(sentiment * 100).toFixed(1)}%)\n`
-      insights += `• Market sentiment is mixed for ${symbol}\n`
-      insights += `• Focus on technical and fundamental analysis\n`
+      insights += `- Sentiment: Neutral\n\n`
+      insights += `Insights:\n`
+      insights += `- Market sentiment is mixed for ${symbol}\n`
+      insights += `- Focus on technical and fundamental analysis\n`
     }
     
     // Add personalized insights based on user preferences
     if (memoryContext.userPreferences?.riskTolerance === 'conservative') {
-      insights += `\n💡 **Conservative Investor Note:** Consider sentiment as one factor among many in your decision-making process.`
+      insights += `\nNote (Conservative): Consider sentiment as one factor among many in your decision-making process.`
     } else if (memoryContext.userPreferences?.riskTolerance === 'aggressive') {
-      insights += `\n💡 **Aggressive Investor Note:** Sentiment can be a leading indicator for short-term price movements.`
+      insights += `\nNote (Aggressive): Sentiment can be a leading indicator for short-term price movements.`
     }
     
     return insights
@@ -678,18 +694,21 @@ async function generateChartAnalysis(symbol: string, data: any[], timeframe: str
   const isUptrend = recentPrices[recentPrices.length - 1] > recentPrices[0]
   const volatility = calculateVolatility(recentPrices)
 
-  return `
-📈 Chart Analysis for ${symbol.toUpperCase()}
-
-Current Price: $${currentPrice.toFixed(2)}
-Daily Change: ${dailyChange >= 0 ? '+' : ''}${dailyChange.toFixed(2)}%
-Monthly Change: ${monthlyChange >= 0 ? '+' : ''}${monthlyChange.toFixed(2)}%
-
-Technical Outlook: ${isUptrend ? 'Bullish trend' : 'Bearish trend'} over ${timeframe}
-Volatility: ${volatility < 2 ? 'Low' : volatility < 5 ? 'Moderate' : 'High'} (${volatility.toFixed(2)}%)
-
-Timeframe: ${timeframe.toUpperCase()} • Data Points: ${data.length}
-  `.trim()
+  const volatilityLabel = volatility < 2 ? 'Low' : volatility < 5 ? 'Moderate' : 'High'
+  return [
+    `Chart Analysis for ${symbol.toUpperCase()}`,
+    ``,
+    `Metric / Value:`,
+    `- Current Price: $${currentPrice.toFixed(2)}`,
+    `- Daily Change: ${dailyChange >= 0 ? '+' : ''}${dailyChange.toFixed(2)}%`,
+    `- Monthly Change: ${monthlyChange >= 0 ? '+' : ''}${monthlyChange.toFixed(2)}%`,
+    `- Trend: ${isUptrend ? 'Bullish' : 'Bearish'}`,
+    `- Volatility: ${volatilityLabel} (${volatility.toFixed(2)}%)`,
+    ``,
+    `Context:`,
+    `- Timeframe: ${timeframe.toUpperCase()}`,
+    `- Data Points: ${data.length}`
+  ].join('\n')
 }
 
 function calculateVolatility(prices: number[]): number {
@@ -1360,23 +1379,23 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // Get dynamic system prompt based on conversation and user preferences
-    const systemPrompt = getSystemPrompt(messages, memoryContext.userPreferences)
+  // Get dynamic system prompt based on conversation and user preferences
+  const systemPrompt = getSystemPrompt(messages, memoryContext.userPreferences) + OUTPUT_POLICY
 
-    // Add memory context to system prompt
-    let enhancedSystemPrompt = `${systemPrompt}
+  // Add memory context to system prompt
+  let enhancedSystemPrompt = `${systemPrompt}
 
-**USER CONTEXT:**
+User Context:
 - Risk Tolerance: ${memoryContext.userPreferences.riskTolerance}
 - Trading Style: ${memoryContext.userPreferences.tradingStyle}
 - Preferred Sectors: ${memoryContext.userPreferences.preferredSectors.join(', ')}
 - Experience Level: ${memoryContext.tradingProfile.experienceLevel}
 - Market Context: ${memoryContext.marketContext.currentMarketRegime} market
 
-**CONVERSATION HISTORY:**
+Conversation History:
 ${memoryContext.conversationHistory.slice(-3).map(msg => `${msg.role}: ${msg.content.substring(0, 100)}...`).join('\n')}
 
-Use this context to provide personalized, relevant responses.`
+Instruction: Follow the Output Policy. Use Metric / Value sections and simple dash bullets. No Markdown or emojis.`
 
 
 

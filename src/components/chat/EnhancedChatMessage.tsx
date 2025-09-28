@@ -23,7 +23,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { AIChatMessage } from '@/types'
-import ReactMarkdown from 'react-markdown'
+// Plain-text rendering: Markdown disabled
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
@@ -134,35 +134,9 @@ export function EnhancedChatMessage({
             ? 'bg-primary text-primary-foreground'
             : 'bg-card border shadow-sm'
         }`}>
-          {/* Message Content */}
-          <div className="prose prose-sm max-w-none">
-            <ReactMarkdown
-              components={{
-                code({ className, children, ...props }) {
-                  return (
-                    <code className={`${className} bg-muted px-1 py-0.5 rounded text-sm`} {...props}>
-                      {children}
-                    </code>
-                  )
-                },
-                h1: ({ children }) => <h1 className="text-lg font-bold mb-2">{children}</h1>,
-                h2: ({ children }) => <h2 className="text-base font-semibold mb-2">{children}</h2>,
-                h3: ({ children }) => <h3 className="text-sm font-medium mb-1">{children}</h3>,
-                p: ({ children }) => <p className="mb-2">{children}</p>,
-                ul: ({ children }) => <ul className="list-disc list-inside mb-2">{children}</ul>,
-                ol: ({ children }) => <ol className="list-decimal list-inside mb-2">{children}</ol>,
-                li: ({ children }) => <li className="mb-1">{children}</li>,
-                strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
-                em: ({ children }) => <em className="italic">{children}</em>,
-                blockquote: ({ children }) => (
-                  <blockquote className="border-l-4 border-primary pl-4 italic bg-muted/50 py-2 rounded-r">
-                    {children}
-                  </blockquote>
-                ),
-              }}
-            >
-              {displayContent}
-            </ReactMarkdown>
+          {/* Message Content (plain text rendering) */}
+          <div className="max-w-none text-sm whitespace-pre-wrap">
+            {displayContent}
           </div>
 
           {/* Streaming indicator */}
