@@ -156,7 +156,7 @@ export async function POST(request: NextRequest) {
       child.on('error', (error) => {
         reject(new Error(`Failed to start script. Python command not found or not executable. Details: ${error.message}\n[diag] used_python=${pythonCommand} venv_exists=${venvExists} venv_path=${venvPython ? venvPython : 'not found'}`));
       });
-{{ ... }}
+    });
 
     return NextResponse.json(result);
 
