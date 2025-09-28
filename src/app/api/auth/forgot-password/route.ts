@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
 
     // Generate secure reset token
     const resetToken = crypto.randomBytes(32).toString('hex')
-    const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
+    const resetTokenExpiry = new Date(Date.now() + 15 * 60 * 1000) // 15 minutes
 
     console.log('🔐 Generated reset token and expiry')
 
@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
             <p>We received a request to reset your password for your Vidality account.</p>
             <p>Click the button below to reset your password:</p>
             <a href="${resetUrl}" style="display: inline-block; background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0;">Reset Password</a>
-            <p>This link will expire in 1 hour.</p>
+            <p>This link will expire in 15 minutes.</p>
             <p>If you didn't request this password reset, please ignore this email.</p>
             <p>If you have any questions, contact us at support@vidality.com</p>
             <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">

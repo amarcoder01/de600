@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useRouter } from 'next/navigation'
+import { formatUtcDate, formatUtcDateTime } from '@/lib/date'
 
 export function UserProfile() {
   const { user } = useAuthStore()
@@ -70,7 +71,7 @@ export function UserProfile() {
                     <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
                       <div className="flex items-center space-x-1">
                         <Calendar className="w-4 h-4" />
-                      <span>Joined {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Unknown'}</span>
+                      <span>Joined {user?.createdAt ? formatUtcDate(user.createdAt) : 'Unknown'}</span>
                       </div>
                     {user?.isEmailVerified && (
                         <div className="flex items-center space-x-1 text-green-600">
@@ -153,9 +154,9 @@ export function UserProfile() {
               
               <div className="space-y-4">
                 <div>
-                <Label className="text-sm font-medium text-gray-700">Last Changed</Label>
+                <Label className="text-sm font-medium text-gray-700">Last Password Change</Label>
                 <p className="text-sm text-gray-500 mt-1">
-                  {user?.updatedAt ? new Date(user.updatedAt).toLocaleDateString() : 'Unknown'}
+                  {user?.lastPasswordChange ? formatUtcDateTime(user.lastPasswordChange as any) : (user?.updatedAt ? formatUtcDateTime(user.updatedAt as any) : 'Unknown')}
                 </p>
                 </div>
                 
