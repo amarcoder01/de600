@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import bcrypt from 'bcryptjs'
+import { AUTH_MESSAGES } from '@/lib/auth-messages'
 
 export async function POST(request: NextRequest) {
   console.log('🔧 Reset Password API: POST request received')
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { success: false, error: 'Invalid or expired reset token' },
+        { success: false, error: AUTH_MESSAGES.PASSWORD_RESET.INVALID_TOKEN },
         { status: 400 }
       )
     }
@@ -59,7 +60,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'Password has been reset successfully'
+      message: AUTH_MESSAGES.PASSWORD_RESET.SUCCESS
     })
 
   } catch (error) {
@@ -103,7 +104,7 @@ export async function GET(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { success: false, error: 'Invalid or expired reset token' },
+        { success: false, error: AUTH_MESSAGES.PASSWORD_RESET.INVALID_TOKEN },
         { status: 400 }
       )
     }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import sgMail from '@sendgrid/mail'
 import crypto from 'crypto'
+import { AUTH_MESSAGES } from '@/lib/auth-messages'
 
 // Enhanced SendGrid configuration with detailed logging
 const configureSendGrid = () => {
@@ -57,7 +58,7 @@ export async function POST(request: NextRequest) {
       console.log('❌ User not found (security: not revealing this to client)')
       // Don't reveal if user exists or not for security
       return NextResponse.json(
-        { success: true, message: 'If an account with that email exists, a password reset link has been sent.' }
+        { success: true, message: AUTH_MESSAGES.PASSWORD_RESET.GENERIC_SUCCESS }
       )
     }
 
@@ -135,7 +136,7 @@ export async function POST(request: NextRequest) {
       console.log('🌐 Production mode: returning generic message')
       return NextResponse.json({
         success: true,
-        message: 'If an account with that email exists, a password reset link has been sent.'
+        message: AUTH_MESSAGES.PASSWORD_RESET.GENERIC_SUCCESS
       })
     }
 
@@ -205,14 +206,14 @@ export async function POST(request: NextRequest) {
       console.log('🌐 Production mode: returning generic message despite SendGrid failure')
       return NextResponse.json({
         success: true,
-        message: 'If an account with that email exists, a password reset link has been sent.'
+        message: AUTH_MESSAGES.PASSWORD_RESET.GENERIC_SUCCESS
       })
     }
 
     console.log('✅ Password reset request completed successfully')
     return NextResponse.json({
       success: true,
-      message: 'If an account with that email exists, a password reset link has been sent.'
+      message: AUTH_MESSAGES.PASSWORD_RESET.GENERIC_SUCCESS
     })
 
   } catch (error) {

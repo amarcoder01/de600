@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuthStore } from '@/store'
+import { AUTH_MESSAGES } from '@/lib/auth-messages'
 
 interface ForgotPasswordModalProps {
   isOpen: boolean
@@ -236,8 +237,8 @@ export function ForgotPasswordModal({ isOpen, onClose, onSwitchToLogin }: Forgot
                     Check Your Email
                   </h3>
                   <p className="text-sm text-gray-600 mb-6">
-                    We've sent a password reset link to <strong>{email}</strong>. 
-                    Please check your email and click the link to reset your password.
+                    {AUTH_MESSAGES.PASSWORD_RESET.GENERIC_SUCCESS} 
+                    {AUTH_MESSAGES.PASSWORD_RESET.EMAIL_SENT_CHECK}
                   </p>
                   
                   {/* Development Mode - Show Reset URL */}
@@ -274,7 +275,7 @@ export function ForgotPasswordModal({ isOpen, onClose, onSwitchToLogin }: Forgot
                       onClick={() => setIsSuccess(false)}
                       className="w-full text-sm text-gray-600 hover:text-gray-800"
                     >
-                      Didn't receive the email? Try again
+                      Need to try a different email? Send another request
                     </button>
                   </div>
                 </div>

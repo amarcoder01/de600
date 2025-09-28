@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ForgotPasswordModal } from './ForgotPasswordModal'
+import { AUTH_MESSAGES } from '@/lib/auth-messages'
 
 interface LoginModalProps {
   isOpen: boolean
@@ -582,7 +583,7 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalPr
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                     <div className="text-sm text-green-700">
-                      <p>Verification email sent successfully!</p>
+                      <p>{AUTH_MESSAGES.EMAIL_VERIFICATION.GENERIC_SUCCESS}</p>
                     </div>
                   </motion.div>
                 )}

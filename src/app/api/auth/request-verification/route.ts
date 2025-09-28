@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { EmailVerificationService } from '@/lib/email-verification-service'
 import { logSecurityEvent, SecurityEventType, SecuritySeverity } from '@/lib/security-monitoring'
+import { AUTH_MESSAGES } from '@/lib/auth-messages'
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,10 +33,11 @@ export async function POST(request: NextRequest) {
         request,
         { reason: 'User not found for verification request', email: email.toLowerCase().trim() }
       )
-      return NextResponse.json(
-        { success: false, error: 'No account found with this email address' },
-        { status: 404 }
-      )
+      // Don't reveal if user exists or not for security (prevent user enumeration)
+      return NextResponse.json({
+        success: true,
+        message: AUTH_MESSAGES.EMAIL_VERIFICATION.GENERIC_SUCCESS
+      })
     }
 
     // Check if email is already verified
@@ -46,10 +48,11 @@ export async function POST(request: NextRequest) {
         request,
         { reason: 'Email already verified', userId: user.id, email: user.email }
       )
-      return NextResponse.json(
-        { success: false, error: 'This email is already verified' },
-        { status: 400 }
-      )
+      // Return generic success message even if already verified
+      return NextResponse.json({
+        success: true,
+        message: AUTH_MESSAGES.EMAIL_VERIFICATION.GENERIC_SUCCESS
+      })
     }
 
     // Check if user is locked or disabled
@@ -60,10 +63,11 @@ export async function POST(request: NextRequest) {
         request,
         { reason: 'Account locked or disabled', userId: user.id, email: user.email, isLocked: user.isAccountLocked, isDisabled: user.isAccountDisabled }
       )
-      return NextResponse.json(
-        { success: false, error: 'Account is locked or disabled' },
-        { status: 403 }
-      )
+      // Return generic success message even for locked/disabled accounts
+      return NextResponse.json({
+        success: true,
+        message: AUTH_MESSAGES.EMAIL_VERIFICATION.GENERIC_SUCCESS
+      })
     }
 
     // Create and send verification code
@@ -114,7 +118,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'Verification email sent successfully',
+      message: AUTH_MESSAGES.EMAIL_VERIFICATION.GENERIC_SUCCESS,
+      // Only return user data for legitimate requests (when email was actually sent)
       userId: user.id,
       email: user.email
     })
