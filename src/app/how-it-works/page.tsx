@@ -27,7 +27,6 @@ export default function HowItWorksPage() {
       '/advanced-charts',
       '/strategy-builder',
       '/backtesting',
-      '/qlib-backtesting',
       '/screener',
       '/stock-comparison',
       '/market-view',
@@ -166,7 +165,7 @@ export default function HowItWorksPage() {
                   'Choose engine (Polygon or qlib) and your strategy.',
                   'Set date range, symbols, and parameters.',
                   'Run and review performance (Sharpe, drawdown, win rate, trades).'
-                ]} link={{ href: '/qlib-backtesting', label: 'Open Backtesting' }} />
+                ]} link={{ href: '/backtesting', label: 'Open Backtesting' }} />
                 <Tips items={[
                   'Validate robustness across multiple symbols and regimes.',
                   'Avoid overfitting by keeping parameter counts modest.'
