@@ -2,7 +2,7 @@
   {
     "id": "TC001",
     "title": "User Registration with Email Verification",
-    "description": "Verify that new users can register with valid data and complete email verification successfully.",
+    "description": "Verify that user can register successfully with valid email and password, and complete email verification process.",
     "category": "functional",
     "priority": "High",
     "steps": [
@@ -12,26 +12,30 @@
       },
       {
         "type": "action",
-        "description": "Input valid email, strong password, and submit registration form"
-      },
-      {
-        "type": "assertion",
-        "description": "Check registration success message is displayed"
+        "description": "Input valid email, strong password, and other required registration details"
       },
       {
         "type": "action",
-        "description": "Open email client and click verification link received"
+        "description": "Submit registration form"
       },
       {
         "type": "assertion",
-        "description": "Confirm email is verified and user account is activated"
+        "description": "Check registration success message is shown"
+      },
+      {
+        "type": "action",
+        "description": "Access the email inbox and click verification link"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm account is activated and user is able to log in"
       }
     ]
   },
   {
     "id": "TC002",
-    "title": "User Login with Correct and Incorrect Credentials",
-    "description": "Check that users can login successfully with correct credentials and are blocked with incorrect credentials.",
+    "title": "User Login with Correct Credentials",
+    "description": "Check login is successful using registered email and password.",
     "category": "functional",
     "priority": "High",
     "steps": [
@@ -41,7 +45,7 @@
       },
       {
         "type": "action",
-        "description": "Input valid username/email and password"
+        "description": "Input registered email and correct password"
       },
       {
         "type": "action",
@@ -49,579 +53,444 @@
       },
       {
         "type": "assertion",
-        "description": "Verify user is successfully logged in and redirected to dashboard"
-      },
-      {
-        "type": "action",
-        "description": "Logout from account"
-      },
-      {
-        "type": "action",
-        "description": "Input invalid username/email or password"
-      },
-      {
-        "type": "action",
-        "description": "Click login button"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify login fails with error message and user is not authenticated"
+        "description": "User is authenticated and redirected to dashboard"
       }
     ]
   },
   {
     "id": "TC003",
-    "title": "AI-Powered Trading Assistant Query and Response",
-    "description": "Validate that the AI Trading Assistant (TreadGPT) accepts multi-modal inputs and provides accurate, relevant market insights promptly.",
-    "category": "functional",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to AI Trading Assistant page"
-      },
-      {
-        "type": "action",
-        "description": "Enter a text query for stock market analysis"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify assistant provides a relevant, accurate response within 3 seconds"
-      },
-      {
-        "type": "action",
-        "description": "Send input with mixed modal content if applicable (e.g., text + image file)"
-      },
-      {
-        "type": "assertion",
-        "description": "Confirm assistant handles multi-modal input and returns insightful output"
-      },
-      {
-        "type": "action",
-        "description": "Send invalid or ambiguous query"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify assistant handles errors gracefully and suggests valid alternatives"
-      }
-    ]
-  },
-  {
-    "id": "TC004",
-    "title": "Real-Time AI Predictions Accuracy and Confidence Display",
-    "description": "Ensure AI prediction system displays stock predictions with confidence scores, matches expected accuracy, and updates within 3 seconds.",
-    "category": "functional",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to AI Predictions page"
-      },
-      {
-        "type": "action",
-        "description": "Select multiple stocks for prediction"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify predictions include confidence scores and technical analysis data"
-      },
-      {
-        "type": "assertion",
-        "description": "Check predictions refresh within 3 seconds of market data updates"
-      },
-      {
-        "type": "assertion",
-        "description": "Evaluate prediction accuracy over multiple sessions to ensure it meets 85% or above"
-      }
-    ]
-  },
-  {
-    "id": "TC005",
-    "title": "Stock Screener Filters and Saving Custom Screens",
-    "description": "Verify stock screener filters stocks correctly by multiple criteria and allows saving of custom screen results.",
-    "category": "functional",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to Stock Screener page"
-      },
-      {
-        "type": "action",
-        "description": "Apply multiple filters including price range, volume, technical indicators, and fundamentals"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify filtered list only contains stocks matching criteria"
-      },
-      {
-        "type": "action",
-        "description": "Save current filter settings as a custom screen"
-      },
-      {
-        "type": "assertion",
-        "description": "Confirm custom screen can be recalled and reapplied correctly"
-      },
-      {
-        "type": "action",
-        "description": "Apply filters with edge case values (e.g., zero volume, extreme price)"
-      },
-      {
-        "type": "assertion",
-        "description": "Ensure screener returns appropriate results or empty list without errors"
-      }
-    ]
-  },
-  {
-    "id": "TC006",
-    "title": "Paper Trading Order Placement and Position Tracking",
-    "description": "Test paper trading system allows simulated order placement, updates positions accurately, and reflects in portfolio.",
-    "category": "functional",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to Paper Trading page"
-      },
-      {
-        "type": "action",
-        "description": "Place a simulated buy order for a selected stock"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify order appears in order history with correct details and status"
-      },
-      {
-        "type": "assertion",
-        "description": "Confirm position reflects new holdings after simulated execution"
-      },
-      {
-        "type": "action",
-        "description": "Place an order exceeding available simulated balance"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify order is rejected with appropriate error message"
-      }
-    ]
-  },
-  {
-    "id": "TC007",
-    "title": "Backtesting Suite - Strategy Upload, Execution, and Analytics",
-    "description": "Validate professional backtesting supports strategy building, executes over historical data, and provides detailed performance analytics.",
-    "category": "functional",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to Backtesting Suite page"
-      },
-      {
-        "type": "action",
-        "description": "Create or upload a trading strategy script or visual design"
-      },
-      {
-        "type": "action",
-        "description": "Run backtest over selected historical period"
-      },
-      {
-        "type": "assertion",
-        "description": "Confirm backtest completes without errors and results are displayed"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify analytics include Sharpe ratio, max drawdown, return, and other performance metrics"
-      },
-      {
-        "type": "action",
-        "description": "Input invalid or incomplete strategy configuration"
-      },
-      {
-        "type": "assertion",
-        "description": "Check system displays valid error messages and prevents backtest execution"
-      }
-    ]
-  },
-  {
-    "id": "TC008",
-    "title": "Portfolio Management Analytics Accuracy",
-    "description": "Ensure portfolio management module tracks positions accurately and displays real-time risk analytics, asset allocation, and tax optimization suggestions.",
-    "category": "functional",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to Portfolio Management page"
-      },
-      {
-        "type": "action",
-        "description": "Add multiple positions representing different asset classes"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify positions are listed correctly with real-time price updates"
-      },
-      {
-        "type": "assertion",
-        "description": "Check risk analytics include volatility, beta, and value at risk calculations"
-      },
-      {
-        "type": "assertion",
-        "description": "Confirm asset allocation visualization matches input positions"
-      },
-      {
-        "type": "assertion",
-        "description": "Validate tax optimization suggestions align with portfolio composition"
-      },
-      {
-        "type": "action",
-        "description": "Modify or remove portfolio positions"
-      },
-      {
-        "type": "assertion",
-        "description": "Ensure updates reflect immediately in analytics and visualizations"
-      }
-    ]
-  },
-  {
-    "id": "TC009",
-    "title": "Price Alerts Setup and Notification Delivery",
-    "description": "Verify users can create price alerts with multiple criteria and receive timely notifications via email and in-app scheduler.",
-    "category": "functional",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to Price Alerts page"
-      },
-      {
-        "type": "action",
-        "description": "Create price alert for a stock with above threshold value and volume condition"
-      },
-      {
-        "type": "assertion",
-        "description": "Confirm alert is saved and listed in active alerts"
-      },
-      {
-        "type": "action",
-        "description": "Simulate market price reaching alert condition"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify user receives an email notification promptly"
-      },
-      {
-        "type": "assertion",
-        "description": "Ensure in-app alert notification is displayed via scheduler"
-      },
-      {
-        "type": "action",
-        "description": "Create alerts with invalid or conflicting criteria"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify system rejects invalid alerts with descriptive errors"
-      }
-    ]
-  },
-  {
-    "id": "TC010",
-    "title": "Advanced Charting and Technical Indicators Functionality",
-    "description": "Test that charts render correctly with real-time data, support 50+ technical indicators and AI pattern recognition and respond accurately to user interactions.",
-    "category": "functional",
-    "priority": "Medium",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to Market Data & Charts section"
-      },
-      {
-        "type": "action",
-        "description": "Load different stocks charts with real-time price data"
-      },
-      {
-        "type": "assertion",
-        "description": "Ensure charts load quickly (under 2 seconds) with current market data"
-      },
-      {
-        "type": "action",
-        "description": "Apply various technical indicators (e.g., RSI, MACD, Bollinger Bands)"
-      },
-      {
-        "type": "assertion",
-        "description": "Confirm indicators display correctly and update dynamically"
-      },
-      {
-        "type": "action",
-        "description": "Activate AI-driven pattern recognition overlay"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify suggested patterns are accurate and updated real-time"
-      },
-      {
-        "type": "action",
-        "description": "Perform zoom, pan, and timeframe changes on charts"
-      },
-      {
-        "type": "assertion",
-        "description": "Ensure charts respond smoothly without performance degradation"
-      }
-    ]
-  },
-  {
-    "id": "TC011",
-    "title": "Watchlist Management and Real-Time Price Updates",
-    "description": "Validate users can add, remove and search stocks in watchlist and see real-time price updates reflected immediately.",
-    "category": "functional",
-    "priority": "Medium",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to Watchlist page"
-      },
-      {
-        "type": "action",
-        "description": "Add multiple stocks to watchlist including edge case stocks (e.g. low volume, OTC)"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify stocks appear in watchlist with initial price data"
-      },
-      {
-        "type": "assertion",
-        "description": "Confirm prices update in real-time as market data changes"
-      },
-      {
-        "type": "action",
-        "description": "Search for a stock within watchlist and remove it"
-      },
-      {
-        "type": "assertion",
-        "description": "Ensure removed stock disappears immediately"
-      }
-    ]
-  },
-  {
-    "id": "TC012",
-    "title": "News Feed and AI Sentiment Analysis Accuracy",
-    "description": "Test that market news feed loads timely news items and sentiment analysis reflects content accurately with multi-source validation.",
-    "category": "functional",
-    "priority": "Medium",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to News page"
-      },
-      {
-        "type": "action",
-        "description": "Observe news feed loading recent market news from multiple sources"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify news items load within 2 seconds and display source attribution"
-      },
-      {
-        "type": "assertion",
-        "description": "Confirm sentiment analysis matches article tone and shows clear positive/neutral/negative indicators"
-      },
-      {
-        "type": "action",
-        "description": "Trigger refresh or apply news keywords filtering"
-      },
-      {
-        "type": "assertion",
-        "description": "Ensure news feed updates correctly without duplicate or missing items"
-      }
-    ]
-  },
-  {
-    "id": "TC013",
-    "title": "Top Gainers and Losers Market Overview Updates",
-    "description": "Check that Top Gainers and Losers data refreshes session-aware and updates displays accurately with correct metrics.",
-    "category": "functional",
-    "priority": "Medium",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to Top Gainers & Losers page"
-      },
-      {
-        "type": "action",
-        "description": "Observe the list and performance metrics displayed"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify data refreshes based on market session time and reflects real market movements"
-      },
-      {
-        "type": "assertion",
-        "description": "Check data correctness against external verified sources"
-      },
-      {
-        "type": "action",
-        "description": "Filter top movers using provided filters"
-      },
-      {
-        "type": "assertion",
-        "description": "Confirm list updates according to filters without errors"
-      }
-    ]
-  },
-  {
-    "id": "TC014",
-    "title": "Authentication Security and Password Management",
-    "description": "Verify secure authentication with password recovery, secure password storage, and email verification enforcement.",
-    "category": "security",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Attempt login with correct credentials"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify user authentication succeeds"
-      },
-      {
-        "type": "action",
-        "description": "Attempt login with incorrect passwords multiple times"
-      },
-      {
-        "type": "assertion",
-        "description": "Confirm accounts lockout or throttling triggers to prevent brute force"
-      },
-      {
-        "type": "action",
-        "description": "Initiate forgotten password recovery flow"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify secure password reset link is sent and functions correctly"
-      },
-      {
-        "type": "action",
-        "description": "Attempt to register duplicate emails or malformed passwords"
-      },
-      {
-        "type": "assertion",
-        "description": "Check system rejects invalid input with proper errors"
-      }
-    ]
-  },
-  {
-    "id": "TC015",
-    "title": "Scalability and High Availability Under Load",
-    "description": "Test system maintains performance and 99.9% uptime under simulated load of over 10,000 concurrent users.",
-    "category": "performance",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Simulate 10,000 concurrent users executing typical workflows (login, AI queries, backtesting, trading)"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify system uptime remains above 99.9%"
-      },
-      {
-        "type": "assertion",
-        "description": "Confirm response times remain acceptable (AI predictions under 3s, page loads under 2s)"
-      },
-      {
-        "type": "assertion",
-        "description": "Monitor error rates and verify no critical failures or data inconsistencies occur"
-      }
-    ]
-  },
-  {
-    "id": "TC016",
-    "title": "User Experience Accessibility Compliance (WCAG 2.1 AA)",
-    "description": "Verify that all key user interface features comply with WCAG 2.1 AA, ensuring accessibility for users with disabilities.",
-    "category": "ui",
-    "priority": "Medium",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate through all major UI components and pages using keyboard only"
-      },
-      {
-        "type": "assertion",
-        "description": "Confirm all interactive controls are focusable and operable via keyboard"
-      },
-      {
-        "type": "action",
-        "description": "Use screen reader to navigate key pages"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify correct semantic roles, labels, and alerts are announced"
-      },
-      {
-        "type": "action",
-        "description": "Check color contrast ratios for all texts and interactive elements"
-      },
-      {
-        "type": "assertion",
-        "description": "Confirm contrast meets or exceeds WCAG 2.1 AA requirements"
-      }
-    ]
-  },
-  {
-    "id": "TC017",
-    "title": "Error Handling for AI Predictions System Failures",
-    "description": "Test system response when AI prediction engine is unavailable or returns errors, ensuring graceful degradation.",
+    "title": "User Login Failure with Incorrect Credentials",
+    "description": "Verify login failure message appears when login with invalid email or password.",
     "category": "error handling",
     "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Simulate AI prediction service downtime or errors"
+        "description": "Navigate to login page"
       },
       {
         "type": "action",
-        "description": "Request AI stock predictions from the UI"
+        "description": "Input incorrect email or password"
+      },
+      {
+        "type": "action",
+        "description": "Click login button"
       },
       {
         "type": "assertion",
-        "description": "Verify system displays informative error messages without crashes"
-      },
-      {
-        "type": "assertion",
-        "description": "Confirm fallback UI or retry mechanisms are in place"
+        "description": "Display error message indicating login failure"
       }
     ]
   },
   {
-    "id": "TC018",
-    "title": "Paper Trading System Edge Cases - Order Cancellation and Partial Fill",
-    "description": "Validate correct handling of order cancellations and partial fills in simulated trading environment.",
+    "id": "TC004",
+    "title": "AI Trading Assistant (TreadGPT) - Query Market Data",
+    "description": "Verify TreadGPT responds to user queries with relevant multi-modal market analysis and personalized trading advice.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login to platform and navigate to TreadGPT AI Trading Assistant"
+      },
+      {
+        "type": "action",
+        "description": "Submit query requesting real-time stock analysis or trading advice"
+      },
+      {
+        "type": "assertion",
+        "description": "Validate that AI provides relevant market insights with confidence scores and supporting data"
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "AI Predictions System - Accuracy and Response Time",
+    "description": "Validate AI prediction models deliver stock predictions with accuracy over 85% and response time under 3 seconds.",
+    "category": "performance",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Request AI prediction for a selected stock symbol"
+      },
+      {
+        "type": "assertion",
+        "description": "Receive prediction results with confidence score"
+      },
+      {
+        "type": "assertion",
+        "description": "Measure response time is less than 3 seconds"
+      },
+      {
+        "type": "assertion",
+        "description": "Compare prediction against actual market movement to ensure accuracy exceeds 85% over sample set"
+      }
+    ]
+  },
+  {
+    "id": "TC006",
+    "title": "Backtesting Suite - Strategy Testing and Analytics",
+    "description": "Ensure backtesting functionality correctly executes user strategies against historical data and provides comprehensive analytics including Sharpe ratio and drawdown.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login and navigate to backtesting page"
+      },
+      {
+        "type": "action",
+        "description": "Create or load a trading strategy for backtesting"
+      },
+      {
+        "type": "action",
+        "description": "Run backtesting on historical data"
+      },
+      {
+        "type": "assertion",
+        "description": "Results display detailed analytics such as Sharpe ratio, maximum drawdown, and performance metrics"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify results match expected calculations for test strategies"
+      }
+    ]
+  },
+  {
+    "id": "TC007",
+    "title": "Portfolio Management - Add Positions and View Analytics",
+    "description": "Verify users can add positions to their portfolio and see accurate, real-time portfolio analytics and risk assessments.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to portfolio management section"
+      },
+      {
+        "type": "action",
+        "description": "Add new stock positions with quantity, price, and date"
+      },
+      {
+        "type": "assertion",
+        "description": "Positions reflect correctly in portfolio overview"
+      },
+      {
+        "type": "assertion",
+        "description": "Real-time analytics update to show accurate portfolio performance, asset allocation, and risk metrics"
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "Paper Trading System - Place and Track Simulated Orders",
+    "description": "Verify users can place simulated orders with the paper trading system and accurately track positions without financial risk.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Access paper trading dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Place buy and sell orders with specified symbols, quantities, and limit/market order types"
+      },
+      {
+        "type": "assertion",
+        "description": "Orders move to filled or open state correctly based on simulated market conditions"
+      },
+      {
+        "type": "assertion",
+        "description": "Portfolio positions and P&L reflect simulated trading activity"
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "Stock Screener - Filter Stocks by Multiple Criteria",
+    "description": "Validate the real-time stock screener filters stocks correctly based on multiple user-defined criteria including fundamental and technical indicators.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to stock screener page"
+      },
+      {
+        "type": "action",
+        "description": "Set multiple filters (e.g., market cap, P/E ratio, volume, technical indicators)"
+      },
+      {
+        "type": "action",
+        "description": "Apply filters and view results"
+      },
+      {
+        "type": "assertion",
+        "description": "Result set only contains stocks that meet all filter criteria"
+      },
+      {
+        "type": "assertion",
+        "description": "Check that filtering operates correctly with no errors on boundary or invalid inputs"
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "Real-Time Market Data Latency",
+    "description": "Confirm that real-time market data updates with latency under 100 milliseconds.",
+    "category": "performance",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to market data view or a watchlist with real-time price updates"
+      },
+      {
+        "type": "assertion",
+        "description": "Measure latency between market data update broadcast and UI display is less than 100ms"
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "Price Alerts System - Notification Delivery",
+    "description": "Ensure price alerts send timely and accurate notifications through email and scheduled triggers based on user-defined criteria.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Create a price alert for a stock with a target price and notification preferences"
+      },
+      {
+        "type": "action",
+        "description": "Simulate price reaching alert condition or wait for real price event"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify user receives alert notification email within expected timeframe"
+      },
+      {
+        "type": "assertion",
+        "description": "Check alert status updates correctly in the system"
+      }
+    ]
+  },
+  {
+    "id": "TC012",
+    "title": "Advanced Charting - Technical Indicators and Pattern Recognition",
+    "description": "Validate that advanced charting tools correctly display 50+ technical indicators and recognize patterns with AI assistance.",
     "category": "functional",
     "priority": "Medium",
     "steps": [
       {
         "type": "action",
-        "description": "Place a simulated limit order for a stock"
+        "description": "Open charting tool and load a stock chart"
       },
       {
         "type": "action",
-        "description": "Cancel the open order before execution"
+        "description": "Apply multiple technical indicators (e.g., RSI, MACD, Bollinger Bands)"
       },
       {
         "type": "assertion",
-        "description": "Verify order status updates to cancelled and no position is added"
+        "description": "Indicators display correctly overlaid on price chart"
       },
       {
         "type": "action",
-        "description": "Simulate partial fill of a limit order"
+        "description": "Trigger AI-driven pattern recognition"
       },
       {
         "type": "assertion",
-        "description": "Confirm position reflects partially filled quantity accurately"
+        "description": "System highlights known patterns (e.g., head and shoulders) appropriately"
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "Watchlist Management - Add and Remove Stocks with Real-Time Updates",
+    "description": "Check that users can add and remove stocks from personal watchlist and receive real-time price updates.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to watchlist page"
+      },
+      {
+        "type": "action",
+        "description": "Add several stocks to watchlist"
       },
       {
         "type": "assertion",
-        "description": "Ensure order updates reflect filled and remaining quantities correctly"
+        "description": "New stocks appear with initial price data"
+      },
+      {
+        "type": "assertion",
+        "description": "Prices update in real-time"
+      },
+      {
+        "type": "action",
+        "description": "Remove a stock from watchlist"
+      },
+      {
+        "type": "assertion",
+        "description": "Stock is removed successfully and no longer updates"
+      }
+    ]
+  },
+  {
+    "id": "TC014",
+    "title": "News Feed and Sentiment Analysis Display",
+    "description": "Verify that market news is aggregated and displayed with AI-driven sentiment analysis in a timely manner.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Access news feed page"
+      },
+      {
+        "type": "assertion",
+        "description": "Recent news articles load with correct headlines and timestamps"
+      },
+      {
+        "type": "assertion",
+        "description": "Sentiment indicators (positive/negative/neutral) are shown alongside news items"
+      }
+    ]
+  },
+  {
+    "id": "TC015",
+    "title": "Strategy Builder - AI-Powered Strategy Creation and Validation",
+    "description": "Test the AI-powered strategy builder allows users to visually create trading strategies, define risk controls, and run validations.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to strategy builder page"
+      },
+      {
+        "type": "action",
+        "description": "Use visual tools to create a new trading strategy including entry and exit conditions"
+      },
+      {
+        "type": "action",
+        "description": "Apply risk management controls and save strategy"
+      },
+      {
+        "type": "assertion",
+        "description": "Strategy is saved successfully and validates without errors"
+      },
+      {
+        "type": "action",
+        "description": "Backtest the strategy using the integrated backtesting engine"
+      },
+      {
+        "type": "assertion",
+        "description": "Backtesting results are returned with detailed performance metrics"
+      }
+    ]
+  },
+  {
+    "id": "TC016",
+    "title": "Top Gainers & Losers - Real-Time and Session-Aware Updates",
+    "description": "Verify that top gainers and losers list updates correctly in real-time and adapts to current market session.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open top gainers and losers page"
+      },
+      {
+        "type": "assertion",
+        "description": "Lists are populated with correct stocks based on price changes"
+      },
+      {
+        "type": "assertion",
+        "description": "Stocks update in real-time reflecting the current market session"
+      }
+    ]
+  },
+  {
+    "id": "TC017",
+    "title": "Authentication Security - Password Management and Session Handling",
+    "description": "Check that password reset, change, and session management comply with security standards and validate error states.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Request password reset for registered user email"
+      },
+      {
+        "type": "assertion",
+        "description": "Password reset email is sent"
+      },
+      {
+        "type": "action",
+        "description": "Change password using reset link with valid new password"
+      },
+      {
+        "type": "assertion",
+        "description": "Password change is confirmed and user can log in with new password"
+      },
+      {
+        "type": "action",
+        "description": "Try injecting invalid inputs or CSRF attempts during login and password change"
+      },
+      {
+        "type": "assertion",
+        "description": "System blocks and logs security violations, preventing unauthorized access"
+      }
+    ]
+  },
+  {
+    "id": "TC018",
+    "title": "Scalability and Reliability Under Load",
+    "description": "Ensure platform maintains 99.9% uptime and supports over 10,000 concurrent users with appropriate scaling and no degradation in performance.",
+    "category": "performance",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Simulate 10,000 concurrent users performing typical actions such as market data query, trading assistant usage, and portfolio management"
+      },
+      {
+        "type": "assertion",
+        "description": "System response times remain within SLA limits and no crashes or timeouts occur"
+      },
+      {
+        "type": "assertion",
+        "description": "Services scale dynamically without failure"
+      }
+    ]
+  },
+  {
+    "id": "TC019",
+    "title": "UI Accessibility and Performance Compliance",
+    "description": "Validate all key UI components meet WCAG 2.1 AA accessibility standards and page load times remain under 2 seconds across devices.",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate through all major UI pages and components using keyboard navigation and screen readers"
+      },
+      {
+        "type": "assertion",
+        "description": "No accessibility violations are detected via automated and manual testing"
+      },
+      {
+        "type": "action",
+        "description": "Measure page load times on desktop, tablet, and mobile under typical network conditions"
+      },
+      {
+        "type": "assertion",
+        "description": "Page load times are consistently under 2 seconds"
       }
     ]
   }

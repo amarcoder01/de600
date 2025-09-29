@@ -151,11 +151,22 @@ export class StockDataService {
     // Try Polygon.io first
     try {
       // Get explicit dates for current and previous trading days using market-aware calculation
-      const currentDate = await this.getCurrentTradingDate();
-      const previousDate = await this.getPreviousTradingDate();
+      let currentDate = await this.getCurrentTradingDate();
+      let previousDate = await this.getPreviousTradingDate();
       
-      const currentData = await this.polygonApi.getGroupedDaily(currentDate);
-      const previousData = await this.polygonApi.getGroupedDaily(previousDate);
+      let currentData = await this.polygonApi.getGroupedDaily(currentDate);
+      let previousData = await this.polygonApi.getGroupedDaily(previousDate);
+
+      // Fallback: if current day grouped data is empty (common during market hours),
+      // use last close by shifting both dates back by one trading day
+      if (!currentData.results || currentData.results.length === 0) {
+        console.warn(`Grouped daily empty for currentDate=${currentDate}. Falling back to last close.`);
+        // Shift both windows back one trading day
+        currentDate = await this.getPreviousTradingDate(1);
+        previousDate = await this.getPreviousTradingDate(2);
+        currentData = await this.polygonApi.getGroupedDaily(currentDate);
+        previousData = await this.polygonApi.getGroupedDaily(previousDate);
+      }
       
       if (currentData.results) {
         console.log(`Found ${currentData.results.length} stocks from Polygon API`);
@@ -220,15 +231,12 @@ export class StockDataService {
             continue;
           }
           
-          const previousClose = previousCloseMap.get(symbol);
-          
-          // Skip stocks without valid previous close data to avoid incorrect calculations
-          if (!previousClose || previousClose <= 0) {
-            continue;
-          }
-          
+          // Use previous close if available; otherwise fall back to last close (treat change as 0)
+          const prevClose = previousCloseMap.get(symbol);
+          const previousClose = (prevClose && prevClose > 0) ? prevClose : result.c;
+
           const change = result.c - previousClose;
-          const changePercent = (change / previousClose) * 100;
+          const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
           
           // Validate no NaN values before adding to results
           if (isNaN(change) || isNaN(changePercent)) {
