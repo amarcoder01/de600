@@ -166,7 +166,10 @@ export default function TradeGPTPage() {
           }
         }
 
-        // Clear file upload
+        // Clear file upload and revoke preview URL to avoid memory leaks
+        if (fileUpload.preview) {
+          try { URL.revokeObjectURL(fileUpload.preview) } catch {}
+        }
         setFileUpload(null)
         setShowFileUpload(false)
       } else {

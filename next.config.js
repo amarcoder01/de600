@@ -93,7 +93,7 @@ const nextConfig = {
           },
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://s3.tradingview.com https://charting-library.tradingview.com https://*.tradingview.com; style-src 'self' 'unsafe-inline' https://charting-library.tradingview.com https://*.tradingview.com; img-src 'self' data: https: https://s3.tradingview.com https://*.tradingview.com; font-src 'self' data: https://charting-library.tradingview.com https://*.tradingview.com; connect-src 'self' https: wss: https://data.tradingview.com https://symbol-search.tradingview.com https://*.tradingview.com wss://*.tradingview.com; frame-src 'self' https://s3.tradingview.com https://charting-library.tradingview.com https://*.tradingview.com; child-src https://*.tradingview.com; frame-ancestors 'none';",
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://s3.tradingview.com https://charting-library.tradingview.com https://*.tradingview.com; style-src 'self' 'unsafe-inline' https://charting-library.tradingview.com https://*.tradingview.com; img-src 'self' data: blob: https: https://s3.tradingview.com https://*.tradingview.com; font-src 'self' data: https://charting-library.tradingview.com https://*.tradingview.com; connect-src 'self' https: wss: https://data.tradingview.com https://symbol-search.tradingview.com https://*.tradingview.com wss://*.tradingview.com; frame-src 'self' https://s3.tradingview.com https://charting-library.tradingview.com https://*.tradingview.com; child-src https://*.tradingview.com; frame-ancestors 'none';",
           },
           {
             key: 'Permissions-Policy',
