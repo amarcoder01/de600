@@ -8,10 +8,18 @@ export class YahooFinanceSimple {
   // Get real-time stock data from Yahoo Finance
   async getStockData(symbol: string): Promise<Stock | null> {
     try {
-      // Check cache first
+      // Check cache first (but refresh if changePercent looks zero/invalid)
       const cached = YahooFinanceSimple.cache.get(symbol)
       if (cached && Date.now() - cached.timestamp < YahooFinanceSimple.CACHE_DURATION) {
-        return cached.data
+        const cachedData = cached.data
+        const pct = Number(cachedData?.changePercent)
+        const looksZero = !Number.isFinite(pct) || Math.abs(pct) < 0.000001
+        if (!looksZero) {
+          return cachedData
+        } else {
+          // Refresh when cached change is zero to prevent stale zeros (e.g., GOOG/MSFT during off-hours)
+          YahooFinanceSimple.cache.delete(symbol)
+        }
       }
 
       console.log(`📡 Fetching Yahoo Finance data for ${symbol}...`)
@@ -36,11 +44,58 @@ export class YahooFinanceSimple {
       const quote = result.indicators.quote[0]
       const timestamps = result.timestamp
 
-      // Get current price and previous close
-      const currentPrice = meta.regularMarketPrice || 0
-      const previousClose = meta.previousClose || currentPrice
-      const change = currentPrice - previousClose
-      const changePercent = ((change / previousClose) * 100) || 0
+      // Get current price and previous close (initially from chart meta)
+      let currentPrice = meta.regularMarketPrice || 0
+      let previousClose = meta.previousClose || currentPrice
+      let change = currentPrice - previousClose
+      let changePercent = ((change / previousClose) * 100) || 0
+
+      // Enhancement: Prefer Yahoo Quote endpoint for reliable change fields
+      // Only override when chart meta yields zero/invalid change or previousClose equals currentPrice
+      try {
+        const quoteResp = await fetch(`https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbol)}`)
+        if (quoteResp.ok) {
+          const quoteJson = await quoteResp.json().catch(() => null as any)
+          const r = quoteJson?.quoteResponse?.result?.[0]
+          if (r) {
+            const qPrice = typeof r.regularMarketPrice === 'number' ? r.regularMarketPrice : parseFloat(String(r.regularMarketPrice))
+            const qChange = typeof r.regularMarketChange === 'number' ? r.regularMarketChange : parseFloat(String(r.regularMarketChange))
+            const qChangePct = typeof r.regularMarketChangePercent === 'number' ? r.regularMarketChangePercent : parseFloat(String(r.regularMarketChangePercent))
+            const qPrevClose = typeof r.regularMarketPreviousClose === 'number' ? r.regularMarketPreviousClose : parseFloat(String(r.regularMarketPreviousClose))
+
+            const hasFinite = (v: any) => Number.isFinite(v)
+            const chartLooksZero = !Number.isFinite(changePercent) || Math.abs(changePercent) < 0.000001 || previousClose === currentPrice
+
+            if (chartLooksZero) {
+              if (hasFinite(qPrice)) currentPrice = qPrice
+              if (hasFinite(qPrevClose)) previousClose = qPrevClose
+              if (hasFinite(qChange)) change = qChange
+              else change = hasFinite(currentPrice) && hasFinite(previousClose) ? (currentPrice - previousClose) : 0
+              if (hasFinite(qChangePct)) changePercent = qChangePct
+              else changePercent = hasFinite(previousClose) && previousClose !== 0 ? ((change / previousClose) * 100) : 0
+            }
+          }
+        }
+      } catch {
+        // Non-fatal: keep chart-derived values
+      }
+
+      // Final fallback: if still zero/invalid, use YahooFinanceAPI service
+      try {
+        const looksZeroFinal = !Number.isFinite(changePercent) || Math.abs(changePercent) < 0.000001
+        if (looksZeroFinal) {
+          const { yahooFinanceAPI } = await import('@/lib/yahoo-finance-api')
+          const fallbackStock = await yahooFinanceAPI.getStockData(symbol)
+          if (fallbackStock && Number.isFinite(fallbackStock.changePercent) && Math.abs(fallbackStock.changePercent) >= 0.000001) {
+            currentPrice = fallbackStock.price
+            previousClose = fallbackStock.price - fallbackStock.change
+            change = fallbackStock.change
+            changePercent = fallbackStock.changePercent
+          }
+        }
+      } catch {
+        // ignore fallback errors
+      }
 
       // Get volume data
       const volume = quote.volume ? quote.volume[quote.volume.length - 1] : 0

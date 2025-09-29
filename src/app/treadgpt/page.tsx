@@ -81,19 +81,32 @@ export default function TradeGPTPage() {
       }
     }
     setMessages([defaultMessage])
-    localStorage.removeItem('treadgpt-messages')
   }
 
   useEffect(() => {
     scrollToBottom()
   }, [messages])
-
-  // Save messages to localStorage whenever they change
-  useEffect(() => {
-    if (typeof window !== 'undefined' && messages.length > 0) {
-      localStorage.setItem('treadgpt-messages', JSON.stringify(messages))
+  
+  // Sanitize assistant content to hide change metrics
+  const sanitizeAssistantContent = (content: string): string => {
+    try {
+      const lines = content.split('\n')
+      const filtered = lines.filter((line) => {
+        const l = line.trim().toLowerCase()
+        // Hide any explicit change metrics
+        if (l.startsWith('- change:')) return false
+        if (l.startsWith('- change percent:')) return false
+        if (l.startsWith('- price change:')) return false
+        if (l.startsWith('change:')) return false
+        if (l.startsWith('change percent:')) return false
+        if (l.startsWith('price change:')) return false
+        return true
+      })
+      return filtered.join('\n')
+    } catch {
+      return content
     }
-  }, [messages])
+  }
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() && !fileUpload) return
@@ -212,6 +225,9 @@ export default function TradeGPTPage() {
             }
           }
         }
+
+        // Sanitize content before displaying
+        responseContent = typeof responseContent === 'string' ? sanitizeAssistantContent(responseContent) : responseContent
 
         assistantMessage = {
           id: (Date.now() + 1).toString(),
