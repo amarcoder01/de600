@@ -36,20 +36,6 @@ const FilterControls: React.FC<FilterControlsProps> = ({
     onSearch(value);
   };
 
-  const sectors = [
-    'Technology',
-    'Healthcare',
-    'Financial Services',
-    'Consumer Cyclical',
-    'Communication Services',
-    'Industrials',
-    'Consumer Defensive',
-    'Energy',
-    'Utilities',
-    'Real Estate',
-    'Basic Materials',
-  ];
-
   const exchanges = [
     'NASDAQ',
     'NYSE',
@@ -157,25 +143,6 @@ const FilterControls: React.FC<FilterControlsProps> = ({
           className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-background text-foreground placeholder:text-muted-foreground"
           min="0"
         />
-      </div>
-
-      {/* Sector */}
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-foreground">
-          Sector
-        </label>
-        <select
-          value={filters.sector || ''}
-          onChange={(e) => handleInputChange('sector', e.target.value || undefined)}
-          className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-background text-foreground"
-        >
-          <option value="">All Sectors</option>
-          {sectors.map((sector) => (
-            <option key={sector} value={sector}>
-              {sector}
-            </option>
-          ))}
-        </select>
       </div>
 
       {/* Exchange */}
