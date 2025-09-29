@@ -57,7 +57,16 @@ export function NewsWidget({
   showMarketUpdates = true,
   className = ''
 }: NewsWidgetProps) {
-  const { news: storeNews, marketUpdates: storeUpdates, fetchNews, isLoading } = useNewsStore()
+  const { 
+    news: storeNews, 
+    marketUpdates: storeUpdates, 
+    fetchNews, 
+    fetchBookmarks,
+    addBookmark,
+    removeBookmark,
+    isBookmarked,
+    isLoading 
+  } = useNewsStore()
   const [news, setNews] = useState<NewsItem[]>([])
   const [marketUpdates, setMarketUpdates] = useState<MarketUpdate[]>([])
   const [loading, setLoading] = useState(true)
@@ -76,7 +85,10 @@ export function NewsWidget({
         setLoading(false)
       })
     }
-  }, [storeNews, storeUpdates, fetchNews])
+    
+    // Also fetch bookmarks to initialize bookmark state
+    fetchBookmarks()
+  }, [storeNews, storeUpdates, fetchNews, fetchBookmarks])
 
   const handleRefresh = async () => {
     try {
@@ -247,7 +259,19 @@ export function NewsWidget({
                       )}
                     </div>
                     <div className="flex items-center space-x-1 ml-2">
-                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className={`h-6 w-6 p-0 ${isBookmarked(item.id) ? 'text-yellow-500' : ''}`}
+                        onClick={async () => {
+                          if (isBookmarked(item.id)) {
+                            await removeBookmark(item.id)
+                          } else {
+                            await addBookmark(item)
+                          }
+                        }}
+                        title={isBookmarked(item.id) ? 'Remove from bookmarks' : 'Add to bookmarks'}
+                      >
                         <Bookmark className="w-3 h-3" />
                       </Button>
                       <Button variant="ghost" size="sm" className="h-6 w-6 p-0">

@@ -8,10 +8,8 @@ import { Badge } from '@/components/ui/badge'
 import { 
   BarChart3, 
   TrendingUp, 
-  TrendingDown, 
   Info, 
-  ExternalLink,
-  Download
+  ExternalLink
 } from 'lucide-react'
 
 interface ChartMessageProps {
@@ -21,11 +19,9 @@ interface ChartMessageProps {
     timeframe: string
     chartType: string
     indicators: string[]
-    currentPrice: number
-    priceChange: number
-    priceChangePercent: number
+    currentPrice?: number
     dataPoints: number
-    source: string
+    dataSource?: string
     chartUrl?: string
     analysis: string
   }
@@ -37,16 +33,13 @@ export function ChartMessage({ chartData }: ChartMessageProps) {
   const {
     symbol,
     currentPrice,
-    priceChange,
-    priceChangePercent,
     chartType,
     indicators,
     dataPoints,
-    source,
+    dataSource,
     analysis
   } = chartData
 
-  const isPriceUp = priceChange >= 0
 
   const handleTimeframeChange = (newTimeframe: string) => {
     setSelectedTimeframe(newTimeframe)
@@ -76,19 +69,13 @@ export function ChartMessage({ chartData }: ChartMessageProps) {
             <div className="flex items-center space-x-4">
               {/* Price Info */}
               <div className="text-right">
-                <div className="text-2xl font-bold">${currentPrice.toFixed(2)}</div>
-                <div className={`flex items-center space-x-1 text-sm ${isPriceUp ? 'text-green-500' : 'text-red-500'}`}>
-                  {isPriceUp ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-                  <span>{isPriceUp ? '+' : ''}${priceChange.toFixed(2)}</span>
-                  <span>({isPriceUp ? '+' : ''}{priceChangePercent.toFixed(2)}%)</span>
-                </div>
+                <div className="text-2xl font-bold">${Number.isFinite(currentPrice as number) ? (currentPrice as number).toFixed(2) : 'N/A'}</div>
               </div>
 
               {/* Actions */}
               <div className="flex items-center space-x-2">
                 <Button 
                   variant="outline" 
-                  size="sm"
                   onClick={openFullChart}
                 >
                   <ExternalLink className="w-4 h-4 mr-1" />
@@ -98,15 +85,8 @@ export function ChartMessage({ chartData }: ChartMessageProps) {
             </div>
           </div>
 
-          {/* Chart Metadata */}
-          <div className="flex items-center justify-between text-sm text-gray-500">
-            <div className="flex items-center space-x-4">
-              <span className="flex items-center space-x-1">
-                <Info className="w-4 h-4" />
-                <span>{dataPoints} data points</span>
-              </span>
-            </div>
-            
+          {/* Chart Metadata (data points removed per requirement) */}
+          <div className="flex items-center justify-end text-sm text-gray-500">
             <div className="flex items-center space-x-2">
               {indicators.map((indicator) => (
                 <Badge key={indicator} variant="secondary" className="text-xs">
@@ -125,6 +105,8 @@ export function ChartMessage({ chartData }: ChartMessageProps) {
             chartType={chartType as 'candlestick' | 'line' | 'area'}
             indicators={indicators}
             height={450}
+            showHeaderPrice={false}
+            showHeaderTitle={false}
             onTimeframeChange={handleTimeframeChange}
           />
         </CardContent>

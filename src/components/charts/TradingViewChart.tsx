@@ -5,7 +5,7 @@ import { createChart, IChartApi, ISeriesApi, ColorType, LineStyle } from 'lightw
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Loader2, TrendingUp, TrendingDown, BarChart3, Activity } from 'lucide-react'
+import { Loader2, BarChart3 } from 'lucide-react'
 
 interface ChartData {
   time: string
@@ -24,6 +24,8 @@ interface TradingViewChartProps {
   height?: number
   data?: ChartData[]
   onTimeframeChange?: (timeframe: string) => void
+  showHeaderPrice?: boolean
+  showHeaderTitle?: boolean
 }
 
 export function TradingViewChart({
@@ -33,7 +35,9 @@ export function TradingViewChart({
   indicators = ['sma20', 'volume'],
   height = 500,
   data,
-  onTimeframeChange
+  onTimeframeChange,
+  showHeaderPrice = true,
+  showHeaderTitle = true
 }: TradingViewChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<IChartApi | null>(null)
@@ -47,8 +51,7 @@ export function TradingViewChart({
   const [loading, setLoading] = useState(!data)
   const [error, setError] = useState<string | null>(null)
   const [currentPrice, setCurrentPrice] = useState<number | null>(null)
-  const [priceChange, setPriceChange] = useState<number | null>(null)
-  const [priceChangePercent, setPriceChangePercent] = useState<number | null>(null)
+  // Change metrics intentionally omitted from UI
 
   const timeframes = [
     { value: '1d', label: '1D' },
@@ -164,16 +167,9 @@ export function TradingViewChart({
         const formattedData = sanitizeChartData(result.data)
         setChartData(formattedData)
         
-        // Calculate price metrics
-        if (formattedData.length >= 2) {
-          const latest = formattedData[formattedData.length - 1]
-          const previous = formattedData[formattedData.length - 2]
-          
-          setCurrentPrice(latest.close)
-          const change = latest.close - previous.close
-          setPriceChange(change)
-          setPriceChangePercent((change / previous.close) * 100)
-        }
+        // Set current price only; omit change metrics per requirements
+        const latest = formattedData[formattedData.length - 1]
+        setCurrentPrice(latest.close)
       } else {
         throw new Error('No chart data available')
       }
@@ -439,20 +435,13 @@ export function TradingViewChart({
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center space-x-2">
             <BarChart3 className="w-5 h-5" />
-            <span>{symbol.toUpperCase()} Chart</span>
+            {showHeaderTitle && <span>{symbol.toUpperCase()} Chart</span>}
           </CardTitle>
           
-          {currentPrice && (
+          {showHeaderPrice && currentPrice !== null && (
             <div className="flex items-center space-x-4">
               <div className="text-right">
                 <div className="text-2xl font-bold">${currentPrice.toFixed(2)}</div>
-                {priceChange !== null && priceChangePercent !== null && (
-                  <div className={`flex items-center space-x-1 ${priceChange >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                    {priceChange >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-                    <span>${priceChange >= 0 ? '+' : ''}{priceChange.toFixed(2)}</span>
-                    <span>({priceChangePercent >= 0 ? '+' : ''}{priceChangePercent.toFixed(2)}%)</span>
-                  </div>
-                )}
               </div>
             </div>
           )}

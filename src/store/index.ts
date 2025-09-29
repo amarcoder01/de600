@@ -1078,10 +1078,16 @@ export const useMarketDataStore = create<MarketDataStore>()(
 interface NewsStore {
   news: any[]
   marketUpdates: any[]
+  bookmarkedNews: any[]
+  userBookmarks: Set<string>
   unreadCount: number
   isLoading: boolean
   lastFetch: Date | null
   fetchNews: () => Promise<void>
+  fetchBookmarks: () => Promise<void>
+  addBookmark: (newsItem: any) => Promise<boolean>
+  removeBookmark: (newsId: string) => Promise<boolean>
+  isBookmarked: (newsId: string) => boolean
   markAsRead: () => void
   incrementUnreadCount: () => void
 }
@@ -1091,6 +1097,8 @@ export const useNewsStore = create<NewsStore>()(
     (set, get) => ({
       news: [],
       marketUpdates: [],
+      bookmarkedNews: [],
+      userBookmarks: new Set<string>(),
       unreadCount: 0,
       isLoading: false,
       lastFetch: null,
@@ -1137,6 +1145,107 @@ export const useNewsStore = create<NewsStore>()(
         } finally {
           set({ isLoading: false })
         }
+      },
+      
+      fetchBookmarks: async () => {
+        try {
+          const token = localStorage.getItem('token')
+          if (!token) return
+          
+          const response = await fetch('/api/news/bookmarks', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          })
+          
+          const data = await response.json()
+          if (data.success) {
+            const bookmarkIds = new Set<string>(data.bookmarks.map((item: any) => item.id as string))
+            set({ 
+              bookmarkedNews: data.bookmarks,
+              userBookmarks: bookmarkIds
+            })
+          }
+        } catch (error) {
+          console.error('❌ Error fetching bookmarks:', error)
+        }
+      },
+      
+      addBookmark: async (newsItem: any) => {
+        try {
+          const token = localStorage.getItem('token')
+          if (!token) return false
+          
+          const response = await fetch('/api/news/bookmarks', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              newsId: newsItem.id,
+              title: newsItem.title,
+              summary: newsItem.summary,
+              source: newsItem.source,
+              url: newsItem.url,
+              publishedAt: newsItem.publishedAt,
+              category: newsItem.category,
+              sentiment: newsItem.sentiment,
+              impact: newsItem.impact,
+              symbols: newsItem.symbols || []
+            })
+          })
+          
+          const data = await response.json()
+          if (data.success) {
+            const currentBookmarks = get().userBookmarks
+            const newBookmarks = new Set<string>([...Array.from(currentBookmarks), newsItem.id])
+            set({ 
+              userBookmarks: newBookmarks,
+              bookmarkedNews: [...get().bookmarkedNews, newsItem]
+            })
+            return true
+          }
+          return false
+        } catch (error) {
+          console.error('❌ Error adding bookmark:', error)
+          return false
+        }
+      },
+      
+      removeBookmark: async (newsId: string) => {
+        try {
+          const token = localStorage.getItem('token')
+          if (!token) return false
+          
+          const response = await fetch(`/api/news/bookmarks?newsId=${newsId}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          })
+          
+          const data = await response.json()
+          if (data.success) {
+            const currentBookmarks = get().userBookmarks
+            const newBookmarks = new Set<string>([...Array.from(currentBookmarks)])
+            newBookmarks.delete(newsId)
+            
+            set({ 
+              userBookmarks: newBookmarks,
+              bookmarkedNews: get().bookmarkedNews.filter(item => item.id !== newsId)
+            })
+            return true
+          }
+          return false
+        } catch (error) {
+          console.error('❌ Error removing bookmark:', error)
+          return false
+        }
+      },
+      
+      isBookmarked: (newsId: string) => {
+        return get().userBookmarks.has(newsId)
       },
       
       markAsRead: () => set({ unreadCount: 0 }),

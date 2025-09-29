@@ -533,7 +533,7 @@ async function executeCompanyInfo(symbol: string, memoryContext: any): Promise<s
 
 async function executeGenerateChart(args: any, memoryContext: any): Promise<string> {
   try {
-    const { symbol, timeframe = '1mo', chartType = 'candlestick', indicators = ['sma20', 'volume'] } = args
+    const { symbol, timeframe = '1d', chartType = 'candlestick', indicators = ['sma20', 'volume'] } = args
     
     console.log(`📊 Generating chart for ${symbol} (${timeframe}, ${chartType})`)
     
@@ -593,8 +593,6 @@ async function executeGenerateChart(args: any, memoryContext: any): Promise<stri
       chartType,
       indicators,
       currentPrice: latestPrice,
-      priceChange,
-      priceChangePercent,
       dataPoints: data.length,
       dataSource,
       isRealData: dataSource === 'yahoo_finance',
@@ -678,6 +676,18 @@ function getIntervalFromTimeframe(timeframe: string): string {
   }
 }
 
+// Helper to format percentages and avoid displaying "-0.00%" for tiny negatives
+function formatPercent(value: number): string {
+  if (!isFinite(value)) return '0.00%'
+  const abs = Math.abs(value)
+  if (abs > 0 && abs < 0.01) {
+    return value < 0 ? '-<0.01%' : '<0.01%'
+  }
+  const rounded = Math.round(value * 100) / 100
+  const sign = rounded > 0 ? '+' : ''
+  return `${sign}${rounded.toFixed(2)}%`
+}
+
 async function generateChartAnalysis(symbol: string, data: any[], timeframe: string, memoryContext: any): Promise<string> {
   if (data.length < 20) return 'Insufficient data for analysis'
 
@@ -686,7 +696,10 @@ async function generateChartAnalysis(symbol: string, data: any[], timeframe: str
   const monthAgo = data[Math.max(0, data.length - 30)]
 
   const currentPrice = latest.close
-  const dailyChange = ((latest.close - previous.close) / previous.close) * 100
+  // Prefer changePercent from the latest point if available (intraday will be vs previous close)
+  const dailyChange = (typeof latest.changePercent === 'number' && isFinite(latest.changePercent))
+    ? latest.changePercent
+    : ((latest.close - previous.close) / previous.close) * 100
   const monthlyChange = monthAgo ? ((latest.close - monthAgo.close) / monthAgo.close) * 100 : 0
 
   // Simple trend analysis
@@ -700,8 +713,7 @@ async function generateChartAnalysis(symbol: string, data: any[], timeframe: str
     ``,
     `Metric / Value:`,
     `- Current Price: $${currentPrice.toFixed(2)}`,
-    `- Daily Change: ${dailyChange >= 0 ? '+' : ''}${dailyChange.toFixed(2)}%`,
-    `- Monthly Change: ${monthlyChange >= 0 ? '+' : ''}${monthlyChange.toFixed(2)}%`,
+    `- Monthly Change: ${formatPercent(monthlyChange)}`,
     `- Trend: ${isUptrend ? 'Bullish' : 'Bearish'}`,
     `- Volatility: ${volatilityLabel} (${volatility.toFixed(2)}%)`,
     ``,
@@ -1382,20 +1394,20 @@ export async function POST(request: NextRequest) {
   // Get dynamic system prompt based on conversation and user preferences
   const systemPrompt = getSystemPrompt(messages, memoryContext.userPreferences) + OUTPUT_POLICY
 
-  // Add memory context to system prompt
-  let enhancedSystemPrompt = `${systemPrompt}
+  // Add memory context to system prompt and SANITIZE to avoid any asterisks/Markdown
+  let enhancedSystemPrompt = `${systemPrompt.replace(/\*/g, '')}
 
-User Context:
-- Risk Tolerance: ${memoryContext.userPreferences.riskTolerance}
-- Trading Style: ${memoryContext.userPreferences.tradingStyle}
-- Preferred Sectors: ${memoryContext.userPreferences.preferredSectors.join(', ')}
-- Experience Level: ${memoryContext.tradingProfile.experienceLevel}
-- Market Context: ${memoryContext.marketContext.currentMarketRegime} market
+  User Context:
+  - Risk Tolerance: ${memoryContext.userPreferences.riskTolerance}
+  - Trading Style: ${memoryContext.userPreferences.tradingStyle}
+  - Preferred Sectors: ${memoryContext.userPreferences.preferredSectors.join(', ')}
+  - Experience Level: ${memoryContext.tradingProfile.experienceLevel}
+  - Market Context: ${memoryContext.marketContext.currentMarketRegime} market
 
-Conversation History:
-${memoryContext.conversationHistory.slice(-3).map(msg => `${msg.role}: ${msg.content.substring(0, 100)}...`).join('\n')}
+  Conversation History:
+  ${memoryContext.conversationHistory.slice(-3).map(msg => `${msg.role}: ${msg.content.substring(0, 100)}...`).join('\n')}
 
-Instruction: Follow the Output Policy. Use Metric / Value sections and simple dash bullets. No Markdown or emojis.`
+  Instruction: Follow the Output Policy. Use Metric / Value sections and simple dash bullets. No Markdown or emojis.`
 
 
 

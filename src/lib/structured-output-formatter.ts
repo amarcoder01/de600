@@ -33,7 +33,6 @@ export class StructuredOutputFormatter {
       <div class="financial-chart-analysis">
         <div class="analysis-header">
           <h2>📊 Financial Chart Analysis</h2>
-          <div class="confidence-badge">Confidence: ${confidence}/10</div>
         </div>
         
         <div class="summary-section">
@@ -59,18 +58,13 @@ export class StructuredOutputFormatter {
           </div>
         ` : ''}
 
-        <div class="analysis-footer">
-          <small>Analysis completed in ${analysis.processingTime}ms</small>
-        </div>
+        
       </div>
     `
 
     // Markdown Format
     const markdown = `
 # 📊 Financial Chart Analysis
-
-**Confidence Level:** ${confidence}/10  
-**Processing Time:** ${analysis.processingTime}ms
 
 ## Executive Summary
 ${analysis.summary}
@@ -90,9 +84,6 @@ ${recommendations.map((rec, i) => `${i + 1}. ${rec}`).join('\n')}
     const plain = `
 FINANCIAL CHART ANALYSIS
 ========================
-
-Confidence Level: ${confidence}/10
-Processing Time: ${analysis.processingTime}ms
 
 EXECUTIVE SUMMARY:
 ${analysis.summary}
@@ -131,7 +122,6 @@ ${recommendations.map((rec, i) => `${i + 1}. ${rec}`).join('\n')}
       <div class="financial-document-analysis">
         <div class="analysis-header">
           <h2>📄 Financial Document Analysis</h2>
-          <div class="confidence-badge">Confidence: ${confidence}/10</div>
         </div>
         
         <div class="summary-section">
@@ -169,8 +159,6 @@ ${recommendations.map((rec, i) => `${i + 1}. ${rec}`).join('\n')}
     const markdown = `
 # 📄 Financial Document Analysis
 
-**Confidence Level:** ${confidence}/10
-
 ## Document Summary
 ${analysis.summary}
 
@@ -193,8 +181,6 @@ ${extractedText.substring(0, 500)}${extractedText.length > 500 ? '...' : ''}
     const plain = `
 FINANCIAL DOCUMENT ANALYSIS
 ===========================
-
-Confidence Level: ${confidence}/10
 
 DOCUMENT SUMMARY:
 ${analysis.summary}
@@ -235,7 +221,6 @@ ${extractedText.substring(0, 500)}${extractedText.length > 500 ? '...' : ''}
       <div class="general-document-analysis">
         <div class="analysis-header">
           <h2>📋 Document Analysis</h2>
-          <div class="confidence-badge">Confidence: ${confidence}/10</div>
         </div>
         
         <div class="summary-section">
@@ -264,8 +249,6 @@ ${extractedText.substring(0, 500)}${extractedText.length > 500 ? '...' : ''}
     const markdown = `
 # 📋 Document Analysis
 
-**Confidence Level:** ${confidence}/10
-
 ## Document Summary
 ${analysis.summary}
 
@@ -283,8 +266,6 @@ ${extractedText.substring(0, 500)}${extractedText.length > 500 ? '...' : ''}
     const plain = `
 DOCUMENT ANALYSIS
 =================
-
-Confidence Level: ${confidence}/10
 
 DOCUMENT SUMMARY:
 ${analysis.summary}
@@ -319,7 +300,6 @@ ${extractedText.substring(0, 500)}${extractedText.length > 500 ? '...' : ''}
       <div class="general-image-analysis">
         <div class="analysis-header">
           <h2>🖼️ Image Analysis</h2>
-          <div class="confidence-badge">Confidence: ${confidence}/10</div>
         </div>
         
         <div class="summary-section">
@@ -339,8 +319,6 @@ ${extractedText.substring(0, 500)}${extractedText.length > 500 ? '...' : ''}
     const markdown = `
 # 🖼️ Image Analysis
 
-**Confidence Level:** ${confidence}/10
-
 ## Image Description
 ${analysis.summary}
 
@@ -351,8 +329,6 @@ ${keyInsights.map((insight, i) => `${i + 1}. ${insight}`).join('\n')}
     const plain = `
 IMAGE ANALYSIS
 ==============
-
-Confidence Level: ${confidence}/10
 
 IMAGE DESCRIPTION:
 ${analysis.summary}
@@ -381,7 +357,6 @@ ${keyInsights.map((insight, i) => `${i + 1}. ${insight}`).join('\n')}
       <div class="table-data-analysis">
         <div class="analysis-header">
           <h2>📊 Table Data Analysis</h2>
-          <div class="confidence-badge">Confidence: ${confidence}/10</div>
         </div>
         
         <div class="summary-section">
@@ -408,8 +383,6 @@ ${keyInsights.map((insight, i) => `${i + 1}. ${insight}`).join('\n')}
     const markdown = `
 # 📊 Table Data Analysis
 
-**Confidence Level:** ${confidence}/10
-
 ## Data Summary
 ${analysis.summary}
 
@@ -427,8 +400,6 @@ ${JSON.stringify(structuredData, null, 2)}
     const plain = `
 TABLE DATA ANALYSIS
 ===================
-
-Confidence Level: ${confidence}/10
 
 DATA SUMMARY:
 ${analysis.summary}
@@ -463,7 +434,6 @@ ${JSON.stringify(structuredData, null, 2)}
       <div class="default-analysis">
         <div class="analysis-header">
           <h2>🔍 Content Analysis</h2>
-          <div class="confidence-badge">Confidence: ${confidence}/10</div>
         </div>
         
         <div class="summary-section">
@@ -483,8 +453,6 @@ ${JSON.stringify(structuredData, null, 2)}
     const markdown = `
 # 🔍 Content Analysis
 
-**Confidence Level:** ${confidence}/10
-
 ## Summary
 ${analysis.summary}
 
@@ -495,8 +463,6 @@ ${keyInsights.map((insight, i) => `${i + 1}. ${insight}`).join('\n')}
     const plain = `
 CONTENT ANALYSIS
 ================
-
-Confidence Level: ${confidence}/10
 
 SUMMARY:
 ${analysis.summary}

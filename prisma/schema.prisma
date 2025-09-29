@@ -45,6 +45,7 @@ model User {
   securityEvents          SecurityEvent[]
   queryHistory            QueryHistory[]
   savedFilters            SavedFilter[]
+  newsBookmarks           NewsBookmark[]
 }
 
 // NextAuth.js required models
@@ -415,4 +416,28 @@ model QueryResultsCache {
   expiresAt     DateTime
 
   @@map("query_results_cache")
+}
+
+model NewsBookmark {
+  id          String   @id @default(cuid())
+  userId      String
+  newsId      String   // External news ID from API
+  title       String
+  summary     String?
+  source      String
+  url         String
+  publishedAt DateTime
+  category    String?
+  sentiment   String?
+  impact      String?
+  symbols     String   @default("[]") // JSON array of symbols
+  createdAt   DateTime @default(now())
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, newsId])
+  @@index([userId])
+  @@index([newsId])
+  @@index([category])
+  @@index([createdAt])
 }

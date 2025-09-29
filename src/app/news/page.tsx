@@ -64,14 +64,24 @@ interface MarketUpdate {
 }
 
 export default function NewsPage() {
-  const { news: storeNews, marketUpdates: storeUpdates, fetchNews, markAsRead } = useNewsStore()
+  const { 
+    news: storeNews, 
+    marketUpdates: storeUpdates, 
+    bookmarkedNews,
+    userBookmarks,
+    fetchNews, 
+    fetchBookmarks,
+    addBookmark,
+    removeBookmark,
+    isBookmarked,
+    markAsRead 
+  } = useNewsStore()
   const [news, setNews] = useState<NewsItem[]>([])
   const [marketUpdates, setMarketUpdates] = useState<MarketUpdate[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [selectedSentiment, setSelectedSentiment] = useState<string>('all')
-  const [bookmarkedNews, setBookmarkedNews] = useState<Set<string>>(new Set())
   const [activeTab, setActiveTab] = useState('all')
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null)
   const [searchLoading, setSearchLoading] = useState(false)
@@ -296,8 +306,11 @@ export default function NewsPage() {
     // Fetch initial market updates
     fetchMarketUpdates(1, false)
     
+    // Fetch user bookmarks
+    fetchBookmarks()
+    
     setLoading(false)
-  }, [markAsRead])
+  }, [markAsRead, fetchBookmarks])
 
   // Filter news based on selected category and sentiment (client-side safety net)
   const filteredNews = news.filter((item) => {
@@ -311,16 +324,22 @@ export default function NewsPage() {
     return matchesCategory && matchesSentiment
   })
 
-  const toggleBookmark = (newsId: string) => {
-    const newBookmarks = new Set(bookmarkedNews)
-    if (newBookmarks.has(newsId)) {
-      newBookmarks.delete(newsId)
-      toast.success('Removed from bookmarks')
+  const toggleBookmark = async (newsItem: NewsItem) => {
+    if (isBookmarked(newsItem.id)) {
+      const success = await removeBookmark(newsItem.id)
+      if (success) {
+        toast.success('Removed from bookmarks')
+      } else {
+        toast.error('Failed to remove bookmark')
+      }
     } else {
-      newBookmarks.add(newsId)
-      toast.success('Added to bookmarks')
+      const success = await addBookmark(newsItem)
+      if (success) {
+        toast.success('Added to bookmarks')
+      } else {
+        toast.error('Failed to add bookmark')
+      }
     }
-    setBookmarkedNews(newBookmarks)
   }
 
   const formatTimeAgo = (timestamp: string) => {
@@ -471,7 +490,7 @@ export default function NewsPage() {
        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
                    <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="all">All News ({filteredNews.length})</TabsTrigger>
-            <TabsTrigger value="bookmarked">Bookmarked ({bookmarkedNews.size})</TabsTrigger>
+            <TabsTrigger value="bookmarked">Bookmarked ({bookmarkedNews.length})</TabsTrigger>
             <TabsTrigger value="market-updates">Market Updates</TabsTrigger>
           </TabsList>
 
@@ -523,9 +542,9 @@ export default function NewsPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => toggleBookmark(item.id)}
-                            className={bookmarkedNews.has(item.id) ? 'text-yellow-500' : ''}
-                            title={bookmarkedNews.has(item.id) ? 'Remove from bookmarks' : 'Add to bookmarks'}
+                            onClick={() => toggleBookmark(item)}
+                            className={isBookmarked(item.id) ? 'text-yellow-500' : ''}
+                            title={isBookmarked(item.id) ? 'Remove from bookmarks' : 'Add to bookmarks'}
                           >
                             <Bookmark className="w-4 h-4" />
                           </Button>
@@ -633,7 +652,7 @@ export default function NewsPage() {
         </TabsContent>
 
         <TabsContent value="bookmarked" className="space-y-6">
-          {bookmarkedNews.size === 0 ? (
+          {bookmarkedNews.length === 0 ? (
             <div className="text-center py-12">
               <Bookmark className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
               <h3 className="text-lg font-medium mb-2">No bookmarked articles</h3>
@@ -641,7 +660,7 @@ export default function NewsPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {filteredNews.filter(item => bookmarkedNews.has(item.id)).map((item) => (
+              {bookmarkedNews.map((item) => (
                 <Card key={item.id} className="h-full">
                   <CardHeader>
                     <CardTitle className="text-lg">{item.title}</CardTitle>
@@ -665,6 +684,15 @@ export default function NewsPage() {
                       <Button 
                         variant="ghost" 
                         size="sm"
+                        onClick={() => toggleBookmark(item)}
+                        className="text-yellow-500"
+                        title="Remove from bookmarks"
+                      >
+                        <Bookmark className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
                         onClick={() => handleShare(item)}
                       >
                         <Share2 className="w-4 h-4" />
@@ -677,7 +705,7 @@ export default function NewsPage() {
           )}
           
           {/* Load More Button for Bookmarked */}
-          {bookmarkedNews.size > 0 && hasMoreNews && (
+          {bookmarkedNews.length > 0 && hasMoreNews && (
             <div className="flex justify-center mt-8">
               <Button 
                 onClick={handleLoadMore} 

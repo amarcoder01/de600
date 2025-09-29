@@ -120,7 +120,8 @@ export default function TradeGPTPage() {
         // Handle file upload and analysis
         const formData = new FormData()
         formData.append('file', fileUpload.file)
-        formData.append('analysisMode', fileUpload.analysisMode)
+        // Force financial-only analysis mode for production
+        formData.append('analysisMode', 'financial')
         formData.append('prompt', inputValue || 'Please analyze this file')
 
         const response = await fetch('/api/ai/file-analysis', {
@@ -290,8 +291,8 @@ export default function TradeGPTPage() {
       preview = URL.createObjectURL(file)
     }
 
-    // Default to financial mode for financial files, general for others
-    const analysisMode = isFinancialFile(file) ? 'financial' : 'general'
+    // Force financial-only mode in production
+    const analysisMode = 'financial'
 
     setFileUpload({
       file,
@@ -322,7 +323,7 @@ export default function TradeGPTPage() {
   const formatFileAnalysisResponse = (analysis: any): string => {
     let response = `📊 File Analysis Results\n\n`
     
-    response += `Content Type: ${analysis.contentType}\n\n`
+    // Hide content type to avoid showing generic/general labels
     response += `Summary: ${analysis.summary}\n\n`
     
     if (analysis.keyInsights && analysis.keyInsights.length > 0) {
@@ -355,8 +356,7 @@ export default function TradeGPTPage() {
       response += `${analysis.extractedText.substring(0, 300)}${analysis.extractedText.length > 300 ? '...' : ''}\n\n`
     }
 
-    response += `Confidence Level: ${analysis.confidence}/10\n`
-    response += `Processing Time: ${analysis.processingTime}ms`
+    // Do not display confidence or processing metadata in production
 
     return response
   }
@@ -460,11 +460,7 @@ export default function TradeGPTPage() {
                         }`}>
                           {message.metadata.responseType === 'file-analysis' ? '📊 File Analysis' : message.metadata.responseType}
                         </span>
-                        {message.metadata.fileAnalysis?.confidence && (
-                          <span className="text-gray-600 dark:text-gray-400">
-                            Confidence: {message.metadata.fileAnalysis.confidence}/10
-                          </span>
-                        )}
+                        {/* Confidence hidden in production */}
                       </div>
                     )}
                   </>
@@ -585,19 +581,11 @@ export default function TradeGPTPage() {
                       {fileUpload.file.name}
                     </div>
                     <div className="text-xs text-gray-500 dark:text-gray-400">
-                      {(fileUpload.file.size / 1024 / 1024).toFixed(2)} MB • {fileUpload.analysisMode} analysis
+                      {(fileUpload.file.size / 1024 / 1024).toFixed(2)} MB • Financial analysis
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <select
-                    value={fileUpload.analysisMode}
-                    onChange={(e) => setFileUpload(prev => prev ? {...prev, analysisMode: e.target.value as 'financial' | 'general'} : null)}
-                    className="text-xs bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1"
-                  >
-                    <option value="financial">Financial</option>
-                    <option value="general">General</option>
-                  </select>
                   <button
                     onClick={removeFileUpload}
                     className="text-red-500 hover:text-red-700"

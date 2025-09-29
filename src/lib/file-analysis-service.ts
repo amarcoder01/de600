@@ -299,7 +299,7 @@ For financial documents:
 - Identify investment opportunities and risks
 - Provide contextual market analysis
 
-Always provide structured, actionable insights with confidence levels.`
+Always provide structured, actionable insights.`
     } else {
       return `You are an expert document analyst capable of processing and analyzing various types of content including images, documents, charts, and reports.
 
@@ -341,7 +341,6 @@ Please provide a comprehensive financial analysis including:
 5. **Market Context**: How this relates to current market conditions
 6. **Risk Assessment**: Potential risks and concerns
 7. **Recommendations**: Specific actionable advice
-8. **Confidence Level**: How confident are you in this analysis (1-10)?
 
 Format your response as a structured analysis with clear sections.`
     } else {
@@ -355,7 +354,6 @@ Please provide a comprehensive analysis including:
 4. **Structured Data**: Any tables, lists, or organized information
 5. **Actionable Information**: What can be done with this information?
 6. **Questions Answered**: If this answers specific questions
-7. **Confidence Level**: How confident are you in this analysis (1-10)?
 
 Organize your response clearly and provide practical value.`
     }
