@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Sidebar } from './sidebar'
 import { Header } from './header'
 import { useUIStore } from '@/store'
+import { NetworkStatusBanner } from '@/components/network/NetworkStatusBanner'
 
 interface MainLayoutProps {
   children: React.ReactNode
@@ -14,11 +15,13 @@ export function MainLayout({ children }: MainLayoutProps) {
   const { sidebarCollapsed } = useUIStore()
 
   useEffect(() => {
-    console.log('🔍 MainLayout: Component mounted')
+    console.log(' MainLayout: Component mounted')
   }, [])
 
   return (
     <div className="layout-container flex bg-background">
+      {/* Non-intrusive network status banner (dashboard scope only) */}
+      <NetworkStatusBanner />
       {/* Sidebar */}
       <Sidebar />
       
@@ -36,4 +39,4 @@ export function MainLayout({ children }: MainLayoutProps) {
       </div>
     </div>
   )
-} 
+}
