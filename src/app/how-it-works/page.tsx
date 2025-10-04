@@ -263,16 +263,16 @@ export default function HowItWorksPage() {
                   <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">Get Started Free</Button>
                 </Link>
                 <Link href="/advanced-charts">
-                  <Button variant="outline" className="border-white/20 text-white hover:bg-white/10">Pro Charts</Button>
+                  <Button variant="outline" className="bg-transparent border-white/20 text-white hover:bg-white/10">Pro Charts</Button>
                 </Link>
                 <Link href="/backtesting">
-                  <Button variant="outline" className="border-white/20 text-white hover:bg-white/10">Backtesting</Button>
+                  <Button variant="outline" className="bg-transparent border-white/20 text-white hover:bg-white/10">Backtesting</Button>
                 </Link>
                 <Link href="/paper-trading">
-                  <Button variant="outline" className="border-white/20 text-white hover:bg-white/10">Paper Trading</Button>
+                  <Button variant="outline" className="bg-transparent border-white/20 text-white hover:bg-white/10">Paper Trading</Button>
                 </Link>
                 <Link href="/price-alerts">
-                  <Button variant="outline" className="border-white/20 text-white hover:bg-white/10">Price Alerts</Button>
+                  <Button variant="outline" className="bg-transparent border-white/20 text-white hover:bg-white/10">Price Alerts</Button>
                 </Link>
               </div>
             </div>
