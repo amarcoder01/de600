@@ -736,15 +736,15 @@ function LandingPageContent() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-black/20 backdrop-blur-md border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <VidalityLogo className="h-8 w-auto text-foreground" />
+            <VidalityLogo className="h-8 w-auto text-white" />
             <div className="flex items-center space-x-4">
-              <Link href="/how-it-works" className="hidden md:inline-block text-foreground/80 hover:text-foreground text-sm">
+              <Link href="/how-it-works" className="hidden md:inline-block text-white/80 hover:text-white text-sm">
                 How It Works
               </Link>
               <Button
                 onClick={handleOpenLogin}
                 variant="ghost"
-                className="text-foreground hover:bg-foreground/10"
+                className="text-white hover:bg-white/10"
               >
                 Sign In
               </Button>
