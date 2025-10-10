@@ -1150,7 +1150,11 @@ export const useNewsStore = create<NewsStore>()(
       fetchBookmarks: async () => {
         try {
           const token = localStorage.getItem('token')
-          if (!token) return
+          if (!token) {
+            // Ensure userBookmarks is always a Set, even without token
+            set({ userBookmarks: new Set<string>() })
+            return
+          }
           
           const response = await fetch('/api/news/bookmarks', {
             headers: {
@@ -1158,16 +1162,27 @@ export const useNewsStore = create<NewsStore>()(
             }
           })
           
+          if (response.status === 401) {
+            console.warn('⚠️ Authentication failed for bookmarks, initializing empty Set')
+            set({ userBookmarks: new Set<string>() })
+            return
+          }
+          
           const data = await response.json()
-          if (data.success) {
+          if (data.success && data.bookmarks) {
             const bookmarkIds = new Set<string>(data.bookmarks.map((item: any) => item.id as string))
             set({ 
               bookmarkedNews: data.bookmarks,
               userBookmarks: bookmarkIds
             })
+          } else {
+            // Fallback: ensure userBookmarks is always a Set
+            set({ userBookmarks: new Set<string>() })
           }
         } catch (error) {
           console.error('❌ Error fetching bookmarks:', error)
+          // Ensure userBookmarks is always a Set even on error
+          set({ userBookmarks: new Set<string>() })
         }
       },
       
@@ -1199,7 +1214,9 @@ export const useNewsStore = create<NewsStore>()(
           const data = await response.json()
           if (data.success) {
             const currentBookmarks = get().userBookmarks
-            const newBookmarks = new Set<string>([...Array.from(currentBookmarks), newsItem.id])
+            // Ensure currentBookmarks is a valid Set
+            const safeCurrentBookmarks = currentBookmarks instanceof Set ? currentBookmarks : new Set<string>()
+            const newBookmarks = new Set<string>([...Array.from(safeCurrentBookmarks), newsItem.id])
             set({ 
               userBookmarks: newBookmarks,
               bookmarkedNews: [...get().bookmarkedNews, newsItem]
@@ -1228,7 +1245,9 @@ export const useNewsStore = create<NewsStore>()(
           const data = await response.json()
           if (data.success) {
             const currentBookmarks = get().userBookmarks
-            const newBookmarks = new Set<string>([...Array.from(currentBookmarks)])
+            // Ensure currentBookmarks is a valid Set
+            const safeCurrentBookmarks = currentBookmarks instanceof Set ? currentBookmarks : new Set<string>()
+            const newBookmarks = new Set<string>([...Array.from(safeCurrentBookmarks)])
             newBookmarks.delete(newsId)
             
             set({ 
@@ -1245,7 +1264,14 @@ export const useNewsStore = create<NewsStore>()(
       },
       
       isBookmarked: (newsId: string) => {
-        return get().userBookmarks.has(newsId)
+        const userBookmarks = get().userBookmarks
+        // Safety check: ensure userBookmarks is a Set and has the has method
+        if (!userBookmarks || typeof userBookmarks.has !== 'function') {
+          console.warn('⚠️ userBookmarks is not a valid Set, initializing new Set')
+          set({ userBookmarks: new Set<string>() })
+          return false
+        }
+        return userBookmarks.has(newsId)
       },
       
       markAsRead: () => set({ unreadCount: 0 }),
