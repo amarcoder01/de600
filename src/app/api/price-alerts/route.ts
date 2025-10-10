@@ -43,9 +43,38 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
     const { symbol, targetPrice, condition, userEmail } = body
 
     // Validate required fields
-    if (!symbol || !targetPrice || !condition || !userEmail) {
+    if (!symbol || symbol.trim() === '') {
       return NextResponse.json(
-        { success: false, message: 'Missing required fields' },
+        { success: false, message: 'Asset symbol is required' },
+        { status: 400 }
+      )
+    }
+
+    if (!targetPrice) {
+      return NextResponse.json(
+        { success: false, message: 'Target price is required' },
+        { status: 400 }
+      )
+    }
+
+    if (!condition) {
+      return NextResponse.json(
+        { success: false, message: 'Condition is required' },
+        { status: 400 }
+      )
+    }
+
+    if (!userEmail || userEmail.trim() === '') {
+      return NextResponse.json(
+        { success: false, message: 'Email address is required' },
+        { status: 400 }
+      )
+    }
+
+    // Validate symbol length
+    if (symbol.length > 10) {
+      return NextResponse.json(
+        { success: false, message: 'Symbol must be 10 characters or less' },
         { status: 400 }
       )
     }
@@ -58,17 +87,82 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
       )
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(userEmail)) {
+    // Enhanced email validation - RFC 5322 compliant
+    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
+    const trimmedEmail = userEmail.trim()
+    
+    if (!emailRegex.test(trimmedEmail)) {
+      return NextResponse.json(
+        { success: false, message: 'Please enter a valid email address (e.g., user@example.com)' },
+        { status: 400 }
+      )
+    }
+
+    // Additional email validation checks
+    const emailParts = trimmedEmail.split('@')
+    if (emailParts.length !== 2) {
       return NextResponse.json(
         { success: false, message: 'Invalid email format' },
         { status: 400 }
       )
     }
 
+    const [localPart, domain] = emailParts
+
+    // Check local part length (max 64 characters per RFC 5321)
+    if (localPart.length > 64 || localPart.length === 0) {
+      return NextResponse.json(
+        { success: false, message: 'Email address format is invalid' },
+        { status: 400 }
+      )
+    }
+
+    // Check domain part
+    if (domain.length > 255 || domain.length === 0) {
+      return NextResponse.json(
+        { success: false, message: 'Email domain is invalid' },
+        { status: 400 }
+      )
+    }
+
+    // Check if domain has at least one dot
+    if (!domain.includes('.')) {
+      return NextResponse.json(
+        { success: false, message: 'Email must include a valid domain (e.g., gmail.com)' },
+        { status: 400 }
+      )
+    }
+
+    // Check domain extension length (at least 2 characters)
+    const domainParts = domain.split('.')
+    const extension = domainParts[domainParts.length - 1].toLowerCase()
+    
+    if (extension.length < 2) {
+      return NextResponse.json(
+        { success: false, message: 'Email domain extension must be at least 2 characters' },
+        { status: 400 }
+      )
+    }
+
+    // Validate against common valid TLDs
+    const validTLDs = new Set([
+      'com', 'org', 'net', 'edu', 'gov', 'mil', 'int', 'info', 'biz', 'name', 'pro',
+      'us', 'uk', 'ca', 'au', 'de', 'fr', 'it', 'es', 'nl', 'be', 'ch', 'at', 'se',
+      'no', 'dk', 'fi', 'ie', 'pt', 'pl', 'cz', 'ru', 'ua', 'ro', 'gr', 'jp', 'cn',
+      'kr', 'tw', 'hk', 'sg', 'my', 'th', 'vn', 'ph', 'id', 'in', 'pk', 'nz', 'mx',
+      'br', 'ar', 'cl', 'co', 'pe', 've', 'io', 'ai', 'tv', 'me', 'cc', 'xyz', 'app',
+      'dev', 'tech', 'online', 'site', 'store', 'shop', 'blog', 'cloud', 'email'
+    ])
+
+    if (!validTLDs.has(extension)) {
+      return NextResponse.json(
+        { success: false, message: `Invalid domain extension '.${extension}'. Please use a valid email domain (e.g., gmail.com, outlook.com)` },
+        { status: 400 }
+      )
+    }
+
     // Validate target price
-    if (targetPrice <= 0) {
+    if (isNaN(targetPrice) || targetPrice <= 0) {
       return NextResponse.json(
         { success: false, message: 'Target price must be greater than 0' },
         { status: 400 }

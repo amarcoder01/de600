@@ -71,6 +71,15 @@ export default function PriceAlertsPage() {
     userEmail: ''
   })
 
+  // Form validation state
+  const [formErrors, setFormErrors] = useState<{
+    symbol?: string
+    targetPrice?: string
+    userEmail?: string
+  }>({})
+  
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
   // Load alerts on component mount
   useEffect(() => {
     loadAlerts()
@@ -85,6 +94,151 @@ export default function PriceAlertsPage() {
 
     return () => clearInterval(interval)
   }, [loadCurrentPrices])
+
+  // Valid TLDs for email validation
+  const validTLDs = new Set([
+    'com', 'org', 'net', 'edu', 'gov', 'mil', 'int', 'info', 'biz', 'name', 'pro',
+    'us', 'uk', 'ca', 'au', 'de', 'fr', 'it', 'es', 'nl', 'be', 'ch', 'at', 'se',
+    'no', 'dk', 'fi', 'ie', 'pt', 'pl', 'cz', 'ru', 'ua', 'ro', 'gr', 'jp', 'cn',
+    'kr', 'tw', 'hk', 'sg', 'my', 'th', 'vn', 'ph', 'id', 'in', 'pk', 'nz', 'mx',
+    'br', 'ar', 'cl', 'co', 'pe', 've', 'io', 'ai', 'tv', 'me', 'cc', 'xyz', 'app',
+    'dev', 'tech', 'online', 'site', 'store', 'shop', 'blog', 'cloud', 'email'
+  ])
+
+  // Email validation function - RFC 5322 compliant with TLD validation
+  const validateEmail = (email: string): boolean => {
+    // More comprehensive email validation
+    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
+    
+    if (!emailRegex.test(email)) {
+      return false
+    }
+    
+    // Additional checks
+    const parts = email.split('@')
+    if (parts.length !== 2) return false
+    
+    const [localPart, domain] = parts
+    
+    // Check local part length (max 64 characters)
+    if (localPart.length > 64 || localPart.length === 0) return false
+    
+    // Check domain part
+    if (domain.length > 255 || domain.length === 0) return false
+    
+    // Check if domain has at least one dot
+    if (!domain.includes('.')) return false
+    
+    // Check domain extension length and validity
+    const domainParts = domain.split('.')
+    const extension = domainParts[domainParts.length - 1].toLowerCase()
+    
+    if (extension.length < 2) return false
+    
+    // Validate TLD against known valid TLDs
+    if (!validTLDs.has(extension)) return false
+    
+    return true
+  }
+
+  // Form validation function
+  const validateForm = (): boolean => {
+    const errors: typeof formErrors = {}
+    let isValid = true
+
+    // Validate symbol
+    if (!formData.symbol || formData.symbol.trim() === '') {
+      errors.symbol = 'Asset symbol is required'
+      isValid = false
+    } else if (formData.symbol.length > 10) {
+      errors.symbol = 'Symbol must be 10 characters or less'
+      isValid = false
+    }
+
+    // Validate target price
+    if (!formData.targetPrice || formData.targetPrice <= 0) {
+      errors.targetPrice = 'Target price must be greater than 0'
+      isValid = false
+    } else if (isNaN(formData.targetPrice)) {
+      errors.targetPrice = 'Please enter a valid number'
+      isValid = false
+    }
+
+    // Validate email
+    if (!formData.userEmail || formData.userEmail.trim() === '') {
+      errors.userEmail = 'Email address is required'
+      isValid = false
+    } else if (!validateEmail(formData.userEmail.trim())) {
+      // Check if it's a TLD issue for better error message
+      const parts = formData.userEmail.trim().split('@')
+      if (parts.length === 2 && parts[1].includes('.')) {
+        const domainParts = parts[1].split('.')
+        const extension = domainParts[domainParts.length - 1].toLowerCase()
+        if (!validTLDs.has(extension)) {
+          errors.userEmail = `Invalid domain extension '.${extension}'. Please use a valid email domain (e.g., gmail.com, outlook.com)`
+        } else {
+          errors.userEmail = 'Please enter a valid email address (e.g., user@example.com)'
+        }
+      } else {
+        errors.userEmail = 'Please enter a valid email address (e.g., user@example.com)'
+      }
+      isValid = false
+    }
+
+    setFormErrors(errors)
+    return isValid
+  }
+
+  // Real-time field validation
+  const validateField = (field: keyof typeof formErrors, value: any) => {
+    const errors = { ...formErrors }
+
+    switch (field) {
+      case 'symbol':
+        if (!value || value.trim() === '') {
+          errors.symbol = 'Asset symbol is required'
+        } else if (value.length > 10) {
+          errors.symbol = 'Symbol must be 10 characters or less'
+        } else {
+          delete errors.symbol
+        }
+        break
+
+      case 'targetPrice':
+        if (!value || value <= 0) {
+          errors.targetPrice = 'Target price must be greater than 0'
+        } else if (isNaN(value)) {
+          errors.targetPrice = 'Please enter a valid number'
+        } else {
+          delete errors.targetPrice
+        }
+        break
+
+      case 'userEmail':
+        if (!value || value.trim() === '') {
+          errors.userEmail = 'Email address is required'
+        } else if (!validateEmail(value.trim())) {
+          // Check if it's a TLD issue
+          const parts = value.trim().split('@')
+          if (parts.length === 2 && parts[1].includes('.')) {
+            const domainParts = parts[1].split('.')
+            const extension = domainParts[domainParts.length - 1].toLowerCase()
+            if (!validTLDs.has(extension)) {
+              errors.userEmail = `Invalid domain extension '.${extension}'. Please use a valid email domain (e.g., gmail.com, outlook.com)`
+            } else {
+              errors.userEmail = 'Please enter a valid email address (e.g., user@example.com)'
+            }
+          } else {
+            errors.userEmail = 'Please enter a valid email address (e.g., user@example.com)'
+          }
+        } else {
+          delete errors.userEmail
+        }
+        break
+    }
+
+    setFormErrors(errors)
+  }
 
   // Load statistics
   const loadStats = async () => {
@@ -106,13 +260,18 @@ export default function PriceAlertsPage() {
 
   // Handle form submission
   const handleCreateAlert = async () => {
-    try {
-      if (!formData.symbol || !formData.targetPrice || !formData.userEmail) {
-        toast.error('Please fill in all required fields')
-        return
-      }
+    // Validate form before submission
+    if (!validateForm()) {
+      toast.error('Please fix the errors in the form')
+      return
+    }
 
+    setIsSubmitting(true)
+    
+    try {
       await createAlert(formData)
+      
+      // Success: close dialog and reset form
       setShowCreateDialog(false)
       setFormData({
         symbol: '',
@@ -120,10 +279,35 @@ export default function PriceAlertsPage() {
         condition: 'above',
         userEmail: ''
       })
+      setFormErrors({})
       toast.success('Price alert created successfully!')
-      loadStats()
-    } catch (error) {
-      toast.error('Failed to create price alert')
+      await loadStats()
+      await loadAlerts()
+      
+    } catch (error: any) {
+      // Handle specific error messages from the backend
+      const errorMessage = error?.message || 'Failed to create price alert'
+      
+      // Show specific error messages for better UX
+      if (errorMessage.includes('email')) {
+        setFormErrors({ ...formErrors, userEmail: errorMessage })
+        toast.error(errorMessage)
+      } else if (errorMessage.includes('symbol')) {
+        setFormErrors({ ...formErrors, symbol: errorMessage })
+        toast.error(errorMessage)
+      } else if (errorMessage.includes('price')) {
+        setFormErrors({ ...formErrors, targetPrice: errorMessage })
+        toast.error(errorMessage)
+      } else if (errorMessage.includes('already have')) {
+        // Duplicate alert error
+        toast.error(errorMessage, { duration: 5000 })
+      } else {
+        toast.error(errorMessage)
+      }
+      
+      console.error('Error creating price alert:', error)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -285,26 +469,58 @@ export default function PriceAlertsPage() {
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium">Asset Symbol</label>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">
+                    Asset Symbol <span className="text-red-500">*</span>
+                  </label>
                   <Input
                     placeholder="e.g., BTC, ETH, AAPL"
                     value={formData.symbol}
-                    onChange={(e) => setFormData({ ...formData, symbol: e.target.value.toUpperCase() })}
+                    onChange={(e) => {
+                      const value = e.target.value.toUpperCase()
+                      setFormData({ ...formData, symbol: value })
+                      validateField('symbol', value)
+                    }}
+                    onBlur={() => validateField('symbol', formData.symbol)}
+                    className={formErrors.symbol ? 'border-red-500 focus:border-red-500' : ''}
                   />
+                  {formErrors.symbol && (
+                    <p className="text-sm text-red-500 flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3" />
+                      {formErrors.symbol}
+                    </p>
+                  )}
                 </div>
-                <div>
-                  <label className="text-sm font-medium">Target Price</label>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">
+                    Target Price <span className="text-red-500">*</span>
+                  </label>
                   <Input
                     type="number"
                     step="0.01"
                     placeholder="0.00"
                     value={formData.targetPrice || ''}
-                    onChange={(e) => setFormData({ ...formData, targetPrice: parseFloat(e.target.value) || 0 })}
+                    onChange={(e) => {
+                      const value = parseFloat(e.target.value) || 0
+                      setFormData({ ...formData, targetPrice: value })
+                      validateField('targetPrice', value)
+                    }}
+                    onBlur={() => validateField('targetPrice', formData.targetPrice)}
+                    className={formErrors.targetPrice ? 'border-red-500 focus:border-red-500' : ''}
                   />
+                  {formErrors.targetPrice && (
+                    <p className="text-sm text-red-500 flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3" />
+                      {formErrors.targetPrice}
+                    </p>
+                  )}
                 </div>
-                <div>
-                  <label className="text-sm font-medium">Condition</label>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">
+                    Condition <span className="text-red-500">*</span>
+                  </label>
                   <Select value={formData.condition} onValueChange={(value: 'above' | 'below') => setFormData({ ...formData, condition: value })}>
                     <SelectTrigger>
                       <SelectValue />
@@ -315,21 +531,69 @@ export default function PriceAlertsPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                                 <div>
-                   <label className="text-sm font-medium">Email Address</label>
-                   <Input
-                     type="email"
-                     placeholder="your@email.com"
-                     value={formData.userEmail}
-                     onChange={(e) => setFormData({ ...formData, userEmail: e.target.value })}
-                   />
-                 </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">
+                    Email Address <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="email"
+                    placeholder="your@email.com"
+                    value={formData.userEmail}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      setFormData({ ...formData, userEmail: value })
+                      // Only validate on blur to avoid annoying users while typing
+                      if (value.includes('@') && value.includes('.')) {
+                        validateField('userEmail', value)
+                      }
+                    }}
+                    onBlur={() => validateField('userEmail', formData.userEmail)}
+                    className={formErrors.userEmail ? 'border-red-500 focus:border-red-500' : ''}
+                  />
+                  {formErrors.userEmail && (
+                    <p className="text-sm text-red-500 flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3" />
+                      {formErrors.userEmail}
+                    </p>
+                  )}
+                  {!formErrors.userEmail && formData.userEmail && validateEmail(formData.userEmail) && (
+                    <p className="text-sm text-green-600 flex items-center gap-1">
+                      <CheckCircle className="w-3 h-3" />
+                      Valid email format
+                    </p>
+                  )}
+                </div>
+
                 <div className="flex justify-end space-x-2 pt-4">
-                  <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setShowCreateDialog(false)
+                      setFormErrors({})
+                      setFormData({
+                        symbol: '',
+                        targetPrice: 0,
+                        condition: 'above',
+                        userEmail: ''
+                      })
+                    }}
+                    disabled={isSubmitting}
+                  >
                     Cancel
                   </Button>
-                  <Button onClick={handleCreateAlert}>
-                    Create Alert
+                  <Button 
+                    onClick={handleCreateAlert}
+                    disabled={isSubmitting || Object.keys(formErrors).length > 0}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Creating...
+                      </>
+                    ) : (
+                      'Create Alert'
+                    )}
                   </Button>
                 </div>
               </div>
