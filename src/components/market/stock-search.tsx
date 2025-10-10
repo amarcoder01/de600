@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Search, Brain, Loader2 } from "lucide-react";
+import { Search, Loader2, X } from "lucide-react";
 import { stockApi } from "@/lib/market-api";
 import { StockCard } from "./stock-card";
 import type { Stock } from "@/types/market";
@@ -54,11 +54,27 @@ export function StockSearch({ className, onStockSelect }: StockSearchProps) {
             placeholder="Search stocks by symbol or company name..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 pr-4 py-2 w-full"
+            className="pl-10 pr-14 py-2 w-full"
             data-testid="input-stock-search"
           />
+          {/* Clear (X) button */}
+          {searchQuery.length > 0 && (
+            <button
+              type="button"
+              aria-label="Clear search"
+              onClick={() => {
+                setSearchQuery("");
+                setDebouncedQuery("");
+              }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring"
+              data-testid="clear-stock-search"
+            >
+              <X className="w-4 h-4 text-muted-foreground" />
+            </button>
+          )}
+          {/* Loading spinner (shifted left to avoid overlap with clear button) */}
           {isLoading && (
-            <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 animate-spin text-muted-foreground" />
+            <Loader2 className="absolute right-10 top-1/2 transform -translate-y-1/2 w-4 h-4 animate-spin text-muted-foreground" />
           )}
         </div>
 
@@ -105,3 +121,4 @@ export function StockSearch({ className, onStockSelect }: StockSearchProps) {
     </div>
   );
 }
+
