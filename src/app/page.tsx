@@ -243,9 +243,9 @@ const HeroSection = ({ onOpenLogin, onOpenRegister }: {
         </Button>
         <Button
           onClick={onOpenLogin}
-          variant="outline"
+          variant="ghost"
           size="lg"
-          className="border-2 border-foreground/20 text-foreground hover:bg-foreground/10 px-8 py-4 text-lg font-semibold rounded-xl backdrop-blur-sm transition-all duration-300"
+          className="bg-transparent border-2 border-white/20 text-white hover:bg-white/10 focus-visible:ring-white/40 focus-visible:ring-offset-0 px-8 py-4 text-lg font-semibold rounded-xl backdrop-blur-sm transition-all duration-300"
         >
           Sign In
         </Button>
@@ -255,9 +255,9 @@ const HeroSection = ({ onOpenLogin, onOpenRegister }: {
           rel="noopener noreferrer"
         >
           <Button
-            variant="outline"
+            variant="ghost"
             size="lg"
-            className="border-2 border-foreground/20 text-foreground hover:bg-foreground/10 px-8 py-4 text-lg font-semibold rounded-xl backdrop-blur-sm transition-all duration-300"
+            className="bg-transparent border-2 border-white/20 text-white hover:bg-white/10 focus-visible:ring-white/40 focus-visible:ring-offset-0 px-8 py-4 text-lg font-semibold rounded-xl backdrop-blur-sm transition-all duration-300"
             aria-label="Follow Vidality Pulse on Telegram"
           >
             Follow on Telegram
