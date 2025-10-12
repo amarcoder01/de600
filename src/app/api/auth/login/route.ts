@@ -122,8 +122,8 @@ export async function POST(request: NextRequest) {
     if (!user) {
       console.log('❌ Login API - User not found:', email)
       return NextResponse.json(
-        { success: false, error: 'Invalid email or password' },
-        { status: 401 }
+        { success: false, error: 'Email is not registered', type: 'USER_NOT_FOUND' },
+        { status: 404 }
       )
     }
 

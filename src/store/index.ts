@@ -1714,6 +1714,9 @@ export const useAuthStore = create<AuthStore>()(
               errorMessage = 'Account is temporarily locked due to multiple failed login attempts. Please try again later.'
             } else if (data.type === 'ACCOUNT_DISABLED') {
               errorMessage = 'This account has been disabled. Please contact support.'
+            } else if (data.type === 'USER_NOT_FOUND' || response.status === 404) {
+              // Specific message for unregistered email
+              errorMessage = 'Email is not registered'
             } else if (data.type === 'INVALID_CREDENTIALS') {
               errorMessage = 'Invalid email or password'
             } else if (data.requiresEmailVerification) {
