@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { AuthValidator } from '@/lib/auth-validation'
 
 interface RegisterModalProps {
   isOpen: boolean
@@ -102,15 +103,14 @@ export function RegisterModal({ isOpen, onClose, onSwitchToLogin }: RegisterModa
 
   // Validation functions
   const validateEmail = (email: string): string => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!email) return 'Email is required'
-    if (!emailRegex.test(email)) return 'Please enter a valid email address'
-    return ''
+    const result = AuthValidator.validateEmail(email)
+    return result.success ? '' : (result.message || 'Please enter a valid email address')
   }
 
   const validatePassword = (password: string): string => {
     if (!password) return 'Password is required'
-    if (password.length < 5) return 'Password must be at least 5 characters long'
+    if (password.length < 8) return 'Password must be at least 8 characters long'
     if (!/[a-z]/.test(password)) return 'Password must contain at least one lowercase letter'
     if (!/[A-Z]/.test(password)) return 'Password must contain at least one uppercase letter'
     if (!/\d/.test(password)) return 'Password must contain at least one number'
@@ -123,6 +123,14 @@ export function RegisterModal({ isOpen, onClose, onSwitchToLogin }: RegisterModa
     if (confirmPassword !== password) return 'Passwords do not match'
     return ''
   }
+
+  const getPasswordCriteria = (pwd: string) => ({
+    length: pwd.length >= 8,
+    lower: /[a-z]/.test(pwd),
+    upper: /[A-Z]/.test(pwd),
+    number: /\d/.test(pwd),
+    special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwd)
+  })
 
   const validateName = (name: string, fieldName: string): string => {
     if (!name.trim()) return `${fieldName} is required`
@@ -513,13 +521,21 @@ export function RegisterModal({ isOpen, onClose, onSwitchToLogin }: RegisterModa
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
-                {validationErrors.password ? (
+                {validationErrors.password && (
                   <p className="text-xs text-red-500">{validationErrors.password}</p>
-                                 ) : (
-                   <p className="text-xs text-gray-500">
-                     Must be at least 5 characters with uppercase, lowercase, number, and special character
-                   </p>
-                 )}
+                )}
+                {(() => {
+                  const c = getPasswordCriteria(password)
+                  return (
+                    <ul className="mt-1 space-y-1 text-xs">
+                      <li className={c.length ? 'text-green-600' : 'text-gray-500'}>At least 8 characters</li>
+                      <li className={c.upper ? 'text-green-600' : 'text-gray-500'}>At least one uppercase letter</li>
+                      <li className={c.lower ? 'text-green-600' : 'text-gray-500'}>At least one lowercase letter</li>
+                      <li className={c.number ? 'text-green-600' : 'text-gray-500'}>At least one number</li>
+                      <li className={c.special ? 'text-green-600' : 'text-gray-500'}>At least one special character</li>
+                    </ul>
+                  )
+                })()}
               </div>
 
               {/* Confirm Password Field */}

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db'
 import { hashPassword } from '@/lib/auth-security'
 import { EmailVerificationService } from '@/lib/email-verification-service'
 import { logSecurityEvent, SecurityEventType, SecuritySeverity } from '@/lib/security-monitoring'
+import { AuthValidator } from '@/lib/auth-validation'
 import jwt from 'jsonwebtoken'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production'
@@ -23,37 +24,36 @@ export async function POST(request: NextRequest) {
 
     const { email, password, firstName, lastName, privacyPolicyAccepted } = body
 
-    // Basic validation
-    if (!email || !password || !firstName || !lastName) {
+    // Validate payload using shared validator (strong server-side enforcement)
+    const validation = AuthValidator.validateRegistration({
+      email,
+      password,
+      firstName,
+      lastName,
+      confirmPassword: password, // server doesn't persist this, just to satisfy schema match
+      privacyPolicyAccepted,
+    })
+
+    if (!validation.success) {
       const response = NextResponse.json(
-        { success: false, error: 'All fields are required' },
+        {
+          success: false,
+          type: 'VALIDATION_ERROR',
+          error: 'Validation failed',
+          details: { errors: validation.errors }
+        },
         { status: 400 }
       )
-      
-      // Clear any existing auth cookies
       response.cookies.set('token', '', { httpOnly: true, maxAge: 0, path: '/' })
       response.cookies.set('refreshToken', '', { httpOnly: true, maxAge: 0, path: '/' })
-      
       return response
     }
 
-    // Validate privacy policy acceptance
-    if (!privacyPolicyAccepted) {
-      const response = NextResponse.json(
-        { success: false, error: 'You must accept the Privacy Policy to continue' },
-        { status: 400 }
-      )
-      
-      // Clear any existing auth cookies
-      response.cookies.set('token', '', { httpOnly: true, maxAge: 0, path: '/' })
-      response.cookies.set('refreshToken', '', { httpOnly: true, maxAge: 0, path: '/' })
-      
-      return response
-    }
+    const normalizedEmail = (validation.data?.email || String(email)).toLowerCase().trim()
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
-      where: { email: email.toLowerCase().trim() }
+      where: { email: normalizedEmail }
     })
 
     if (existingUser) {
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
     // Create user
     const user = await prisma.user.create({
       data: {
-        email: email.toLowerCase().trim(),
+        email: normalizedEmail,
         password: hashedPassword,
         firstName: firstName.trim(),
         lastName: lastName.trim(),

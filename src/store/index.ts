@@ -22,6 +22,7 @@ import {
   AuthResponse
 } from '@/types'
 import { trackAuthEvent, setUserId } from '@/lib/telemetry'
+import { AuthValidator } from '@/lib/auth-validation'
 
 // UI Store
 interface UIStore extends UIState {
@@ -1778,16 +1779,33 @@ export const useAuthStore = create<AuthStore>()(
       register: async (credentials: RegisterCredentials) => {
         set({ isLoading: true, error: null })
         try {
+          // Preflight email validation (client-side guard before API)
+          const emailCheck = AuthValidator.validateEmail(credentials.email)
+          if (!emailCheck.success) {
+            const errorMessage = emailCheck.message || 'Please enter a valid email address'
+            set({ error: errorMessage, isLoading: false })
+            trackAuthEvent('register_failed', false, {
+              email: credentials.email,
+              reason: errorMessage,
+              timestamp: new Date().toISOString()
+            })
+            throw new Error(errorMessage)
+          }
+
+          // Sanitize email to normalized form
+          const sanitizedEmail = emailCheck.data || credentials.email.toLowerCase().trim()
+          const payload = { ...credentials, email: sanitizedEmail }
+
           // Track registration attempt
           trackAuthEvent('register_attempt', true, {
-            email: credentials.email,
+            email: sanitizedEmail,
             timestamp: new Date().toISOString()
           })
           
           const response = await fetch('/api/auth/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(credentials)
+            body: JSON.stringify(payload)
           })
           
           const data = await response.json()

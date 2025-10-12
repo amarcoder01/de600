@@ -12,6 +12,7 @@ import { motion } from 'framer-motion'
 import { VidalityLogo } from '@/components/ui/VidalityLogo'
 import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react'
 import { EmailVerificationModal } from '@/components/auth/EmailVerificationModal'
+import { AuthValidator } from '@/lib/auth-validation'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -26,6 +27,14 @@ export default function RegisterPage() {
   const [showVerification, setShowVerification] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  
+  const getPasswordCriteria = (pwd: string) => ({
+    length: pwd.length >= 8,
+    lower: /[a-z]/.test(pwd),
+    upper: /[A-Z]/.test(pwd),
+    number: /\d/.test(pwd),
+    special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwd)
+  })
 
   useEffect(() => {
     clearError()
@@ -40,8 +49,16 @@ export default function RegisterPage() {
     if (!firstName.trim()) errs.firstName = 'First name is required'
     if (!lastName.trim()) errs.lastName = 'Last name is required'
     if (!email.trim()) errs.email = 'Email is required'
+    else {
+      const emailValidation = AuthValidator.validateEmail(email)
+      if (!emailValidation.success) errs.email = emailValidation.message || 'Please enter a valid email address'
+    }
     if (!password) errs.password = 'Password is required'
     if (password && password.length < 8) errs.password = 'Password must be at least 8 characters'
+    if (password && !/[a-z]/.test(password)) errs.password = errs.password || 'Password must contain at least one lowercase letter'
+    if (password && !/[A-Z]/.test(password)) errs.password = errs.password || 'Password must contain at least one uppercase letter'
+    if (password && !/\d/.test(password)) errs.password = errs.password || 'Password must contain at least one number'
+    if (password && !/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) errs.password = errs.password || 'Password must contain at least one special character'
     if (password !== confirmPassword) errs.confirmPassword = 'Passwords do not match'
     if (!privacyPolicyAccepted) errs.privacy = 'You must accept the Privacy Policy and Terms of Service'
 
@@ -193,6 +210,18 @@ export default function RegisterPage() {
                 {validationErrors.password && (
                   <p className="text-xs text-red-400">{validationErrors.password}</p>
                 )}
+                {(() => {
+                  const c = getPasswordCriteria(password)
+                  return (
+                    <ul className="mt-1 space-y-1 text-xs">
+                      <li className={c.length ? 'text-green-400' : 'text-gray-400'}>At least 8 characters</li>
+                      <li className={c.upper ? 'text-green-400' : 'text-gray-400'}>At least one uppercase letter</li>
+                      <li className={c.lower ? 'text-green-400' : 'text-gray-400'}>At least one lowercase letter</li>
+                      <li className={c.number ? 'text-green-400' : 'text-gray-400'}>At least one number</li>
+                      <li className={c.special ? 'text-green-400' : 'text-gray-400'}>At least one special character</li>
+                    </ul>
+                  )
+                })()}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword" className="text-gray-300">Confirm password</Label>
