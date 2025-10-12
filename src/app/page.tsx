@@ -183,7 +183,7 @@ const SidePop = () => {
                         Open Telegram
                       </Button>
                     </a>
-                    <Button size="sm" variant="outline" className="border-white/20 text-white hover:bg-white/10" onClick={dismiss} aria-label="Dismiss">
+                    <Button size="sm" variant="ghost" className="bg-transparent border border-white/20 text-white hover:bg-white/10 focus-visible:ring-white/40 focus-visible:ring-offset-0" onClick={dismiss} aria-label="Dismiss">
                       Dismiss
                     </Button>
                   </div>
