@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { motion } from 'framer-motion'
 import { VidalityLogo } from '@/components/ui/VidalityLogo'
-import { Mail, Lock, User } from 'lucide-react'
+import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react'
 import { EmailVerificationModal } from '@/components/auth/EmailVerificationModal'
 
 export default function RegisterPage() {
@@ -24,6 +24,8 @@ export default function RegisterPage() {
   const [privacyPolicyAccepted, setPrivacyPolicyAccepted] = useState(false)
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const [showVerification, setShowVerification] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   useEffect(() => {
     clearError()
@@ -166,7 +168,7 @@ export default function RegisterPage() {
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
                     id="password"
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => {
                       setPassword(e.target.value)
@@ -174,8 +176,19 @@ export default function RegisterPage() {
                       if (error) clearError()
                     }}
                     placeholder="••••••••"
-                    className={`pl-9 ${validationErrors.password ? 'border-red-500' : ''}`}
+                    autoComplete="new-password"
+                    className={`pl-9 pr-10 ${validationErrors.password ? 'border-red-500' : ''}`}
                   />
+                  <button
+                    type="button"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 focus:outline-none"
+                    disabled={isLoading}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
                 {validationErrors.password && (
                   <p className="text-xs text-red-400">{validationErrors.password}</p>
@@ -187,7 +200,7 @@ export default function RegisterPage() {
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
                     id="confirmPassword"
-                    type="password"
+                    type={showConfirmPassword ? 'text' : 'password'}
                     value={confirmPassword}
                     onChange={(e) => {
                       setConfirmPassword(e.target.value)
@@ -195,8 +208,19 @@ export default function RegisterPage() {
                       if (error) clearError()
                     }}
                     placeholder="••••••••"
-                    className={`pl-9 ${validationErrors.confirmPassword ? 'border-red-500' : ''}`}
+                    autoComplete="new-password"
+                    className={`pl-9 pr-10 ${validationErrors.confirmPassword ? 'border-red-500' : ''}`}
                   />
+                  <button
+                    type="button"
+                    aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 focus:outline-none"
+                    disabled={isLoading}
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
                 {validationErrors.confirmPassword && (
                   <p className="text-xs text-red-400">{validationErrors.confirmPassword}</p>
