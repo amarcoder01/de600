@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { withAuth } from '@/lib/auth-middleware'
 import type { AuthenticatedRequest } from '@/lib/auth-middleware'
+import { RealTimePriceService } from '@/lib/real-time-price-service'
 
 // GET /api/price-alerts - Get all price alerts for the current user
 export const GET = withAuth(async (request: AuthenticatedRequest) => {
@@ -165,6 +166,16 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
     if (isNaN(targetPrice) || targetPrice <= 0) {
       return NextResponse.json(
         { success: false, message: 'Target price must be greater than 0' },
+        { status: 400 }
+      )
+    }
+
+    // Validate that the symbol exists by checking real-time price
+    const normalizedSymbol = symbol.toUpperCase().trim()
+    const priceData = await RealTimePriceService.getRealTimePrice(normalizedSymbol)
+    if (!priceData || !priceData.price || priceData.price <= 0) {
+      return NextResponse.json(
+        { success: false, message: `Invalid or unsupported asset symbol '${symbol}'. Please enter a valid symbol.` },
         { status: 400 }
       )
     }
