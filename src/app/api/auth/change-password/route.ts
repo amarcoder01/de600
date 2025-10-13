@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { verifyPassword, hashPassword } from '@/lib/auth-security'
 import jwt from 'jsonwebtoken'
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production'
+import { AuthValidator } from '@/lib/auth-validation'
+const JWT_SECRET = process.env.JWT_SECRET
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,6 +29,35 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Strong password validation
+    const validation = AuthValidator.validatePasswordChange({ currentPassword, newPassword })
+    if (!validation.success) {
+      const strength = AuthValidator.validatePasswordStrength(newPassword)
+      const requirements = [
+        'Be between 8 and 128 characters long',
+        'Include at least one uppercase letter',
+        'Include at least one lowercase letter',
+        'Include at least one number',
+        'Include at least one special character (!@#$%^&* etc.)',
+        'Not be a common or easily guessable password',
+        'Be different from your current password'
+      ]
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Your new password is too weak. Please follow the requirements below.', 
+          errors: validation.errors,
+          requirements,
+          strength: {
+            score: strength.score,
+            feedback: strength.feedback,
+            suggestions: strength.suggestions
+          }
+        },
+        { status: 400 }
+      )
+    }
+
     // Extract token from Authorization header or cookies
     const authHeader = request.headers.get('authorization')
     const token = authHeader?.replace('Bearer ', '') || 
@@ -43,12 +72,28 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify token and get user
+    if (!JWT_SECRET) {
+      return NextResponse.json(
+        { success: false, error: 'Server misconfiguration: missing JWT secret' },
+        { status: 500 }
+      )
+    }
     let decoded
     try {
       decoded = jwt.verify(token, JWT_SECRET) as any
-    } catch (error) {
+    } catch (error: any) {
+      if (error?.name === 'TokenExpiredError') {
+        return NextResponse.json(
+          {
+            success: false,
+            errorCode: 'TOKEN_EXPIRED',
+            error: 'Your session timed out for security. Sign in again to continue.'
+          },
+          { status: 401 }
+        )
+      }
       return NextResponse.json(
-        { success: false, error: 'Invalid or expired token' },
+        { success: false, errorCode: 'INVALID_TOKEN', error: 'Authentication is required.' },
         { status: 401 }
       )
     }
@@ -91,6 +136,11 @@ export async function POST(request: NextRequest) {
         password: hashedNewPassword,
         updatedAt: new Date()
       }
+    })
+
+    // Invalidate all sessions for the user
+    await prisma.userSession.deleteMany({
+      where: { userId: user.id }
     })
 
     return NextResponse.json({

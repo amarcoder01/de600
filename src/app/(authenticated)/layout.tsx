@@ -1,5 +1,6 @@
 import { MainLayout } from '@/components/layout/main-layout'
 import { AuthGuard } from '@/components/auth/AuthGuard'
+import { SessionExpiredBanner } from '@/components/auth/SessionExpiredBanner'
 
 export default function AuthenticatedLayout({
   children,
@@ -9,6 +10,7 @@ export default function AuthenticatedLayout({
   return (
     <AuthGuard requireAuth={true}>
       <MainLayout>
+        <SessionExpiredBanner />
         {children}
       </MainLayout>
     </AuthGuard>

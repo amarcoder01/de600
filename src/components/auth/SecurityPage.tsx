@@ -21,6 +21,7 @@ export function SecurityPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [validationInfo, setValidationInfo] = useState<{ requirements?: string[]; feedback?: string[]; suggestions?: string[] }>({})
   
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -42,6 +43,7 @@ export function SecurityPage() {
     // Clear previous messages
     setError(null)
     setSuccess(null)
+    setValidationInfo({})
     setIsLoading(true)
 
     try {
@@ -72,6 +74,7 @@ export function SecurityPage() {
         setSuccess('Password updated successfully! You can now use your new password to log in.')
         setIsChangingPassword(false)
         setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
+        setValidationInfo({})
         
         // Clear success message after 5 seconds
         setTimeout(() => {
@@ -79,10 +82,16 @@ export function SecurityPage() {
         }, 5000)
       } else {
         setError(data.error || 'Failed to update password. Please try again.')
+        setValidationInfo({
+          requirements: data.requirements,
+          feedback: data.strength?.feedback,
+          suggestions: data.strength?.suggestions
+        })
         
         // Clear error message after 5 seconds
         setTimeout(() => {
           setError(null)
+          setValidationInfo({})
         }, 5000)
       }
     } catch (error) {
@@ -103,6 +112,7 @@ export function SecurityPage() {
     setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
     setError(null)
     setSuccess(null)
+    setValidationInfo({})
   }
 
   const isPasswordValid = 
@@ -136,6 +146,40 @@ export function SecurityPage() {
               <div className="w-2 h-2 bg-red-500 rounded-full"></div>
               <p className="text-sm text-red-700">{error}</p>
             </div>
+            {(validationInfo.requirements || validationInfo.feedback || validationInfo.suggestions) && (
+              <div className="mt-3 text-xs text-red-700">
+                {validationInfo.requirements && validationInfo.requirements.length > 0 && (
+                  <div className="mt-2">
+                    <p className="font-medium">Password should:</p>
+                    <ul className="list-disc ml-5 mt-1 space-y-1">
+                      {validationInfo.requirements.map((r, idx) => (
+                        <li key={`req-${idx}`}>{r}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {validationInfo.feedback && validationInfo.feedback.length > 0 && (
+                  <div className="mt-3">
+                    <p className="font-medium">Issues detected:</p>
+                    <ul className="list-disc ml-5 mt-1 space-y-1">
+                      {validationInfo.feedback.map((f, idx) => (
+                        <li key={`fb-${idx}`}>{f}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {validationInfo.suggestions && validationInfo.suggestions.length > 0 && (
+                  <div className="mt-3">
+                    <p className="font-medium">Suggestions:</p>
+                    <ul className="list-disc ml-5 mt-1 space-y-1">
+                      {validationInfo.suggestions.map((s, idx) => (
+                        <li key={`sg-${idx}`}>{s}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
