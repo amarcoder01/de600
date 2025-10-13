@@ -9,8 +9,8 @@ export function SessionExpiredBanner() {
   const [visible, setVisible] = React.useState(true)
 
   const sessionExpired =
-    searchParams.get('session_expired') === '1' ||
-    searchParams.get('message') === 'session_expired'
+    searchParams?.get('session_expired') === '1' ||
+    searchParams?.get('message') === 'session_expired'
 
   if (!sessionExpired || !visible) return null
 

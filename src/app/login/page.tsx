@@ -37,6 +37,16 @@ export default function LoginPage() {
     clearError()
   }, [clearError])
 
+  // Comprehensive email validator following RFC 5322 standard
+  const isValidEmail = (value: string) => {
+    const email = value.trim()
+    if (!email) return false
+    // RFC 5322 Official Standard regex for email validation
+    // eslint-disable-next-line no-control-regex
+    const emailRegex = /(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/i
+    return emailRegex.test(email)
+  }
+
   // Request verification email for an existing account
   const handleRequestVerification = async () => {
     setVerificationRequestError('')
@@ -45,6 +55,10 @@ export default function LoginPage() {
     const normalizedEmail = email.trim().toLowerCase()
     if (!normalizedEmail) {
       setVerificationRequestError('Please enter your email address first')
+      return
+    }
+    if (!isValidEmail(normalizedEmail)) {
+      setVerificationRequestError('Please enter a valid email address')
       return
     }
 
@@ -90,6 +104,7 @@ export default function LoginPage() {
 
     const errs: Record<string, string> = {}
     if (!email.trim()) errs.email = 'Email is required'
+    else if (!isValidEmail(email)) errs.email = 'Please enter a valid email address'
     if (!password) errs.password = 'Password is required'
     if (Object.keys(errs).length > 0) {
       setValidationErrors(errs)
@@ -188,7 +203,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={handleRequestVerification}
-                disabled={isRequestingVerification}
+                disabled={isRequestingVerification || !isValidEmail(email)}
                 className="text-green-300 hover:text-green-200 disabled:opacity-60"
                 aria-label="Request email verification"
                 title="Request a verification email"

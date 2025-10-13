@@ -305,6 +305,16 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalPr
     }
   }
 
+  // Comprehensive email validator following RFC 5322 standard
+  const isValidEmail = (value: string) => {
+    const email = value.trim()
+    if (!email) return false
+    // RFC 5322 Official Standard regex for email validation
+    // eslint-disable-next-line no-control-regex
+    const emailRegex = /(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/i
+    return emailRegex.test(email)
+  }
+
   // Request verification email for existing user
   const handleRequestVerification = async () => {
     if (!email.trim()) {
@@ -317,13 +327,19 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalPr
     setVerificationRequestSuccess(false)
 
     try {
+      const normalizedEmail = email.trim().toLowerCase()
+      if (!isValidEmail(normalizedEmail)) {
+        setVerificationRequestError('Please enter a valid email address')
+        setIsRequestingVerification(false)
+        return
+      }
       const response = await fetch('/api/auth/request-verification', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: email.trim().toLowerCase()
+          email: normalizedEmail
         })
       })
 
@@ -599,7 +615,11 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalPr
                 {/* Send Verification Button */}
                 <button
                   onClick={handleRequestVerification}
-                  disabled={isRequestingVerification || !email.trim()}
+                  disabled={
+                    isRequestingVerification ||
+                    !email.trim() ||
+                    !isValidEmail(email.trim())
+                  }
                   className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   {isRequestingVerification ? (
