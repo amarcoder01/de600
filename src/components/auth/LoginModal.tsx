@@ -607,7 +607,7 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalPr
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                     <div className="text-sm text-green-700">
-                      <p>{AUTH_MESSAGES.EMAIL_VERIFICATION.GENERIC_SUCCESS}</p>
+                      <p>If an account with that email exists, you'll receive a verification email with instructions. Please check your inbox and spam folder.</p>
                     </div>
                   </motion.div>
                 )}

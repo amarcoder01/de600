@@ -229,7 +229,7 @@ export default function LoginPage() {
             )}
             {verificationRequestSuccess && (
               <div className="p-3 rounded-xl border border-emerald-300/30 bg-emerald-500/10 text-emerald-300 text-sm">
-                We sent a verification code to {verificationUser?.email || email}. Enter it below to verify.
+                If an account with that email exists, you’ll receive a verification email with instructions. Please check your inbox and spam folder.
               </div>
             )}
             {showVerification && (
