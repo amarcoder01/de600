@@ -131,7 +131,7 @@ export default function LoginPage() {
           className="relative w-full max-w-md bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 shadow-2xl"
         >
           <div className="flex flex-col items-center text-center mb-6">
-            <VidalityLogo className="h-10 w-auto text-white mb-3" />
+            <VidalityLogo className="h-10 w-auto mb-3" theme="onDark" />
             <h1 className="text-2xl font-semibold text-white mb-1">Welcome back</h1>
             <p className="text-sm text-gray-300">Sign in to access your dashboard</p>
           </div>
