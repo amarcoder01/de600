@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 import { Bell, Plus, CheckCircle, XCircle, AlertTriangle, Settings, Clock, Target } from 'lucide-react'
 
 interface Alert {
@@ -109,9 +110,18 @@ export function AlertsPanel({
               </Badge>
             </CardTitle>
             <div className="flex items-center space-x-2">
-              <Button size="sm" variant="outline" onClick={onAddAlert}>
-                <Plus className="w-4 h-4" />
-              </Button>
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button size="sm" variant="outline" onClick={onAddAlert}>
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="left" align="center">
+                    Add Price Alert
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </div>
           

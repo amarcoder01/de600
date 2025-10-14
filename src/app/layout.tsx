@@ -5,6 +5,7 @@ import '@/lib/startup' // Initialize price alert scheduler
 import { ThemeProvider } from '@/components/theme/ThemeProvider'
 import { NextAuthProvider } from '@/components/auth/NextAuthProvider'
 import NoSSR from '@/components/NoSSR'
+import { Toaster } from '@/components/ui/toaster'
 
 // Force dynamic rendering and disable caching to prevent static prerender errors during build
 export const dynamic = 'force-dynamic'
@@ -50,6 +51,7 @@ export default function RootLayout({
           <NextAuthProvider>
             <ThemeProvider>
               {children}
+              <Toaster />
             </ThemeProvider>
           </NextAuthProvider>
         </NoSSR>

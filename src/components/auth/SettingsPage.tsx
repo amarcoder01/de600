@@ -23,6 +23,7 @@ import {
   SelectValue 
 } from '@/components/ui/select'
 import { useAuthStore, useUIStore } from '@/store'
+import { toast } from '@/hooks/use-toast'
 
 export function SettingsPage() {
   const { user, updateUser } = useAuthStore()
@@ -55,6 +56,10 @@ export function SettingsPage() {
     // Update both local settings and global UI store
     setSettings(prev => ({ ...prev, theme: newTheme as 'light' | 'dark' | 'system' }))
     setTheme(newTheme as 'light' | 'dark' | 'system')
+    toast({
+      title: 'Theme updated',
+      description: `Theme changed to ${newTheme}.`,
+    })
   }
 
   const handleSave = () => {
@@ -68,6 +73,10 @@ export function SettingsPage() {
       }
     })
     setIsEditing(false)
+    toast({
+      title: 'Settings updated',
+      description: 'Your preferences have been saved successfully.',
+    })
   }
 
   const handleCancel = () => {

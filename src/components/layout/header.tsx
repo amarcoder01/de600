@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils'
 import { useUIStore, useSettingsStore } from '@/store'
 
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 import { AuthProvider } from '@/components/auth/AuthProvider'
 import { VidalityLogo } from '@/components/ui/VidalityLogo'
 import { useRouter } from 'next/navigation'
@@ -69,25 +70,40 @@ export function Header() {
 
       {/* Right Section - Actions */}
       <div className="flex items-center space-x-3">
+        <TooltipProvider delayDuration={0}>
         {/* Theme Toggle */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleThemeToggle}
-          className="relative"
-        >
-          {getThemeIcon()}
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleThemeToggle}
+              className="relative"
+            >
+              {getThemeIcon()}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" align="center">
+            Change Theme
+          </TooltipContent>
+        </Tooltip>
 
         {/* Settings */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleSettingsClick}
-        >
-          <Settings className="w-5 h-5" />
-        </Button>
-
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleSettingsClick}
+            >
+              <Settings className="w-5 h-5" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" align="center">
+            Settings
+          </TooltipContent>
+        </Tooltip>
+        </TooltipProvider>
         {/* Authentication */}
         <div className="flex items-center space-x-3 pl-3 border-l border-border">
           <AuthProvider />
