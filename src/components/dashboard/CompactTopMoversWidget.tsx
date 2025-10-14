@@ -114,7 +114,8 @@ export default function CompactTopMoversWidget({
       <motion.div
         initial={{ opacity: 0, x: -10 }}
         animate={{ opacity: 1, x: 0 }}
-        className="flex items-center justify-between py-2 px-3 rounded-md bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        className="flex items-center justify-between py-2 px-3 rounded-md bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+        onClick={() => window.open(`/top-movers?symbol=${stock.symbol}`, '_blank')}
       >
         <div className="flex items-center space-x-2 min-w-0 flex-1">
           <div className={`w-6 h-6 rounded flex items-center justify-center text-white font-bold text-xs shrink-0 ${

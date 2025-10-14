@@ -49,7 +49,10 @@ export default function TopMoversWidget() {
   }, [loadData]);
 
   const Row = ({ item, type }: { item: StockData; type: "g" | "l" }) => (
-    <div className="flex items-center justify-between py-2 border-b last:border-b-0">
+    <div
+      className="flex items-center justify-between py-2 border-b last:border-b-0 cursor-pointer"
+      onClick={() => window.open(`/top-movers?symbol=${item.symbol}`, '_blank')}
+    >
       <div className="flex items-center gap-2 min-w-0">
         <div
           className={`w-6 h-6 rounded-md flex items-center justify-center text-white text-xs shrink-0 ${

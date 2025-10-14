@@ -128,7 +128,7 @@ export default function LoginPage() {
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative w-full max-w-md bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 shadow-2xl"
+          className="login-card relative w-full max-w-md bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 shadow-2xl"
         >
           <div className="flex flex-col items-center text-center mb-6">
             <VidalityLogo className="h-10 w-auto mb-3" theme="onDark" />
@@ -157,7 +157,7 @@ export default function LoginPage() {
                     if (error) clearError()
                   }}
                   placeholder="you@example.com"
-                  className={`pl-9 ${validationErrors.email ? 'border-red-500' : ''}`}
+                  className={`pl-9 bg-white/10 text-white placeholder:text-gray-300 border-white/20 focus-visible:ring-white/40 ${validationErrors.email ? 'border-red-500' : ''}`}
                 />
               </div>
               {validationErrors.email && (
@@ -179,12 +179,12 @@ export default function LoginPage() {
                     if (error) clearError()
                   }}
                   placeholder="••••••••"
-                  className={`pl-9 pr-10 ${validationErrors.password ? 'border-red-500' : ''}`}
+                  className={`pl-9 pr-12 bg-white/10 text-white placeholder:text-gray-300 border-white/20 focus-visible:ring-white/40 ${validationErrors.password ? 'border-red-500' : ''}`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 z-20 pointer-events-auto text-gray-200 hover:text-white bg-white/5 hover:bg-white/10 transition-colors rounded-md p-1 hover:ring-1 hover:ring-white/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30 backdrop-blur-sm"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 z-20 pointer-events-auto text-gray-200 hover:text-white bg-white/10 hover:bg-white/20 transition-colors rounded-md p-1 hover:ring-1 hover:ring-white/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30 backdrop-blur-sm"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? (
@@ -244,7 +244,7 @@ export default function LoginPage() {
                     setVerificationError('')
                   }}
                   placeholder="000000"
-                  className="mt-2 text-center tracking-widest text-lg"
+                  className="mt-2 text-center tracking-widest text-lg bg-white/10 text-white placeholder:text-gray-300 border-white/20 focus-visible:ring-white/40"
                 />
                 {verificationError && (
                   <div className="mt-2 p-2 rounded-lg border border-red-300/30 bg-red-500/10 text-red-300 text-xs">
@@ -331,6 +331,18 @@ export default function LoginPage() {
             onClose={() => setShowForgot(false)}
             onSwitchToLogin={() => setShowForgot(false)}
           />
+          {/* Fix Chrome autofill white background on dark surfaces */}
+          <style jsx global>{`
+            .login-card input:-webkit-autofill,
+            .login-card input:-webkit-autofill:hover,
+            .login-card input:-webkit-autofill:focus {
+              -webkit-box-shadow: 0 0 0px 1000px rgba(255,255,255,0.06) inset !important;
+              box-shadow: 0 0 0px 1000px rgba(255,255,255,0.06) inset !important;
+              -webkit-text-fill-color: #ffffff !important;
+              caret-color: #ffffff !important;
+              transition: background-color 999999s ease-in-out 0s;
+            }
+          `}</style>
         </motion.div>
       </div>
     </AuthGuard>

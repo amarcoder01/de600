@@ -102,7 +102,7 @@ export function Sidebar() {
     },
     {
       id: 'treadgpt',
-      label: 'TreadGPT',
+      label: 'TradeGPT',
       icon: Bot,
       href: '/treadgpt',
       description: 'AI trading assistant'

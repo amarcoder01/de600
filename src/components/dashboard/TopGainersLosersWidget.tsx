@@ -123,7 +123,8 @@ export default function TopGainersLosersWidget({
       <motion.div
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
-        className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 hover:shadow-md transition-all duration-200 group"
+        className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 hover:shadow-md transition-all duration-200 group cursor-pointer"
+        onClick={() => window.open(`/top-movers?symbol=${stock.symbol}`, '_blank')}
       >
         <div className="flex items-center space-x-3 min-w-0 flex-1">
           <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm shrink-0 ${

@@ -26,6 +26,16 @@ export default function Dashboard() {
     setLoadingMore
   } = useTopGainersLosersStore();
 
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const sym = params.get('symbol');
+      if (sym) {
+        setSelectedSymbol(sym.toUpperCase());
+      }
+    } catch {}
+  }, []);
+
   // Load more handler
   const handleLoadMore = () => {
     if (isLoadingMore) return;

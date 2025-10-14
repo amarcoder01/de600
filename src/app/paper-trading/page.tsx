@@ -428,6 +428,53 @@ export default function PaperTradingPage() {
 
 
 
+      {accounts.length === 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>Get started with Paper Trading</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Set up a virtual trading account to test strategies with simulated funds. No real money or live brokerage connection is required.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="p-4 border rounded-lg">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Target className="w-4 h-4 text-primary" />
+                  <span className="font-semibold text-sm">Create an account</span>
+                </div>
+                <p className="text-sm text-muted-foreground">Start with a simulated balance and manage multiple accounts for different strategies.</p>
+              </div>
+              <div className="p-4 border rounded-lg">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Zap className="w-4 h-4 text-primary" />
+                  <span className="font-semibold text-sm">Place your first order</span>
+                </div>
+                <p className="text-sm text-muted-foreground">Validate a symbol, choose order type and size, and simulate entries/exits.</p>
+              </div>
+              <div className="p-4 border rounded-lg">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Shield className="w-4 h-4 text-primary" />
+                  <span className="font-semibold text-sm">Track performance</span>
+                </div>
+                <p className="text-sm text-muted-foreground">Monitor P&L, cash, and history to evaluate risk and consistency over time.</p>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <Button className="sm:w-auto w-full" onClick={() => setShowCreateAccount(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Create your first account
+              </Button>
+            </div>
+            <div className="mt-3 text-xs text-muted-foreground">
+              Results from simulated trading are for educational purposes and may differ from live market execution and slippage.
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Account Selection */}
       {accounts.length > 0 && (
         <Card>
