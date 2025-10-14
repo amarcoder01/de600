@@ -668,9 +668,17 @@ export default function PriceAlertsPage() {
           {filteredAlerts.length === 0 ? (
             <div className="text-center py-12">
               <Bell className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-medium mb-2">No {activeTab} alerts</h3>
+              <h3 className="text-lg font-medium mb-2">{activeTab === 'all' ? 'No Alerts Found.' : `No ${activeTab} alerts`}</h3>
               <p className="text-muted-foreground">
-                {activeTab === 'active' ? 'Create your first price alert to get started' : `No ${activeTab} alerts found`}
+                {activeTab === 'active'
+                  ? 'Create your first price alert to get started'
+                  : activeTab === 'all'
+                    ? 'Create your first price alert to get started'
+                    : activeTab === 'triggered'
+                      ? 'Triggered alerts will appear here once their conditions are met.'
+                      : activeTab === 'cancelled'
+                        ? 'Cancelled alerts will appear here.'
+                        : `No ${activeTab} alerts found`}
               </p>
             </div>
           ) : (
