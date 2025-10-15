@@ -237,6 +237,25 @@ export default function WatchlistPage() {
     }
   }
 
+  // Smoothly scroll to the active watchlist header when selection changes
+  useEffect(() => {
+    if (!activeWatchlistId) return
+    // Defer to next frame to ensure DOM has updated
+    const id = window.requestAnimationFrame(() => {
+      const target = document.getElementById('active-watchlist-header') || document.getElementById('watchlist-items-section')
+      if (target) {
+        try {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          // Optional focus for accessibility; no visual change unless focus styles exist
+          if (typeof (target as any).focus === 'function') {
+            ;(target as HTMLElement).focus({ preventScroll: true })
+          }
+        } catch {}
+      }
+    })
+    return () => window.cancelAnimationFrame(id)
+  }, [activeWatchlistId])
+
   // Force clear stale authentication state
   const forceClearAuth = () => {
     // Use the proper auth store logout method
@@ -1667,7 +1686,9 @@ export default function WatchlistPage() {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4"
+            className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 scroll-mt-24"
+            id="active-watchlist-header"
+            tabIndex={-1}
           >
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-3">
