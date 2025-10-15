@@ -29,6 +29,7 @@ import {
   RefreshCw
 } from 'lucide-react'
 import { Stock } from '@/types'
+import { useToast } from '@/hooks/use-toast'
 import PortfolioAnalytics from './PortfolioAnalytics'
 
 interface Trade {
@@ -66,6 +67,7 @@ interface Portfolio {
 }
 
 export default function ProductionPortfolioManager() {
+  const { toast } = useToast()
   const [portfolios, setPortfolios] = useState<Portfolio[]>([])
   const [activePortfolio, setActivePortfolio] = useState<Portfolio | null>(null)
   const [trades, setTrades] = useState<Trade[]>([])
@@ -517,6 +519,10 @@ export default function ProductionPortfolioManager() {
       setError(null)
       
       console.log('✅ Portfolio Component - Trade form reset and data refreshed')
+      toast({
+        title: 'Trade recorded',
+        description: `${tradeForm.type === 'buy' ? 'Buy' : 'Sell'} order for ${tradeForm.quantity} ${tradeForm.symbol.toUpperCase()} recorded successfully.`,
+      })
     } catch (err) {
       console.error('❌ Portfolio Component - Error adding trade:', err)
       setError(err instanceof Error ? err.message : 'Failed to add trade')
@@ -1252,7 +1258,15 @@ export default function ProductionPortfolioManager() {
                         type="number"
                         placeholder="Number of shares"
                         value={tradeForm.quantity}
-                        onChange={(e) => setTradeForm({...tradeForm, quantity: parseFloat(e.target.value) || 0})}
+                        onChange={(e) => {
+                          const raw = e.target.value
+                          const sanitized = raw.replace(/^0+(?=\d)/, '')
+                          if (sanitized !== raw) e.target.value = sanitized
+                          setTradeForm({
+                            ...tradeForm,
+                            quantity: parseFloat(sanitized) || 0,
+                          })
+                        }}
                       />
                     </div>
                     <div className="space-y-2">
@@ -1385,7 +1399,15 @@ export default function ProductionPortfolioManager() {
                         type="number"
                         placeholder="Number of shares"
                         value={tradeForm.quantity}
-                        onChange={(e) => setTradeForm({...tradeForm, quantity: parseFloat(e.target.value) || 0})}
+                        onChange={(e) => {
+                          const raw = e.target.value
+                          const sanitized = raw.replace(/^0+(?=\d)/, '')
+                          if (sanitized !== raw) e.target.value = sanitized
+                          setTradeForm({
+                            ...tradeForm,
+                            quantity: parseFloat(sanitized) || 0,
+                          })
+                        }}
                       />
                     </div>
                     <div className="space-y-2">

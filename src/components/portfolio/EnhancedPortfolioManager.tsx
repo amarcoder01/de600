@@ -28,6 +28,7 @@ import {
 } from 'lucide-react'
 import { Stock } from '@/types'
 import PortfolioAnalytics from './PortfolioAnalytics'
+import { useToast } from '@/hooks/use-toast'
 
 interface Trade {
   id: string
@@ -55,6 +56,7 @@ interface Position {
 }
 
 export default function EnhancedPortfolioManager() {
+  const { toast } = useToast()
   const [trades, setTrades] = useState<Trade[]>([])
   const [positions, setPositions] = useState<Position[]>([])
   const [searchSymbol, setSearchSymbol] = useState('')
@@ -243,6 +245,10 @@ export default function EnhancedPortfolioManager() {
     
     // Show success message
     alert(`${tradeForm.type === 'buy' ? 'Buy' : 'Sell'} trade recorded successfully!`)
+    toast({
+      title: 'Trade recorded',
+      description: `${tradeForm.type === 'buy' ? 'Buy' : 'Sell'} order for ${trade.quantity} ${trade.symbol} at $${trade.price.toFixed(2)} was recorded.`,
+    })
   }
 
   // Delete trade
@@ -592,7 +598,15 @@ export default function EnhancedPortfolioManager() {
                         type="number"
                         placeholder="Number of shares"
                         value={tradeForm.quantity}
-                        onChange={(e) => setTradeForm({...tradeForm, quantity: parseFloat(e.target.value) || 0})}
+                        onChange={(e) => {
+                          const raw = e.target.value
+                          const sanitized = raw.replace(/^0+(?=\d)/, '')
+                          if (sanitized !== raw) e.target.value = sanitized
+                          setTradeForm({
+                            ...tradeForm,
+                            quantity: parseFloat(sanitized) || 0,
+                          })
+                        }}
                       />
                     </div>
                     <div className="space-y-2">
@@ -712,7 +726,15 @@ export default function EnhancedPortfolioManager() {
                         type="number"
                         placeholder="Number of shares"
                         value={tradeForm.quantity}
-                        onChange={(e) => setTradeForm({...tradeForm, quantity: parseFloat(e.target.value) || 0})}
+                        onChange={(e) => {
+                          const raw = e.target.value
+                          const sanitized = raw.replace(/^0+(?=\d)/, '')
+                          if (sanitized !== raw) e.target.value = sanitized
+                          setTradeForm({
+                            ...tradeForm,
+                            quantity: parseFloat(sanitized) || 0,
+                          })
+                        }}
                       />
                     </div>
                     <div className="space-y-2">
