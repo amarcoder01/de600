@@ -493,6 +493,11 @@ export default function ProductionPortfolioManager() {
             errorMessage = `Failed to add trade: ${response.status} ${response.statusText}`
           }
         }
+        // Surface error contextually to the user (no scrolling required)
+        toast({
+          title: 'Trade failed',
+          description: errorMessage,
+        })
         
         throw new Error(errorMessage)
       }
@@ -526,6 +531,11 @@ export default function ProductionPortfolioManager() {
     } catch (err) {
       console.error('❌ Portfolio Component - Error adding trade:', err)
       setError(err instanceof Error ? err.message : 'Failed to add trade')
+      // Also show a toast near the action context
+      toast({
+        title: 'Trade failed',
+        description: err instanceof Error ? err.message : 'Failed to add trade',
+      })
     } finally {
       setIsAddingTrade(false)
     }
