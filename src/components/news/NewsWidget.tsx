@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useNewsStore } from '@/store'
+import { toast } from 'sonner'
 
 interface NewsItem {
   id: string
@@ -265,9 +266,19 @@ export function NewsWidget({
                         className={`h-6 w-6 p-0 ${isBookmarked(item.id) ? 'text-yellow-500' : ''}`}
                         onClick={async () => {
                           if (isBookmarked(item.id)) {
-                            await removeBookmark(item.id)
+                            const success = await removeBookmark(item.id)
+                            if (success) {
+                              toast.success('Removed from bookmarks')
+                            } else {
+                              toast.error('Failed to remove bookmark')
+                            }
                           } else {
-                            await addBookmark(item)
+                            const success = await addBookmark(item)
+                            if (success) {
+                              toast.success('Added to bookmarks')
+                            } else {
+                              toast.error('Failed to add bookmark')
+                            }
                           }
                         }}
                         title={isBookmarked(item.id) ? 'Remove from bookmarks' : 'Add to bookmarks'}

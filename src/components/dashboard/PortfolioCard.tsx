@@ -15,6 +15,7 @@ interface PortfolioCardProps {
   iconColor: string
   subtitle?: string
   trend?: 'up' | 'down' | 'neutral'
+  formatAsCurrency?: boolean
 }
 
 export function PortfolioCard({ 
@@ -25,13 +26,20 @@ export function PortfolioCard({
   icon: Icon, 
   iconColor, 
   subtitle,
-  trend = 'neutral'
+  trend = 'neutral',
+  formatAsCurrency = true
 }: PortfolioCardProps) {
   const formatValue = (val: string | number) => {
     if (typeof val === 'number') {
+      if (formatAsCurrency) {
+        return new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'USD',
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0
+        }).format(val)
+      }
       return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
         minimumFractionDigits: 0,
         maximumFractionDigits: 0
       }).format(val)
@@ -103,6 +111,7 @@ export function WatchlistsCard({ count }: { count: number }) {
       icon={Eye}
       iconColor="text-purple-600"
       subtitle="Active watchlists"
+      formatAsCurrency={false}
     />
   )
 }
@@ -115,6 +124,7 @@ export function TodayTradesCard({ count }: { count: number }) {
       icon={Activity}
       iconColor="text-orange-600"
       subtitle="Trades executed"
+      formatAsCurrency={false}
     />
   )
 }

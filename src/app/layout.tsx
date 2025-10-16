@@ -6,6 +6,7 @@ import { ThemeProvider } from '@/components/theme/ThemeProvider'
 import { NextAuthProvider } from '@/components/auth/NextAuthProvider'
 import NoSSR from '@/components/NoSSR'
 import { Toaster } from '@/components/ui/toaster'
+import { Toaster as SonnerToaster } from 'sonner'
 
 // Force dynamic rendering and disable caching to prevent static prerender errors during build
 export const dynamic = 'force-dynamic'
@@ -52,6 +53,7 @@ export default function RootLayout({
             <ThemeProvider>
               {children}
               <Toaster />
+              <SonnerToaster />
             </ThemeProvider>
           </NextAuthProvider>
         </NoSSR>

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, Plus, X, Filter, TrendingUp, TrendingDown, Star, RefreshCw, Loader2, Check, AlertCircle, CheckCircle, XCircle } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -69,6 +69,7 @@ export default function WatchlistPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [removingWatchlistId, setRemovingWatchlistId] = useState<string | null>(null)
   const [activeWatchlistId, setActiveWatchlistId] = useState<string | null>(null)
+  const suppressScrollRef = useRef(false)
 
   // Get or create default watchlist
   const defaultWatchlist = watchlists?.find(w => w.name === 'My Watchlist') || {
@@ -240,13 +241,15 @@ export default function WatchlistPage() {
   // Smoothly scroll to the active watchlist header when selection changes
   useEffect(() => {
     if (!activeWatchlistId) return
-    // Defer to next frame to ensure DOM has updated
+    if (suppressScrollRef.current) {
+      suppressScrollRef.current = false
+      return
+    }
     const id = window.requestAnimationFrame(() => {
       const target = document.getElementById('active-watchlist-header') || document.getElementById('watchlist-items-section')
       if (target) {
         try {
           target.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          // Optional focus for accessibility; no visual change unless focus styles exist
           if (typeof (target as any).focus === 'function') {
             ;(target as HTMLElement).focus({ preventScroll: true })
           }
@@ -725,11 +728,11 @@ export default function WatchlistPage() {
       }, 3000)
       
       // Clear search query
-      setSearchQuery('')
-      setSearchResults([])
+      setSearchQuery(searchQuery)
+      setSearchResults(prev => prev)
       
       // Refresh watchlists to get the latest data
-      await loadWatchlists()
+      Promise.resolve()
       
           } catch (error) {
         console.error('❌ Error adding stock to watchlist:', error)
@@ -932,6 +935,7 @@ export default function WatchlistPage() {
                 {refreshSuccess === 'cleared' && 'All stocks have been removed from your watchlist.'}
                 {refreshSuccess === 'removed' && 'Watchlist has been successfully removed.'}
                 {refreshSuccess === 'switched' && 'Successfully switched to selected watchlist.'}
+                {refreshSuccess === 'added' && 'Stock added. You can add another.'}
               </p>
             </div>
             <Button
@@ -1064,9 +1068,14 @@ export default function WatchlistPage() {
                   } else {
                     setActiveWatchlistId(selectedId)
                     // Scroll to watchlist items section
-                    const watchlistItemsSection = document.getElementById('watchlist-items-section')
-                    if (watchlistItemsSection) {
-                      watchlistItemsSection.scrollIntoView({ behavior: 'smooth' })
+                    if (!suppressScrollRef.current) {
+                      const watchlistItemsSection = document.getElementById('watchlist-items-section')
+                      if (watchlistItemsSection) {
+                        watchlistItemsSection.scrollIntoView({ behavior: 'smooth' })
+                      }
+                    } else {
+                      // clear suppression after honoring it once
+                      suppressScrollRef.current = false
                     }
                   }
                 }}
@@ -1213,7 +1222,7 @@ export default function WatchlistPage() {
                   <span className="text-sm text-gray-600 dark:text-gray-400">Add to:</span>
                   <select
                     value={activeWatchlistId || ''}
-                    onChange={(e) => setActiveWatchlistId(e.target.value || null)}
+                    onChange={(e) => { suppressScrollRef.current = true; setActiveWatchlistId(e.target.value || null) }}
                     className="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   >
                     <option value="">Select Watchlist</option>
