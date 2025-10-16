@@ -127,6 +127,16 @@ export async function POST(
       }, { status: 400 })
     }
 
+    // Enforce integer-only quantity for portfolio trades
+    const qtyNum = typeof quantity === 'string' ? Number(quantity) : Number(quantity)
+    if (!Number.isFinite(qtyNum) || qtyNum <= 0 || !Number.isInteger(qtyNum)) {
+      console.log('❌ Trades API - Invalid quantity (must be a positive whole number):', quantity)
+      return NextResponse.json({
+        success: false,
+        error: 'Quantity must be a positive whole number'
+      }, { status: 400 })
+    }
+
     // Verify user has access to this portfolio
     const token = request.cookies.get('token')?.value
     if (!token) {
@@ -175,7 +185,7 @@ export async function POST(
       )
 
       const currentQty = posRows[0]?.quantity || 0
-      if (currentQty < parseFloat(quantity)) {
+      if (currentQty < qtyNum) {
         console.log('❌ Trades API - Insufficient shares for sell trade:', {
           symbol,
           requestedQuantity: quantity,
@@ -198,7 +208,7 @@ export async function POST(
     // Execute trade and position updates in a transaction
     const trade = await withTransaction(async (client) => {
       const now = new Date()
-      const qty = parseFloat(quantity)
+      const qty = qtyNum
       const prc = parseFloat(price)
       const amount = qty * prc
       // Insert trade with generated ID

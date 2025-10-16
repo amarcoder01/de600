@@ -596,15 +596,17 @@ export default function EnhancedPortfolioManager() {
                       <Input
                         id="quantity"
                         type="number"
+                        step="1"
                         placeholder="Number of shares"
                         value={tradeForm.quantity}
                         onChange={(e) => {
                           const raw = e.target.value
                           const sanitized = raw.replace(/^0+(?=\d)/, '')
-                          if (sanitized !== raw) e.target.value = sanitized
+                          const intOnly = sanitized.split('.')[0]
+                          if (intOnly !== raw) e.target.value = intOnly
                           setTradeForm({
                             ...tradeForm,
-                            quantity: parseFloat(sanitized) || 0,
+                            quantity: parseInt(intOnly || '0', 10) || 0,
                           })
                         }}
                       />
@@ -724,15 +726,17 @@ export default function EnhancedPortfolioManager() {
                       <Input
                         id="sell-quantity"
                         type="number"
+                        step="1"
                         placeholder="Number of shares"
                         value={tradeForm.quantity}
                         onChange={(e) => {
                           const raw = e.target.value
                           const sanitized = raw.replace(/^0+(?=\d)/, '')
-                          if (sanitized !== raw) e.target.value = sanitized
+                          const intOnly = sanitized.split('.')[0]
+                          if (intOnly !== raw) e.target.value = intOnly
                           setTradeForm({
                             ...tradeForm,
-                            quantity: parseFloat(sanitized) || 0,
+                            quantity: parseInt(intOnly || '0', 10) || 0,
                           })
                         }}
                       />

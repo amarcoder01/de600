@@ -419,9 +419,19 @@ export default function PortfolioManager() {
                       <Input
                         id="quantity"
                         type="number"
+                        step="1"
                         placeholder="Number of shares"
                         value={newPosition.quantity}
-                        onChange={(e) => setNewPosition({...newPosition, quantity: parseFloat(e.target.value) || 0})}
+                        onChange={(e) => {
+                          const raw = e.target.value
+                          const sanitized = raw.replace(/^0+(?=\d)/, '')
+                          const intOnly = sanitized.split('.')[0]
+                          if (intOnly !== raw) e.target.value = intOnly
+                          setNewPosition({
+                            ...newPosition,
+                            quantity: parseInt(intOnly || '0', 10) || 0,
+                          })
+                        }}
                       />
                     </div>
                     <div className="space-y-2">
