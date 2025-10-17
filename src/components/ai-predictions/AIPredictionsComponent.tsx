@@ -180,6 +180,7 @@ export default function AIPredictionsComponent({ className }: AIPredictionsCompo
   const [useEnsemble, setUseEnsemble] = useState(true)
   const [includeReasoning, setIncludeReasoning] = useState(true)
   const [includeWebSentiment, setIncludeWebSentiment] = useState(true)
+  const [inputError, setInputError] = useState<string | null>(null)
 
   const formatPercentage = (value: number): string => {
     return `${value >= 0 ? '+' : ''}${(value * 100).toFixed(2)}%`
@@ -192,6 +193,12 @@ export default function AIPredictionsComponent({ className }: AIPredictionsCompo
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(value)
+  }
+
+  const isValidTicker = (t: string): boolean => {
+    const v = t.trim().toUpperCase()
+    // Allow 1-5 alphanumerics, optional "." or "-" suffix of 1-2 chars (e.g., BRK.B)
+    return /^[A-Z0-9]{1,5}([.-][A-Z0-9]{1,2})?$/.test(v)
   }
 
   const getSignalIcon = (signal: string) => {
@@ -235,6 +242,19 @@ export default function AIPredictionsComponent({ className }: AIPredictionsCompo
 
   const runPrediction = async () => {
     console.log('🚀 runPrediction function called')
+    // Lightweight pre-validation before triggering loading state
+    const trimmed = symbol.trim().toUpperCase()
+    if (!trimmed) {
+      setInputError('Please enter a valid stock symbol')
+      setResult({ success: false, error: 'Please enter a valid stock symbol' })
+      return
+    }
+    if (!isValidTicker(trimmed)) {
+      setInputError('Enter a valid stock ticker (e.g., AAPL, MSFT, BRK.B)')
+      setResult({ success: false, error: 'Enter a valid stock ticker (e.g., AAPL, MSFT, BRK.B)' })
+      return
+    }
+
     setLoading(true)
     setResult(null)
 
@@ -242,6 +262,12 @@ export default function AIPredictionsComponent({ className }: AIPredictionsCompo
       // Validate input
       if (!symbol.trim()) {
         throw new Error('Please enter a valid stock symbol')
+      }
+      if (!isValidTicker(symbol)) {
+        setInputError('Enter a valid stock ticker (e.g., AAPL, MSFT, BRK.B)')
+        throw new Error('Enter a valid stock ticker (e.g., AAPL, MSFT, BRK.B)')
+      } else {
+        setInputError(null)
       }
 
       if (predictionType === 'multiDay' && (forecastDays < 3 || forecastDays > 30)) {
@@ -316,10 +342,23 @@ export default function AIPredictionsComponent({ className }: AIPredictionsCompo
               <Input
                 id="symbol"
                 value={symbol}
-                onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+                onChange={(e) => {
+                  const v = e.target.value.toUpperCase()
+                  setSymbol(v)
+                  if (!v.trim()) {
+                    setInputError(null)
+                  } else if (!isValidTicker(v)) {
+                    setInputError('Enter a valid stock ticker (e.g., AAPL, MSFT, BRK.B)')
+                  } else {
+                    setInputError(null)
+                  }
+                }}
                 placeholder="AAPL"
                 className="uppercase"
               />
+              {inputError && symbol.trim() && (
+                <div className="text-xs text-red-600">{inputError}</div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -417,7 +456,7 @@ export default function AIPredictionsComponent({ className }: AIPredictionsCompo
             <div className="flex space-x-2">
               <Button 
                 onClick={runPrediction} 
-                disabled={loading || !symbol.trim()}
+                disabled={loading || !symbol.trim() || !!inputError}
                 className="flex-1"
               >
                 {loading ? (

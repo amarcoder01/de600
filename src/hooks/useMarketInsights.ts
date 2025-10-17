@@ -37,13 +37,19 @@ interface MarketInsights {
   }
 }
 
-export function useMarketInsights() {
+export function useMarketInsights(enabled: boolean = true) {
   const [insights, setInsights] = useState<MarketInsights | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const fetchInsights = async () => {
     try {
+      if (!enabled) {
+        setInsights(null)
+        setLoading(false)
+        setError(null)
+        return
+      }
       setLoading(true)
       setError(null)
       
@@ -73,7 +79,7 @@ export function useMarketInsights() {
     const interval = setInterval(fetchInsights, 5 * 60 * 1000)
     
     return () => clearInterval(interval)
-  }, [])
+  }, [enabled])
 
   return {
     insights,

@@ -29,7 +29,7 @@ import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { usePriceAlertStore } from '@/store'
+import { usePriceAlertStore, useAuthStore } from '@/store'
 import { toast } from 'sonner'
 import { PriceAlert, CreatePriceAlertRequest } from '@/types'
 
@@ -49,6 +49,7 @@ export default function PriceAlertsPage() {
     getActiveAlerts,
     getAlertHistory
   } = usePriceAlertStore()
+  const { isAuthenticated } = useAuthStore()
 
   const [activeTab, setActiveTab] = useState('active')
   const [showCreateDialog, setShowCreateDialog] = useState(false)
@@ -79,12 +80,17 @@ export default function PriceAlertsPage() {
   }>({})
   
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const displayStats = isAuthenticated ? stats : { total: 0, active: 0, triggered: 0, cancelled: 0 }
 
-  // Load alerts on component mount
+  // Load alerts on component mount (only when authenticated)
   useEffect(() => {
+    if (!isAuthenticated) {
+      setStats({ total: 0, active: 0, triggered: 0, cancelled: 0 })
+      return
+    }
     loadAlerts()
     loadStats()
-  }, [loadAlerts])
+  }, [isAuthenticated, loadAlerts])
 
   // Set up automatic price updates every 30 seconds
   useEffect(() => {
@@ -244,17 +250,28 @@ export default function PriceAlertsPage() {
   const loadStats = async () => {
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+      if (!token) {
+        setStats({ total: 0, active: 0, triggered: 0, cancelled: 0 })
+        return
+      }
       const response = await fetch('/api/price-alerts/check', {
         headers: {
           ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         }
       })
+      if (!response.ok) {
+        setStats({ total: 0, active: 0, triggered: 0, cancelled: 0 })
+        return
+      }
       const data = await response.json()
       if (data.success) {
         setStats(data.data)
+      } else {
+        setStats({ total: 0, active: 0, triggered: 0, cancelled: 0 })
       }
     } catch (error) {
       console.error('Error loading stats:', error)
+      setStats({ total: 0, active: 0, triggered: 0, cancelled: 0 })
     }
   }
 
@@ -440,7 +457,7 @@ export default function PriceAlertsPage() {
              variant="outline" 
              size="sm" 
              onClick={handleManualCheck}
-             disabled={isRefreshing}
+             disabled={isRefreshing || !isAuthenticated}
            >
              {isRefreshing ? (
                <>
@@ -629,7 +646,7 @@ export default function PriceAlertsPage() {
               <Bell className="w-5 h-5 text-blue-600" />
               <div>
                 <p className="text-sm text-muted-foreground">Total Alerts</p>
-                <p className="text-2xl font-bold">{stats.total}</p>
+                <p className="text-2xl font-bold">{displayStats.total}</p>
               </div>
             </div>
           </CardContent>
@@ -640,7 +657,7 @@ export default function PriceAlertsPage() {
               <CheckCircle className="w-5 h-5 text-green-600" />
               <div>
                 <p className="text-sm text-muted-foreground">Active</p>
-                <p className="text-2xl font-bold">{stats.active}</p>
+                <p className="text-2xl font-bold">{displayStats.active}</p>
               </div>
             </div>
           </CardContent>
@@ -651,7 +668,7 @@ export default function PriceAlertsPage() {
               <AlertTriangle className="w-5 h-5 text-red-600" />
               <div>
                 <p className="text-sm text-muted-foreground">Triggered</p>
-                <p className="text-2xl font-bold">{stats.triggered}</p>
+                <p className="text-2xl font-bold">{displayStats.triggered}</p>
               </div>
             </div>
           </CardContent>
@@ -662,7 +679,7 @@ export default function PriceAlertsPage() {
               <XCircle className="w-5 h-5 text-gray-600" />
               <div>
                 <p className="text-sm text-muted-foreground">Cancelled</p>
-                <p className="text-2xl font-bold">{stats.cancelled}</p>
+                <p className="text-2xl font-bold">{displayStats.cancelled}</p>
               </div>
             </div>
           </CardContent>
@@ -672,10 +689,10 @@ export default function PriceAlertsPage() {
       {/* Alerts Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="active">Active ({stats.active})</TabsTrigger>
-          <TabsTrigger value="triggered">Triggered ({stats.triggered})</TabsTrigger>
-          <TabsTrigger value="cancelled">Cancelled ({stats.cancelled})</TabsTrigger>
-          <TabsTrigger value="all">All ({stats.total})</TabsTrigger>
+          <TabsTrigger value="active">Active ({displayStats.active})</TabsTrigger>
+          <TabsTrigger value="triggered">Triggered ({displayStats.triggered})</TabsTrigger>
+          <TabsTrigger value="cancelled">Cancelled ({displayStats.cancelled})</TabsTrigger>
+          <TabsTrigger value="all">All ({displayStats.total})</TabsTrigger>
         </TabsList>
 
         <TabsContent value={activeTab} className="space-y-6">

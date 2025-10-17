@@ -31,6 +31,7 @@ import {
 import { Stock } from '@/types'
 import { useToast } from '@/hooks/use-toast'
 import PortfolioAnalytics from './PortfolioAnalytics'
+import { useAuthStore } from '@/store'
 
 interface Trade {
   id: string
@@ -67,6 +68,7 @@ interface Portfolio {
 }
 
 export default function ProductionPortfolioManager() {
+  const { isAuthenticated, user } = useAuthStore()
   const { toast } = useToast()
   const [portfolios, setPortfolios] = useState<Portfolio[]>([])
   const [activePortfolio, setActivePortfolio] = useState<Portfolio | null>(null)
@@ -93,6 +95,7 @@ export default function ProductionPortfolioManager() {
   const [isRefreshingData, setIsRefreshingData] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
+  const isGuest = !isAuthenticated || !user
   
   const [tradeForm, setTradeForm] = useState({
     symbol: '',
@@ -128,6 +131,10 @@ export default function ProductionPortfolioManager() {
 
   // Load positions for a portfolio
   const loadPositions = useCallback(async (portfolioId: string) => {
+    if (!isAuthenticated || !user) {
+      setPositions([])
+      return
+    }
     try {
       console.log('📡 Portfolio Component - Loading positions for portfolio:', portfolioId)
       const response = await fetch(`/api/portfolio/${portfolioId}/positions`, {
@@ -203,10 +210,14 @@ export default function ProductionPortfolioManager() {
       console.error('❌ Portfolio Component - Error loading positions:', err)
       setError(err instanceof Error ? err.message : 'Failed to load positions')
     }
-  }, [])
+  }, [isAuthenticated, user])
 
   // Load trades for a portfolio
   const loadTrades = useCallback(async (portfolioId: string) => {
+    if (!isAuthenticated || !user) {
+      setTrades([])
+      return
+    }
     try {
       console.log('📡 Portfolio Component - Loading trades for portfolio:', portfolioId)
       const response = await fetch(`/api/portfolio/${portfolioId}/trades`, {
@@ -243,6 +254,13 @@ export default function ProductionPortfolioManager() {
 
   // Load portfolios from API
   const loadPortfolios = useCallback(async () => {
+    if (!isAuthenticated || !user) {
+      setPortfolios([])
+      setActivePortfolio(null)
+      setPositions([])
+      setTrades([])
+      return
+    }
     try {
       setIsLoading(true)
       setError(null)
@@ -293,13 +311,23 @@ export default function ProductionPortfolioManager() {
     } finally {
       setIsLoading(false)
     }
-  }, [activePortfolio, loadPositions, loadTrades])
+  }, [activePortfolio, loadPositions, loadTrades, isAuthenticated, user])
 
   // Removed localStorage trade management - now using database only
 
   useEffect(() => {
+    if (!isAuthenticated || !user) {
+      // Clear immediately on logout / unauthenticated
+      setPortfolios([])
+      setActivePortfolio(null)
+      setPositions([])
+      setTrades([])
+      setError(null)
+      setIsLoading(false)
+      return
+    }
     loadPortfolios()
-  }, [loadPortfolios])
+  }, [loadPortfolios, isAuthenticated, user])
 
   // Update trade form type when tab changes
   useEffect(() => {
@@ -765,8 +793,23 @@ export default function ProductionPortfolioManager() {
     )
   }
 
+  // Show a soft auth banner when unauthenticated, but keep interface visible
+
   return (
     <div className="space-y-6">
+      {/* Auth Banner for guests */}
+      {isGuest && (
+        <Card className="border-amber-200 dark:border-amber-800">
+          <CardHeader>
+            <CardTitle className="text-lg">Create an account to manage your portfolios</CardTitle>
+            <CardDescription>Log in or sign up to create portfolios, add positions, and track trades.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex gap-2">
+            <Button onClick={() => (window.location.href = '/login')}>Log in</Button>
+            <Button variant="outline" onClick={() => (window.location.href = '/register')}>Create account</Button>
+          </CardContent>
+        </Card>
+      )}
       {/* Error Display */}
       {error && (
         <Alert className="mb-6 border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20">
@@ -805,7 +848,7 @@ export default function ProductionPortfolioManager() {
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>Portfolio Management</span>
-            <Button onClick={refreshPortfolio} variant="outline" size="sm" disabled={isRefreshingPortfolio}>
+            <Button onClick={refreshPortfolio} variant="outline" size="sm" disabled={isRefreshingPortfolio || isGuest}>
               {isRefreshingPortfolio ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
@@ -822,7 +865,14 @@ export default function ProductionPortfolioManager() {
           {portfolios.length === 0 ? (
             <div className="text-center py-8">
               <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500 mb-4">No portfolios yet. Create your first portfolio to get started.</p>
+              <p className="text-gray-500 mb-2">No portfolios yet.</p>
+              {isGuest ? (
+                <div className="mb-4 text-gray-600">
+                  Log in or create an account to create your first portfolio.
+                </div>
+              ) : (
+                <p className="text-gray-500 mb-4">Create your first portfolio to get started.</p>
+              )}
               <div className="flex gap-2 justify-center">
                 <Input
                   placeholder="New portfolio name"
@@ -830,10 +880,11 @@ export default function ProductionPortfolioManager() {
                   onChange={(e) => setNewPortfolioName(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && createPortfolio()}
                   className="w-[200px]"
+                  disabled={isGuest}
                 />
                 <Button 
                   onClick={createPortfolio} 
-                  disabled={isCreatingPortfolio || !newPortfolioName.trim()}
+                  disabled={isGuest || isCreatingPortfolio || !newPortfolioName.trim()}
                   size="sm"
                 >
                   {isCreatingPortfolio ? (
@@ -843,6 +894,12 @@ export default function ProductionPortfolioManager() {
                   )}
                   {isCreatingPortfolio ? 'Creating...' : 'Create'}
                 </Button>
+                {isGuest && (
+                  <>
+                    <Button size="sm" onClick={() => (window.location.href = '/login')}>Log in</Button>
+                    <Button size="sm" variant="outline" onClick={() => (window.location.href = '/register')}>Create account</Button>
+                  </>
+                )}
               </div>
             </div>
           ) : (
@@ -871,10 +928,11 @@ export default function ProductionPortfolioManager() {
                   onChange={(e) => setNewPortfolioName(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && createPortfolio()}
                   className="w-[200px]"
+                  disabled={isGuest}
                 />
                 <Button 
                   onClick={createPortfolio} 
-                  disabled={isCreatingPortfolio || !newPortfolioName.trim()}
+                  disabled={isGuest || isCreatingPortfolio || !newPortfolioName.trim()}
                   size="sm"
                 >
                   {isCreatingPortfolio ? (
@@ -884,6 +942,12 @@ export default function ProductionPortfolioManager() {
                   )}
                   {isCreatingPortfolio ? 'Creating...' : 'Create'}
                 </Button>
+                {isGuest && (
+                  <>
+                    <Button size="sm" onClick={() => (window.location.href = '/login')}>Log in</Button>
+                    <Button size="sm" variant="outline" onClick={() => (window.location.href = '/register')}>Create account</Button>
+                  </>
+                )}
               </div>
             </div>
           )}

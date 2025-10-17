@@ -974,6 +974,21 @@ export const usePortfolioStore = create<PortfolioStore>()(
     }),
     {
       name: 'portfolio-store',
+      // Only persist UI state; never persist portfolio positions to avoid leakage
+      partialize: (state) => ({
+        activePortfolio: state.activePortfolio,
+      }),
+      onRehydrateStorage: () => (state) => {
+        if (typeof window !== 'undefined') {
+          const token = localStorage.getItem('token')
+          if (!token && state) {
+            try {
+              state.portfolios = []
+              state.activePortfolio = null
+            } catch {}
+          }
+        }
+      }
     }
   )
 )
@@ -1153,7 +1168,7 @@ export const useNewsStore = create<NewsStore>()(
           const token = localStorage.getItem('token')
           if (!token) {
             // Ensure userBookmarks is always a Set, even without token
-            set({ userBookmarks: new Set<string>() })
+            set({ userBookmarks: new Set<string>(), bookmarkedNews: [] })
             return
           }
           
@@ -1165,7 +1180,7 @@ export const useNewsStore = create<NewsStore>()(
           
           if (response.status === 401) {
             console.warn('⚠️ Authentication failed for bookmarks, initializing empty Set')
-            set({ userBookmarks: new Set<string>() })
+            set({ userBookmarks: new Set<string>(), bookmarkedNews: [] })
             return
           }
           
@@ -1178,12 +1193,12 @@ export const useNewsStore = create<NewsStore>()(
             })
           } else {
             // Fallback: ensure userBookmarks is always a Set
-            set({ userBookmarks: new Set<string>() })
+            set({ userBookmarks: new Set<string>(), bookmarkedNews: [] })
           }
         } catch (error) {
           console.error('❌ Error fetching bookmarks:', error)
           // Ensure userBookmarks is always a Set even on error
-          set({ userBookmarks: new Set<string>() })
+          set({ userBookmarks: new Set<string>(), bookmarkedNews: [] })
         }
       },
       
@@ -1282,7 +1297,25 @@ export const useNewsStore = create<NewsStore>()(
       }))
     }),
     {
-      name: 'news-store'
+      name: 'news-store',
+      // Do not persist user-specific bookmarks to prevent leakage
+      partialize: (state) => ({
+        news: state.news,
+        marketUpdates: state.marketUpdates,
+        unreadCount: state.unreadCount,
+        lastFetch: state.lastFetch
+      }),
+      onRehydrateStorage: () => (state) => {
+        if (typeof window !== 'undefined') {
+          const token = localStorage.getItem('token')
+          if (!token && state) {
+            try {
+              state.bookmarkedNews = []
+              state.userBookmarks = new Set<string>()
+            } catch {}
+          }
+        }
+      }
     }
   )
 )
@@ -1449,6 +1482,11 @@ export const usePriceAlertStore = create<PriceAlertStore>()(
         set({ isLoading: true, error: null })
         try {
           const token = localStorage.getItem('token')
+          const isAuthenticated = useAuthStore.getState().isAuthenticated
+          if (!token || !isAuthenticated) {
+            set({ alerts: [], currentPrices: {}, isLoading: false })
+            return
+          }
           const response = await fetch('/api/price-alerts', {
             headers: {
               ...(token ? { 'Authorization': `Bearer ${token}` } : {})
@@ -1479,6 +1517,11 @@ export const usePriceAlertStore = create<PriceAlertStore>()(
       loadCurrentPrices: async () => {
         try {
           const token = localStorage.getItem('token')
+          const isAuthenticated = useAuthStore.getState().isAuthenticated
+          if (!token || !isAuthenticated) {
+            set({ currentPrices: {} })
+            return
+          }
           const response = await fetch('/api/price-alerts/prices', {
             headers: {
               ...(token ? { 'Authorization': `Bearer ${token}` } : {})
@@ -1608,7 +1651,19 @@ export const usePriceAlertStore = create<PriceAlertStore>()(
       }
     }),
     {
-      name: 'price-alert-store'
+      name: 'price-alert-store',
+      partialize: () => ({}),
+      onRehydrateStorage: () => (state) => {
+        if (typeof window !== 'undefined') {
+          const token = localStorage.getItem('token')
+          if (!token && state) {
+            try {
+              state.alerts = []
+              state.currentPrices = {}
+            } catch {}
+          }
+        }
+      }
     }
   )
 )
@@ -1961,8 +2016,21 @@ export const useAuthStore = create<AuthStore>()(
         console.log('🔐 Auth Store: localStorage cleared')
         
         // Clear token cookie by setting it to expire
-        document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+        document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/'
         console.log('🔐 Auth Store: Cookies cleared')
+        
+        // Also clear any persisted and in-memory price alerts to prevent showing after logout
+        try {
+          usePriceAlertStore.setState({ alerts: [], currentPrices: {} as any })
+          localStorage.removeItem('price-alert-store')
+          // Clear portfolio store as well
+          usePortfolioStore.setState({ portfolios: [], activePortfolio: null } as any)
+          localStorage.removeItem('portfolio-store')
+          // Clear news bookmarks to avoid leakage in bookmarked tab
+          useNewsStore.setState({ bookmarkedNews: [], userBookmarks: new Set<string>() } as any)
+          localStorage.removeItem('news-store')
+        } catch (e) {
+        }
         
         // Redirect to landing page with a small delay to ensure state is cleared
         if (typeof window !== 'undefined') {

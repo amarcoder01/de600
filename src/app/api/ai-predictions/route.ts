@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { yahooFinanceSimple } from '@/lib/yahoo-finance-simple'
-import { getStockData } from '@/lib/multi-source-api'
+import { getStockData, searchStocks } from '@/lib/multi-source-api'
 import { NewsService } from '@/lib/news-api'
 
 // Enhanced technical analysis functions
@@ -241,6 +241,9 @@ class PredictionEngine {
     
     // Fetch extended historical data for better analysis (1 year instead of 3 months)
     const historicalData = await this.fetchHistoricalData(symbol, '1y')
+    if (!historicalData || historicalData.length < 60) {
+      throw new Error('Insufficient historical data to generate an accurate prediction')
+    }
     const prices = historicalData.map((d: any) => d.close)
     const highs = historicalData.map((d: any) => d.high)
     const lows = historicalData.map((d: any) => d.low)
@@ -667,9 +670,8 @@ class PredictionEngine {
     } catch (error) {
       console.error('Error fetching historical data:', error)
     }
-    
-    // Fallback: generate synthetic data
-    return this.generateSyntheticData()
+    // No synthetic fallback for predictions to maintain accuracy
+    return []
   }
 
   static generateSyntheticData(days: number = 365) {
@@ -714,7 +716,6 @@ class PredictionEngine {
     return slope / prices[prices.length - 1] // Normalize by current price
   }
 
-  // Calculate volatility from price data
   static calculateVolatility(prices: number[]): number {
     if (prices.length < 2) return 0.02
     
@@ -739,17 +740,21 @@ class PredictionEngine {
       }
     }
 
-    // Combine predictions using weighted average
-    const technicalWeight = 0.6  // Technical analysis weight
-    const mlWeight = 0.4         // ML model weight
+    // Combine predictions using dynamic weights derived from confidences
+    const techConf = Math.max(0, Math.min(1, technicalPrediction?.confidence ?? 0.5))
+    const mlConf = Math.max(0, Math.min(1, mlPrediction?.confidence ?? 0))
+    const sum = techConf + mlConf
+    let technicalWeight = sum > 0 ? (techConf / sum) : 0.6
+    // Clamp weights to reasonable band to avoid extremes
+    technicalWeight = Math.max(0.3, Math.min(0.8, technicalWeight))
+    const mlWeight = 1 - technicalWeight
 
     // Combine price targets
-    const combinedPriceTarget = (technicalPrediction.price_target * technicalWeight) + 
-                               (mlPrediction.predicted_price * mlWeight)
+    const combinedPriceTarget = (technicalPrediction.price_target * technicalWeight) +
+                                (mlPrediction.predicted_price * mlWeight)
 
     // Combine confidence scores
-    const combinedConfidence = (technicalPrediction.confidence * technicalWeight) + 
-                              (mlPrediction.confidence * mlWeight)
+    const combinedConfidence = (techConf * technicalWeight) + (mlConf * mlWeight)
 
     // Calculate combined change percent
     const combinedChangePercent = ((combinedPriceTarget - technicalPrediction.current_price) / 
@@ -835,13 +840,13 @@ class PredictionEngine {
       else mlScore += (50 - rsi) / 100 * 0.1 // Neutral zone
       
       // MACD contribution (25% weight)
-      if (macd.macd > macd.signal && macd.histogram > 0) mlScore += 0.25
-      else if (macd.macd < macd.signal && macd.histogram < 0) mlScore -= 0.25
+      if (macd.macd > macd.signal) mlScore += 0.25
+      else if (macd.macd < macd.signal) mlScore -= 0.25
       else mlScore += (macd.histogram / Math.abs(macd.macd)) * 0.1
       
       // Moving average contribution (20% weight)
-      if (currentPrice > sma20 && sma20 > sma50) mlScore += 0.2
-      else if (currentPrice < sma20 && sma20 < sma50) mlScore -= 0.2
+      if (currentPrice > sma20) mlScore += 0.2
+      else if (currentPrice < sma20) mlScore -= 0.2
       else mlScore += ((currentPrice - sma20) / sma20) * 0.1
       
       // Bollinger Bands contribution (15% weight)
@@ -924,6 +929,55 @@ export async function POST(request: NextRequest) {
         success: false,
         error: 'Missing required field: symbol'
       }, { status: 400 })
+    }
+
+    // Lightweight ticker format validation (does not change API structure)
+    const sym = String(symbol).trim().toUpperCase()
+    const tickerRegex = /^[A-Z0-9]{1,5}([.-][A-Z0-9]{1,2})?$/
+    if (!tickerRegex.test(sym)) {
+      return NextResponse.json({
+        success: false,
+        error: 'Invalid stock ticker format. Use standard tickers like AAPL, MSFT, BRK.B'
+      }, { status: 400 })
+    }
+
+    // Existence checks to prevent mock fallbacks for non-existent tickers
+    // 1) Try market search (may still return mock in worst case)
+    try {
+      const matches = await searchStocks(sym)
+      const hasExact = matches.some(m => (m.symbol || '').toUpperCase() === sym)
+      if (!hasExact) {
+        // 2) As a stronger guard, verify Yahoo chart endpoint has real data
+        try {
+          const yfRes = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=1mo`)
+          const yfData = await yfRes.json()
+          const valid = !!(yfData?.chart?.result && Array.isArray(yfData.chart.result) && yfData.chart.result[0]?.timestamp?.length)
+          if (!valid) {
+            return NextResponse.json({
+              success: false,
+              error: `Unknown stock ticker: ${sym}`
+            }, { status: 400 })
+          }
+        } catch {
+          return NextResponse.json({
+            success: false,
+            error: `Unknown stock ticker: ${sym}`
+          }, { status: 400 })
+        }
+      }
+    } catch (_) {
+      // As a fallback, attempt Yahoo chart check directly
+      try {
+        const yfRes = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=1mo`)
+        const yfData = await yfRes.json()
+        const valid = !!(yfData?.chart?.result && Array.isArray(yfData.chart.result) && yfData.chart.result[0]?.timestamp?.length)
+        if (!valid) {
+          return NextResponse.json({
+            success: false,
+            error: `Unknown stock ticker: ${sym}`
+          }, { status: 400 })
+        }
+      } catch {}
     }
 
          console.log(`AI Predictions API: Processing ${prediction_type} prediction for ${symbol}`)
@@ -1019,6 +1073,9 @@ async function generateMultiDayPrediction(symbol: string, stockData: any, foreca
   
   // Get historical data for comprehensive analysis
   const historicalData = await PredictionEngine.fetchHistoricalData(symbol)
+  if (!historicalData || historicalData.length < 60) {
+    throw new Error('Insufficient historical data to generate a reliable multi-day forecast')
+  }
   const prices = historicalData.map((d: any) => d.close)
   const volumes = historicalData.map((d: any) => d.volume)
   const highs = historicalData.map((d: any) => d.high)

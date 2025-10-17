@@ -47,6 +47,7 @@ import { useRealTimeComparison, usePriceChangeIndicator } from '@/hooks/useRealT
 import { RealTimePriceDisplay, RealTimeVolumeDisplay, RealTimeMarketCapDisplay } from './RealTimePriceDisplay'
 import { useMultipleStockDetails } from '@/hooks/useStockDetails'
 import { useMarketInsights } from '@/hooks/useMarketInsights'
+import { useAuthStore } from '@/store'
 import { FinancialMetricsDisplay } from './FinancialMetricsDisplay'
 import { cn } from '@/lib/utils'
 import { UserDataService } from '@/lib/user-data-service'
@@ -101,6 +102,7 @@ interface AnalysisResult {
 }
 
 export default function StockComparisonAnalyzer() {
+  const { isAuthenticated } = useAuthStore()
   const [selectedStocks, setSelectedStocks] = useState<StockData[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<StockData[]>([])
@@ -226,8 +228,8 @@ export default function StockComparisonAnalyzer() {
     safeSelectedStocks.map(stock => stock.symbol)
   )
 
-  // Market insights hook
-  const { insights: marketInsights, loading: insightsLoading, error: insightsError } = useMarketInsights()
+  // Market insights hook (disabled when not authenticated)
+  const { insights: marketInsights, loading: insightsLoading, error: insightsError } = useMarketInsights(!!isAuthenticated)
 
   // Memoized performance calculations to ensure data consistency
   const performanceMetrics = useMemo(() => {
@@ -301,16 +303,24 @@ export default function StockComparisonAnalyzer() {
     }
   }, [safeSelectedStocks, lastUpdateTime]) // Recalculate when stocks or real-time data changes
 
-  // Load saved sessions from database on component mount
+  // Load saved sessions only when authenticated; clear when logged out
   useEffect(() => {
+    if (!isAuthenticated) {
+      setSavedSessions([])
+      return
+    }
     loadSavedSessions()
-  }, [])
+  }, [isAuthenticated])
 
   const loadSavedSessions = async () => {
     setIsLoadingSessions(true)
     try {
       // Get authentication token from localStorage
       const token = localStorage.getItem('token')
+      if (!token || !isAuthenticated) {
+        setSavedSessions([])
+        return
+      }
       const headers: HeadersInit = {
         'Content-Type': 'application/json'
       }
@@ -386,29 +396,35 @@ export default function StockComparisonAnalyzer() {
       }
     } catch (error) {
       console.error('Error loading saved sessions:', error)
-      // Fallback to localStorage if database fails
-    const saved = localStorage.getItem('stockComparisonSessions')
-    if (saved) {
-      try {
-        const localSessions = JSON.parse(saved)
-        // Apply same repair logic to localStorage data
-        const repairedLocalSessions = (localSessions || []).map((session: any) => {
-          if (!session.stocks || !Array.isArray(session.stocks)) {
-            console.warn('⚠️ Repairing localStorage session:', session.id)
-            return {
-              ...session,
-              stocks: session.stocks || []
-            }
+      // Fallback to localStorage only if still authenticated
+      if (isAuthenticated) {
+        const saved = localStorage.getItem('stockComparisonSessions')
+        if (saved) {
+          try {
+            const localSessions = JSON.parse(saved)
+            // Apply same repair logic to localStorage data
+            const repairedLocalSessions = (localSessions || []).map((session: any) => {
+              if (!session.stocks || !Array.isArray(session.stocks)) {
+                console.warn('⚠️ Repairing localStorage session:', session.id)
+                return {
+                  ...session,
+                  stocks: session.stocks || []
+                }
+              }
+              return session
+            }).filter((session: any) => session && session.id && session.timestamp)
+            
+            setSavedSessions(repairedLocalSessions)
+          } catch (parseError) {
+            console.error('Error parsing localStorage sessions:', parseError)
+            setSavedSessions([])
           }
-          return session
-        }).filter((session: any) => session && session.id && session.timestamp)
-        
-        setSavedSessions(repairedLocalSessions)
-      } catch (parseError) {
-        console.error('Error parsing localStorage sessions:', parseError)
+        } else {
+          setSavedSessions([])
+        }
+      } else {
         setSavedSessions([])
       }
-    }
     } finally {
       setIsLoadingSessions(false)
     }
