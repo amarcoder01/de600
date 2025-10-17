@@ -487,7 +487,7 @@ export default function EnhancedPortfolioManager() {
                         <div>
                           <div className="font-semibold">{trade.symbol}</div>
                           <div className="text-sm text-gray-600">
-                            {trade.quantity.toLocaleString()} shares @ ${trade.price.toFixed(2)}
+                            {trade.quantity.toLocaleString()} {Number.isInteger(trade.quantity) && Math.abs(trade.quantity) === 1 ? 'share' : 'shares'} @ ${trade.price.toFixed(2)}
                           </div>
                           {trade.notes && (
                             <div className="text-xs text-gray-500 mt-1">{trade.notes}</div>

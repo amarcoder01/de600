@@ -63,6 +63,7 @@ export default function TradeGPTPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [fileUpload, setFileUpload] = useState<FileUpload | null>(null)
   const [showFileUpload, setShowFileUpload] = useState(false)
+  const [showPrivacyDetails, setShowPrivacyDetails] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -435,6 +436,74 @@ export default function TradeGPTPage() {
           <span>New Chat</span>
         </button>
       </div>
+
+      {/* Privacy Banner (always visible) */}
+      <div className="bg-emerald-50 dark:bg-emerald-900/20 border-b border-emerald-200 dark:border-emerald-800">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-emerald-900 dark:text-emerald-100 leading-relaxed whitespace-nowrap overflow-hidden text-ellipsis">
+              <span className="font-semibold">TradGPT: Zero‑Trace Intelligence</span> — Your Trades • Your Secrets • Your Edge • Private by design: no chat storage • no logs • no tracking
+            </p>
+          </div>
+          <button
+            className="shrink-0 text-xs px-3 py-1 rounded-md bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600"
+            onClick={() => setShowPrivacyDetails(true)}
+          >
+            See Why We Never Store Your Chat
+          </button>
+        </div>
+      </div>
+
+      {showPrivacyDetails && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-2xl w-full mx-4">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Why We Never Store Your Chat</h3>
+              <button
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                onClick={() => setShowPrivacyDetails(false)}
+                aria-label="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-5 space-y-4 text-sm text-gray-800 dark:text-gray-100">
+              <p className="font-medium">At TradGPT, your privacy isn’t an option — it’s a principle.</p>
+              <p>We believe traders deserve full control over their data, strategies, and conversations. That’s why our system is built in Zero-Trace Mode.</p>
+
+              <div>
+                <h4 className="font-semibold mb-2">🔒 What It Means</h4>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li>No Chat Logs: Every message you send is processed instantly and then deleted.</li>
+                  <li>No Storage: We don’t save your trading data, preferences, or history.</li>
+                  <li>No Tracking: We don’t monitor, analyze, or sell your usage behavior.</li>
+                  <li>No Learning from You: TradGPT doesn’t train or improve using your personal data.</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-semibold mb-2">⚡ Why We Do It</h4>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li>Protect Your Strategy – Your trading edge should remain yours alone.</li>
+                  <li>Build Real Trust – Transparency is our foundation; we have nothing to hide.</li>
+                  <li>Comply with Privacy Standards – Zero storage means zero data risk.</li>
+                  <li>Empower the Trader – You own your knowledge and your results.</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-semibold mb-2">🛡️ The Result</h4>
+                <p>Every session is temporary, secure, and untraceable. When you leave, your chats vanish — only your insights remain.</p>
+              </div>
+
+              <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                <p className="font-medium">TradGPT: Where Intelligence Meets True Privacy.</p>
+                <p>Your Trades. Your Secrets. Your Edge.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto">

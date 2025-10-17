@@ -344,7 +344,7 @@ export default function PortfolioManager() {
                         <div>
                           <div className="font-semibold">{transaction.symbol}</div>
                           <div className="text-sm text-gray-600">
-                            {transaction.quantity.toLocaleString()} shares @ ${transaction.price.toFixed(2)}
+                            {transaction.quantity.toLocaleString()} {Number.isInteger(transaction.quantity) && Math.abs(transaction.quantity) === 1 ? 'share' : 'shares'} @ ${transaction.price.toFixed(2)}
                           </div>
                         </div>
                       </div>

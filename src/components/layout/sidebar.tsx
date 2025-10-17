@@ -29,6 +29,7 @@ import { cn } from '@/lib/utils'
 import { useUIStore } from '@/store'
 import { Button } from '@/components/ui/button'
 import { VidalityLogo, VidalityLogoCompact } from '@/components/ui/VidalityLogo'
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 
 interface SidebarItem {
   id: string
@@ -198,14 +199,25 @@ export function Sidebar() {
           )}
         </AnimatePresence>
         
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          className="ml-auto"
-        >
-          {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-        </Button>
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                className="ml-auto"
+                aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                title={sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+              >
+                {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" align="center">
+              {sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {/* Navigation Items */}

@@ -171,7 +171,7 @@ interface AIPredictionsComponentProps {
 }
 
 export default function AIPredictionsComponent({ className }: AIPredictionsComponentProps) {
-  const [symbol, setSymbol] = useState('AAPL')
+  const [symbol, setSymbol] = useState('')
   const [predictionType, setPredictionType] = useState('nextDay')
   const [forecastDays, setForecastDays] = useState(7)
   const [topStocksCount, setTopStocksCount] = useState(10)
@@ -238,6 +238,19 @@ export default function AIPredictionsComponent({ className }: AIPredictionsCompo
       default:
         return <Activity className="h-5 w-5 text-gray-600" />
     }
+  }
+
+  const getWeightForModel = (modelKey: string, weights: Record<string, number> | undefined) => {
+    const map: Record<string, string> = {
+      rsi_contribution: 'rsi',
+      macd_contribution: 'macd',
+      ma_contribution: 'moving_average',
+      bb_contribution: 'bollinger_bands',
+      stoch_contribution: 'stochastic',
+      volume_contribution: 'volume',
+    }
+    const key = map[modelKey] || modelKey
+    return (weights && typeof weights[key] === 'number') ? weights[key] : 0
   }
 
   const runPrediction = async () => {
@@ -696,7 +709,7 @@ export default function AIPredictionsComponent({ className }: AIPredictionsCompo
                                     ${typeof prediction === 'number' ? prediction.toFixed(2) : 'N/A'}
                                   </div>
                                   <div className="text-gray-500 text-xs">
-                                    Weight: {((result.predictions?.nextDay?.ml_prediction?.model_weights?.[model] || 0) * 100).toFixed(0)}%
+                                    Weight: {(getWeightForModel(model, result.predictions?.nextDay?.ml_prediction?.model_weights) * 100).toFixed(0)}%
                                   </div>
                                 </div>
                               ))}

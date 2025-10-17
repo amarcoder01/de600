@@ -195,7 +195,10 @@ export default function WatchlistPage() {
 
   // Handle watchlist removal
   const handleRemoveWatchlist = async (watchlistId: string, watchlistName: string) => {
-    if (!confirm(`Are you sure you want to delete the watchlist "${watchlistName}"? This action cannot be undone and will remove all stocks in this watchlist.`)) {
+    const wl = watchlists.find(w => w.id === watchlistId)
+    const c = wl?.items?.length || 0
+    const noun = c === 1 ? 'stock' : 'stocks'
+    if (!confirm(`Are you sure you want to delete the watchlist "${watchlistName}"? This action cannot be undone and will remove all ${c} ${noun} in this watchlist.`)) {
       return
     }
 
@@ -401,7 +404,7 @@ export default function WatchlistPage() {
         return
       }
 
-      if (confirm(`Are you sure you want to remove all ${watchlist.items.length} stocks from "${watchlist.name}"? This action cannot be undone.`)) {
+      if (confirm(`Are you sure you want to remove all ${watchlist.items.length} ${watchlist.items.length === 1 ? 'stock' : 'stocks'} from "${watchlist.name}"? This action cannot be undone.`)) {
         console.log(`🗑️ UI: Clearing all items from watchlist ${watchlistId}...`)
         await clearWatchlist(watchlistId)
         setRefreshSuccess('cleared')
@@ -1547,7 +1550,10 @@ export default function WatchlistPage() {
                     </CardTitle>
                     <div className="flex items-center space-x-2">
                       <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-full">
-                        {watchlist.items?.length || 0} stocks
+                        {(() => {
+                          const c = watchlist.items?.length || 0
+                          return `${c} ${c === 1 ? 'stock' : 'stocks'}`
+                        })()}
                       </span>
                     </div>
                   </div>
@@ -1570,7 +1576,7 @@ export default function WatchlistPage() {
                         ))}
                         {watchlist.items.length > 3 && (
                           <p className="text-xs text-gray-500 text-center">
-                            +{watchlist.items.length - 3} more stocks
+                            {(() => { const extra = watchlist.items.length - 3; return `+${extra} more ${extra === 1 ? 'stock' : 'stocks'}` })()}
                           </p>
                         )}
                       </div>
@@ -1707,7 +1713,7 @@ export default function WatchlistPage() {
                     {watchlists.find(w => w.id === activeWatchlistId)?.name}
                   </h3>
                   <p className="text-sm text-blue-700 dark:text-blue-300">
-                    {watchlists.find(w => w.id === activeWatchlistId)?.items?.length || 0} stocks • 
+                    {(() => { const c = watchlists.find(w => w.id === activeWatchlistId)?.items?.length || 0; return `${c} ${c === 1 ? 'stock' : 'stocks'}` })()} • 
                     Created {new Date(watchlists.find(w => w.id === activeWatchlistId)?.createdAt || '').toLocaleDateString()}
                   </p>
                 </div>

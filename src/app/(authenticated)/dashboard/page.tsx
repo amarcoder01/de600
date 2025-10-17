@@ -310,6 +310,7 @@ export default function Dashboard() {
                 <Button 
                   onClick={() => router.push('/watchlist')}
                   className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                  title="Create your first watchlist"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Create Watchlist
@@ -318,6 +319,7 @@ export default function Dashboard() {
                   onClick={() => router.push('/paper-trading')}
                   variant="outline"
                   className="border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-900/20"
+                  title="Practice trading with virtual funds"
                 >
                   <Target className="w-4 h-4 mr-2" />
                   Start Paper Trading
@@ -342,6 +344,7 @@ export default function Dashboard() {
                 variant={useCompactWidget ? "outline" : "default"}
                 onClick={() => setUseCompactWidget(false)}
                 className="text-xs"
+                title="Show full movers widget"
               >
                 Full
               </Button>
@@ -350,6 +353,7 @@ export default function Dashboard() {
                 variant={useCompactWidget ? "default" : "outline"}
                 onClick={() => setUseCompactWidget(true)}
                 className="text-xs"
+                title="Show compact movers widget"
               >
                 Compact
               </Button>
@@ -415,6 +419,7 @@ export default function Dashboard() {
                 variant="outline" 
                 size="sm"
                 onClick={() => router.push('/watchlist')}
+                title="Open watchlist page"
               >
                 <Eye className="w-4 h-4 mr-2" />
                 View Details
@@ -445,6 +450,7 @@ export default function Dashboard() {
                   value={selectedWatchlistId || ''}
                   onChange={(e) => setSelectedWatchlistId(e.target.value || null)}
                   className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                  title="Select a watchlist to view"
                 >
                   <option value="">All Watchlists</option>
                   {watchlists.map((watchlist) => (
@@ -606,6 +612,7 @@ export default function Dashboard() {
                     }
                   }}
                   className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                  title="Select a portfolio to view trades"
                 >
                   {portfolioOptions.map(p => (
                     <option key={p.id} value={p.id}>{p.name}</option>
