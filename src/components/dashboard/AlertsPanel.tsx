@@ -14,7 +14,7 @@ interface Alert {
   symbol: string
   condition: string
   value: number | string
-  status: 'active' | 'triggered' | 'expired'
+  status: 'active' | 'triggered' | 'expired' | 'cancelled'
   time: string
   priority?: 'low' | 'medium' | 'high'
 }
@@ -33,6 +33,7 @@ export function AlertsPanel({
   onEditAlert 
 }: AlertsPanelProps) {
   const [filter, setFilter] = useState<'all' | 'active' | 'triggered'>('all')
+  const [pendingCancelId, setPendingCancelId] = useState<number | null>(null)
 
   const filteredAlerts = alerts.filter(alert => {
     if (filter === 'all') return true
@@ -60,6 +61,8 @@ export function AlertsPanel({
         return <Bell className="w-4 h-4" />
       case 'triggered':
         return <CheckCircle className="w-4 h-4" />
+      case 'cancelled':
+        return <XCircle className="w-4 h-4" />
       case 'expired':
         return <XCircle className="w-4 h-4" />
       default:
@@ -73,6 +76,8 @@ export function AlertsPanel({
         return 'bg-blue-100 text-blue-600'
       case 'triggered':
         return 'bg-green-100 text-green-600'
+      case 'cancelled':
+        return 'bg-gray-100 text-gray-600'
       case 'expired':
         return 'bg-gray-100 text-gray-600'
       default:
@@ -203,16 +208,43 @@ export function AlertsPanel({
                           size="sm"
                           variant="ghost"
                           onClick={() => onEditAlert?.(alert.id)}
+                          title="Edit Alert"
+                          aria-label="Edit Alert"
                         >
                           <Settings className="w-3 h-3" />
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => onDismissAlert?.(alert.id)}
-                        >
-                          <XCircle className="w-3 h-3" />
-                        </Button>
+                        {alert.status === 'active' && (
+                          <TooltipProvider delayDuration={0}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  disabled={pendingCancelId === alert.id}
+                                  onClick={async () => {
+                                    if (typeof window !== 'undefined') {
+                                      const ok = window.confirm('Cancel this alert? This will stop future notifications.');
+                                      if (!ok) return;
+                                    }
+                                    try {
+                                      setPendingCancelId(alert.id)
+                                      await onDismissAlert?.(alert.id)
+                                    } finally {
+                                      setPendingCancelId(null)
+                                    }
+                                  }}
+                                  title="Cancel Alert"
+                                  aria-label="Cancel Alert"
+                                >
+                                  <XCircle className="w-3 h-3" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" align="center">
+                                Cancel Alert
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
                       </div>
                     </div>
                   </motion.div>
@@ -264,7 +296,7 @@ export const sampleAlerts: Alert[] = [
     symbol: 'MSFT',
     condition: 'below',
     value: 300.00,
-    status: 'expired',
+    status: 'cancelled',
     time: '1 hour ago',
     priority: 'medium'
   }

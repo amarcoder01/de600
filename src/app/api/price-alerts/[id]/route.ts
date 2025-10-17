@@ -101,23 +101,59 @@ export const PUT = withAuth(async (
       )
     }
 
-    // Update the alert
-    const updatedAlert = await prisma.priceAlert.update({
-      where: { id: params.id },
-      data: {
-        ...updates,
-        updatedAt: new Date()
+    // Handle cancellation idempotently and record meaningful history
+    let updatedAlert
+    if (updates.status === 'cancelled') {
+      // If already cancelled, return as-is without new history (idempotent)
+      if (existingAlert.status === 'cancelled') {
+        return NextResponse.json({
+          success: true,
+          data: {
+            ...existingAlert,
+            createdAt: existingAlert.createdAt.toISOString(),
+            updatedAt: existingAlert.updatedAt.toISOString(),
+            triggeredAt: existingAlert.triggeredAt?.toISOString(),
+            lastChecked: existingAlert.lastChecked?.toISOString()
+          }
+        })
       }
-    })
 
-    // Create history entry
-    await prisma.priceAlertHistory.create({
-      data: {
-        alertId: params.id,
-        action: 'updated',
-        message: `Price alert updated for ${updatedAlert.symbol}`
-      }
-    })
+      // Force isActive=false when cancelling
+      updatedAlert = await prisma.priceAlert.update({
+        where: { id: params.id },
+        data: {
+          status: 'cancelled',
+          isActive: false,
+          updatedAt: new Date()
+        }
+      })
+
+      // Record a clear cancellation history entry
+      await prisma.priceAlertHistory.create({
+        data: {
+          alertId: params.id,
+          action: 'cancelled',
+          message: `Alert cancelled by user`
+        }
+      })
+    } else {
+      // Generic update path
+      updatedAlert = await prisma.priceAlert.update({
+        where: { id: params.id },
+        data: {
+          ...updates,
+          updatedAt: new Date()
+        }
+      })
+
+      await prisma.priceAlertHistory.create({
+        data: {
+          alertId: params.id,
+          action: 'updated',
+          message: `Price alert updated for ${updatedAlert.symbol}`
+        }
+      })
+    }
 
     return NextResponse.json({
       success: true,

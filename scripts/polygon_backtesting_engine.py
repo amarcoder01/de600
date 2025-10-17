@@ -123,6 +123,9 @@ class PolygonBacktestingEngine:
         try:
             await self._rate_limit_check()
             
+            # Ensure symbol is uppercase for Polygon.io API compatibility
+            symbol = symbol.upper()
+            
             # Polygon.io aggregates endpoint for daily data
             url = f"{self.base_url}/v2/aggs/ticker/{symbol}/range/1/day/{start_date}/{end_date}"
             params = {
@@ -193,6 +196,9 @@ class PolygonBacktestingEngine:
         """Get historical data for multiple symbols with rate limiting"""
         try:
             data_dict = {}
+            
+            # Ensure all symbols are uppercase for Polygon.io API compatibility
+            symbols = [s.upper() for s in symbols]
             
             # Process symbols in batches to respect rate limits
             batch_size = 3  # Conservative batch size for rate limits

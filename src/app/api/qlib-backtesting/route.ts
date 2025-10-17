@@ -23,10 +23,16 @@ export async function POST(request: NextRequest) {
 
     // Prepare command line arguments for Polygon.io backtesting
     const scriptPath = path.join(process.cwd(), 'scripts', 'polygon_backtesting_cli.py');
+    
+    // Convert symbols to uppercase to ensure compatibility with Polygon.io API
+    const normalizedSymbols = Array.isArray(symbols) 
+      ? symbols.map(s => s.toString().toUpperCase().trim()).join(',')
+      : symbols.toString().toUpperCase().trim();
+    
     const args = [
       'backtest',
       '--strategy', strategy_name,
-      '--symbols', Array.isArray(symbols) ? symbols.join(',') : symbols,
+      '--symbols', normalizedSymbols,
       '--start-date', start_date,
       '--end-date', end_date,
       '--parameters', JSON.stringify(parameters || {})

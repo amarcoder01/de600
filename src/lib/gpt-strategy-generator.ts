@@ -378,6 +378,16 @@ Please respond in the following JSON format:
   }
 
   private generateEnhancedStrategyPrompt(request: GPTStrategyRequest, marketData: any): string {
+    // Get current date for context
+    const currentDate = new Date().toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    })
+    const currentYear = new Date().getFullYear()
+    const currentMonth = new Date().toLocaleDateString('en-US', { month: 'long' })
+
     const marketContext = marketData ? `
 CURRENT MARKET CONTEXT:
 - Symbol: ${request.symbol}
@@ -390,6 +400,12 @@ CURRENT MARKET CONTEXT:
 ` : ''
 
     return `You are an expert quantitative trader and AI strategist. Create a comprehensive trading strategy based on the following requirements:
+
+CURRENT DATE CONTEXT:
+- Today is: ${currentDate}
+- Current Year: ${currentYear}
+- Current Month: ${currentMonth}
+- IMPORTANT: All date references in your strategy should be relative to today (${currentDate}). Never use outdated dates like "March 2024" or past years unless specifically discussing historical data.
 
 STRATEGY REQUIREMENTS:
 - Symbol: ${request.symbol}

@@ -18,8 +18,8 @@ from polygon_backtesting_engine import PolygonBacktestingEngine
 async def run_backtest(strategy_name: str, symbols: str, start_date: str, end_date: str, parameters: str = None):
     """Run a backtest with the specified parameters"""
     try:
-        # Parse symbols
-        symbol_list = [s.strip() for s in symbols.split(',')]
+        # Parse symbols and convert to uppercase for Polygon.io API compatibility
+        symbol_list = [s.strip().upper() for s in symbols.split(',')]
         
         # Parse parameters
         params = None
@@ -58,8 +58,8 @@ async def run_backtest(strategy_name: str, symbols: str, start_date: str, end_da
 async def test_data_fetching(symbols: str, start_date: str, end_date: str):
     """Test data fetching from Polygon.io"""
     try:
-        # Parse symbols
-        symbol_list = [s.strip() for s in symbols.split(',')]
+        # Parse symbols and convert to uppercase for Polygon.io API compatibility
+        symbol_list = [s.strip().upper() for s in symbols.split(',')]
         
         # Initialize backtesting engine
         async with PolygonBacktestingEngine() as engine:

@@ -33,7 +33,7 @@ export default function QlibDashboard({ className }: QlibDashboardProps) {
   const [loading, setLoading] = useState(false)
   const [backtestResults, setBacktestResults] = useState<BacktestResult[]>([])
   const [selectedStrategy, setSelectedStrategy] = useState('momentum')
-  const [selectedSymbols, setSelectedSymbols] = useState<string[]>(['AAPL', 'MSFT', 'GOOGL'])
+  const [selectedSymbols, setSelectedSymbols] = useState<string[]>([])
   const [startDate, setStartDate] = useState('2023-01-01')
   const [endDate, setEndDate] = useState('2023-12-31')
   const [initialCapital, setInitialCapital] = useState(100000)
@@ -46,6 +46,13 @@ export default function QlibDashboard({ className }: QlibDashboardProps) {
   const handleRunBacktest = async () => {
     setLoading(true)
     try {
+      // Validate symbols
+      if (selectedSymbols.length === 0) {
+        setStatus({ success: false, error: 'Please enter at least one stock symbol (e.g., AAPL, MSFT, GOOGL)' })
+        setLoading(false)
+        return
+      }
+
       // Choose between Polygon.io and traditional QLib based on toggle
       const apiMethod = usePolygonData ? qlibAPI.runPolygonBacktest : qlibAPI.runBacktest
       
@@ -82,6 +89,13 @@ export default function QlibDashboard({ className }: QlibDashboardProps) {
   const handleCompareStrategies = async () => {
     setLoading(true)
     try {
+      // Validate symbols
+      if (selectedSymbols.length === 0) {
+        setStatus({ success: false, error: 'Please enter at least one stock symbol (e.g., AAPL, MSFT, GOOGL)' })
+        setLoading(false)
+        return
+      }
+
       const result = await qlibAPI.compareStrategies({
         symbols: selectedSymbols,
         start_date: startDate,
@@ -239,9 +253,12 @@ export default function QlibDashboard({ className }: QlibDashboardProps) {
               <Input
                 id="symbols"
                 value={selectedSymbols.join(', ')}
-                onChange={(e) => setSelectedSymbols(e.target.value.split(',').map(s => s.trim()).filter(s => s))}
+                onChange={(e) => setSelectedSymbols(e.target.value.split(',').map(s => s.trim().toUpperCase()).filter(s => s))}
                 placeholder="AAPL, MSFT, GOOGL"
               />
+              <p className="text-xs text-gray-500">
+                Enter stock symbols separated by commas. Examples: AAPL, MSFT, GOOGL or TSLA, NVDA, META
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">

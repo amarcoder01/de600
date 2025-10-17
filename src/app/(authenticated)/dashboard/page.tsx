@@ -16,6 +16,7 @@ import {
   TrendingUp,
   TrendingDown
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { useAuthStore, usePortfolioStore, useWatchlistStore, usePriceAlertStore } from '@/store'
 import { TodayTradesCard } from '@/components/dashboard/PortfolioCard'
 import { useRouter } from 'next/navigation'
@@ -194,12 +195,12 @@ export default function Dashboard() {
   // Map store alerts to AlertsPanel UI shape with safe index-based IDs (no mutation of store data)
   const alertsList = Array.isArray(priceAlerts) ? priceAlerts : []
   const dashboardAlerts = alertsList.map((a, idx) => {
-    const status: 'active' | 'triggered' | 'expired' =
+    const status: 'active' | 'triggered' | 'cancelled' =
       a.status === 'active' && a.isActive
         ? 'active'
         : a.status === 'triggered'
         ? 'triggered'
-        : 'expired'
+        : 'cancelled'
 
     return {
       id: idx + 1,
@@ -216,11 +217,14 @@ export default function Dashboard() {
     router.push('/price-alerts')
   }
 
-  const handleDismissAlert = (uiId: number) => {
+  const handleDismissAlert = async (uiId: number) => {
     const alert = alertsList[uiId - 1]
-    if (alert) {
-      // Soft-cancel via store; does not affect other dashboard state
-      cancelPriceAlert(alert.id)
+    if (!alert) return
+    try {
+      await cancelPriceAlert(alert.id)
+      toast.success('Alert cancelled successfully')
+    } catch (e) {
+      toast.error('Failed to cancel alert')
     }
   }
 

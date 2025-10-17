@@ -53,7 +53,7 @@ interface PolygonBacktestComponentProps {
 
 export default function PolygonBacktestComponent({ className }: PolygonBacktestComponentProps) {
   const [strategy, setStrategy] = useState('momentum')
-  const [symbols, setSymbols] = useState('AAPL,MSFT,GOOGL')
+  const [symbols, setSymbols] = useState('')
   const [startDate, setStartDate] = useState('2021-01-01')
   const [endDate, setEndDate] = useState('2024-12-31')
   const [initialCapital, setInitialCapital] = useState(100000)
@@ -133,6 +133,17 @@ export default function PolygonBacktestComponent({ className }: PolygonBacktestC
     setResult(null)
 
     try {
+      // Validate symbols
+      const symbolsList = symbols.split(',').map(s => s.trim()).filter(s => s);
+      if (symbolsList.length === 0) {
+        setResult({
+          success: false,
+          error: 'Please enter at least one stock symbol (e.g., AAPL, MSFT, GOOGL)'
+        });
+        setLoading(false);
+        return;
+      }
+
       // Validate date range
       const dateError = validateDateRange();
       if (dateError) {
@@ -281,9 +292,12 @@ export default function PolygonBacktestComponent({ className }: PolygonBacktestC
               <Input
                 id="symbols"
                 value={symbols}
-                onChange={(e) => setSymbols(e.target.value)}
+                onChange={(e) => setSymbols(e.target.value.toUpperCase())}
                 placeholder="AAPL,MSFT,GOOGL"
               />
+              <p className="text-xs text-gray-500">
+                Enter stock symbols separated by commas. Examples: AAPL, MSFT, GOOGL or TSLA, NVDA, META
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">

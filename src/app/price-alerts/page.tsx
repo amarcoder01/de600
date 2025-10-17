@@ -454,7 +454,18 @@ export default function PriceAlertsPage() {
                </>
              )}
            </Button>
-           <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+           <Dialog open={showCreateDialog} onOpenChange={(open) => {
+            setShowCreateDialog(open)
+            if (!open) {
+              setFormErrors({})
+              setFormData({
+                symbol: '',
+                targetPrice: 0,
+                condition: 'above',
+                userEmail: ''
+              })
+            }
+          }}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="w-4 h-4 mr-2" />
@@ -479,9 +490,11 @@ export default function PriceAlertsPage() {
                     onChange={(e) => {
                       const value = e.target.value.toUpperCase()
                       setFormData({ ...formData, symbol: value })
-                      validateField('symbol', value)
+                      if (formErrors.symbol) {
+                        const { symbol, ...rest } = formErrors
+                        setFormErrors(rest)
+                      }
                     }}
-                    onBlur={() => validateField('symbol', formData.symbol)}
                     className={formErrors.symbol ? 'border-red-500 focus:border-red-500' : ''}
                   />
                   {formErrors.symbol && (
@@ -504,9 +517,11 @@ export default function PriceAlertsPage() {
                     onChange={(e) => {
                       const value = parseFloat(e.target.value) || 0
                       setFormData({ ...formData, targetPrice: value })
-                      validateField('targetPrice', value)
+                      if (formErrors.targetPrice) {
+                        const { targetPrice, ...rest } = formErrors as any
+                        setFormErrors(rest)
+                      }
                     }}
-                    onBlur={() => validateField('targetPrice', formData.targetPrice)}
                     className={formErrors.targetPrice ? 'border-red-500 focus:border-red-500' : ''}
                   />
                   {formErrors.targetPrice && (
@@ -543,12 +558,11 @@ export default function PriceAlertsPage() {
                     onChange={(e) => {
                       const value = e.target.value
                       setFormData({ ...formData, userEmail: value })
-                      // Only validate on blur to avoid annoying users while typing
-                      if (value.includes('@') && value.includes('.')) {
-                        validateField('userEmail', value)
+                      if (formErrors.userEmail) {
+                        const { userEmail, ...rest } = formErrors
+                        setFormErrors(rest)
                       }
                     }}
-                    onBlur={() => validateField('userEmail', formData.userEmail)}
                     className={formErrors.userEmail ? 'border-red-500 focus:border-red-500' : ''}
                   />
                   {formErrors.userEmail && (
