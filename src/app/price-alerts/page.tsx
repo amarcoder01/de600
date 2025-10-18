@@ -106,14 +106,16 @@ export default function PriceAlertsPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   useEffect(() => {
-    const fromCreate = searchParams.get('create')
+    const fromCreate = searchParams?.get('create')
     if (fromCreate && !showCreateDialog) {
       setShowCreateDialog(true)
       try {
-        const params = new URLSearchParams(Array.from(searchParams.entries()))
-        params.delete('create')
-        const qs = params.toString()
-        router.replace(`/price-alerts${qs ? `?${qs}` : ''}`)
+        if (searchParams) {
+          const params = new URLSearchParams(Array.from(searchParams.entries()))
+          params.delete('create')
+          const qs = params.toString()
+          router.replace(`/price-alerts${qs ? `?${qs}` : ''}`)
+        }
       } catch {}
     }
   }, [searchParams, showCreateDialog, router])
