@@ -41,6 +41,7 @@ import { Footer } from '@/components/layout/Footer'
 import { useAuthStore } from '@/store'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 // Animated background component
 const AnimatedBackground = () => (
@@ -559,23 +560,63 @@ const DemoSection = () => (
             
             {/* Trading panel */}
             <div className="bg-slate-700 rounded-lg p-4">
-              <div className="text-white font-semibold mb-4">Quick Trade</div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="text-white font-semibold">Quick Trade</div>
+                <Badge variant="secondary" className="bg-white/10 text-white border-white/20">Demo Preview</Badge>
+              </div>
               <div className="space-y-3">
-                <div className="bg-slate-600 rounded p-2">
-                  <div className="text-white/60 text-xs">Symbol</div>
-                  <div className="text-white">AAPL</div>
-                </div>
-                <div className="bg-slate-600 rounded p-2">
-                  <div className="text-white/60 text-xs">Quantity</div>
-                  <div className="text-white">100</div>
-                </div>
-                <div className="bg-slate-600 rounded p-2">
-                  <div className="text-white/60 text-xs">Price</div>
-                  <div className="text-white">$185.50</div>
-                </div>
-                <Button className="w-full bg-green-600 hover:bg-green-700">
-                  Buy AAPL
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="bg-slate-600 rounded p-2 cursor-not-allowed" aria-readonly="true">
+                        <div className="text-white/60 text-xs">Symbol</div>
+                        <div className="text-white">AAPL</div>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>Demo preview only</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="bg-slate-600 rounded p-2 cursor-not-allowed" aria-readonly="true">
+                        <div className="text-white/60 text-xs">Quantity</div>
+                        <div className="text-white">100</div>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>Demo preview only</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="bg-slate-600 rounded p-2 cursor-not-allowed" aria-readonly="true">
+                        <div className="text-white/60 text-xs">Price</div>
+                        <div className="text-white">$185.50</div>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>Demo preview only</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span>
+                        <Button
+                          className="w-full bg-green-600 opacity-60 cursor-not-allowed"
+                          disabled
+                          aria-disabled="true"
+                          title="Demo preview"
+                        >
+                          Buy AAPL
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Demo preview only. Sign in to place real trades.
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </div>
           </div>

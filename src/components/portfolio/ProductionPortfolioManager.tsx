@@ -32,6 +32,7 @@ import { Stock } from '@/types'
 import { useToast } from '@/hooks/use-toast'
 import PortfolioAnalytics from './PortfolioAnalytics'
 import { useAuthStore } from '@/store'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 interface Trade {
   id: string
@@ -104,6 +105,8 @@ export default function ProductionPortfolioManager() {
     price: 0,
     notes: ''
   })
+  const [isSellDialogOpen, setIsSellDialogOpen] = useState(false)
+  const [sellError, setSellError] = useState<string | null>(null)
 
   // Retry mechanism for failed API calls
   const retryOperation = useCallback(async (operation: () => Promise<void>, operationName: string) => {
@@ -1118,6 +1121,7 @@ export default function ProductionPortfolioManager() {
                       <div className="flex gap-2">
                         <Button 
                           onClick={() => {
+                            setSellError(null)
                             setTradeForm({
                               symbol: position.symbol,
                               type: 'sell',
@@ -1125,7 +1129,7 @@ export default function ProductionPortfolioManager() {
                               price: position.currentPrice,
                               notes: ''
                             })
-                            setActiveTab('sell')
+                            setIsSellDialogOpen(true)
                           }}
                           variant="outline" 
                           size="sm"
@@ -1626,6 +1630,94 @@ export default function ProductionPortfolioManager() {
             )}
         </TabsContent>
       </Tabs>
-    </div>
-  )
+    <Dialog open={isSellDialogOpen} onOpenChange={setIsSellDialogOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Sell {tradeForm.symbol || ''}</DialogTitle>
+          <DialogDescription>Record selling shares at a specific price.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          {sellError && (
+            <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">
+              {sellError}
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="sell-quantity-inline">Quantity</Label>
+              <Input
+                id="sell-quantity-inline"
+                type="number"
+                placeholder="Number of shares"
+                value={tradeForm.quantity}
+                onChange={(e) => {
+                  const raw = e.target.value
+                  const sanitized = raw.replace(/^0+(?=\d)/, '')
+                  ;(e.target as HTMLInputElement).value = sanitized
+                  setTradeForm({
+                    ...tradeForm,
+                    quantity: parseFloat(sanitized) || 0,
+                  })
+                  if (sellError) setSellError(null)
+                }}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="sell-price-inline">Sell Price</Label>
+              <Input
+                id="sell-price-inline"
+                type="number"
+                step="0.01"
+                placeholder="Price per share"
+                value={tradeForm.price}
+                onChange={(e) => setTradeForm({ ...tradeForm, price: parseFloat(e.target.value) || 0 })}
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="sell-notes-inline">Notes (Optional)</Label>
+            <Input
+              id="sell-notes-inline"
+              placeholder="Add notes about this trade"
+              value={tradeForm.notes}
+              onChange={(e) => setTradeForm({ ...tradeForm, notes: e.target.value })}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => setIsSellDialogOpen(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={async () => {
+              // Inline validation: prevent overselling and keep dialog open
+              if (tradeForm.type === 'sell') {
+                const pos = positions.find(p => p.symbol === (tradeForm.symbol || '').toUpperCase())
+                const owned = pos?.quantity ?? 0
+                if (!pos || tradeForm.quantity > owned) {
+                  setSellError(`Insufficient shares. You own ${owned} ${owned === 1 ? 'share' : 'shares'} of ${tradeForm.symbol}.`)
+                  return
+                }
+              }
+              await addTrade()
+              setIsSellDialogOpen(false)
+              setSellError(null)
+            }}
+            disabled={tradeForm.quantity <= 0 || tradeForm.price <= 0 || isAddingTrade}
+          >
+            {isAddingTrade ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <ArrowDown className="h-4 w-4 mr-2" />
+            )}
+            {isAddingTrade ? 'Recording Trade...' : 'Confirm Sell'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  </div>
+)
 }

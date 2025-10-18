@@ -214,7 +214,7 @@ export default function Dashboard() {
   })
 
   const handleAddAlert = () => {
-    router.push('/price-alerts')
+    router.push('/price-alerts?create=1')
   }
 
   const handleDismissAlert = async (uiId: number) => {

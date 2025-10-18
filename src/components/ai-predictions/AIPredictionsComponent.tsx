@@ -183,7 +183,7 @@ export default function AIPredictionsComponent({ className }: AIPredictionsCompo
   const [inputError, setInputError] = useState<string | null>(null)
 
   const formatPercentage = (value: number): string => {
-    return `${value >= 0 ? '+' : ''}${(value * 100).toFixed(2)}%`
+    return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`
   }
 
   const formatPrice = (value: number): string => {

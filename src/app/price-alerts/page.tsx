@@ -32,6 +32,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { usePriceAlertStore, useAuthStore } from '@/store'
 import { toast } from 'sonner'
 import { PriceAlert, CreatePriceAlertRequest } from '@/types'
+import { useSearchParams, useRouter } from 'next/navigation'
 
 export default function PriceAlertsPage() {
   const { 
@@ -100,6 +101,22 @@ export default function PriceAlertsPage() {
 
     return () => clearInterval(interval)
   }, [loadCurrentPrices])
+
+  // Auto-open create dialog when arriving with ?create=1 (e.g., from Dashboard)
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  useEffect(() => {
+    const fromCreate = searchParams.get('create')
+    if (fromCreate && !showCreateDialog) {
+      setShowCreateDialog(true)
+      try {
+        const params = new URLSearchParams(Array.from(searchParams.entries()))
+        params.delete('create')
+        const qs = params.toString()
+        router.replace(`/price-alerts${qs ? `?${qs}` : ''}`)
+      } catch {}
+    }
+  }, [searchParams, showCreateDialog, router])
 
   // Valid TLDs for email validation
   const validTLDs = new Set([
@@ -448,30 +465,30 @@ export default function PriceAlertsPage() {
             💡 Automatic price checking runs every 5 minutes • Manual check available below
           </p>
         </div>
-                 <div className="flex items-center space-x-2">
-           <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-             <span>Auto-check: 5min</span>
-           </div>
-           <Button 
-             variant="outline" 
-             size="sm" 
-             onClick={handleManualCheck}
-             disabled={isRefreshing || !isAuthenticated}
-           >
-             {isRefreshing ? (
-               <>
-                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                 Checking...
-               </>
-             ) : (
-               <>
-                 <RefreshCw className="w-4 h-4 mr-2" />
-                 Check Prices
-               </>
-             )}
-           </Button>
-           <Dialog open={showCreateDialog} onOpenChange={(open) => {
+        <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 text-xs text-muted-foreground whitespace-nowrap">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shrink-0"></div>
+            <span className="leading-none tracking-normal font-medium shrink-0">Auto-check: 5min</span>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleManualCheck}
+            disabled={isRefreshing || !isAuthenticated}
+          >
+            {isRefreshing ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Checking...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Check Prices
+              </>
+            )}
+          </Button>
+          <Dialog open={showCreateDialog} onOpenChange={(open) => {
             setShowCreateDialog(open)
             if (!open) {
               setFormErrors({})
