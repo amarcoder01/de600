@@ -436,7 +436,7 @@ export default function Dashboard() {
           animate={{ opacity: 1, y: 0 }}
           className="space-y-6"
         >
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-3">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
               {selectedWatchlistId 
                 ? `${watchlists.find(w => w.id === selectedWatchlistId)?.name} Overview`
@@ -489,7 +489,7 @@ export default function Dashboard() {
           )}
           
           {/* Watchlist Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
             <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
               <CardContent className="p-6">
                 <div className="flex items-center space-x-3">

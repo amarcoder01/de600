@@ -54,7 +54,7 @@ export function UserMenu() {
       <Button
         variant="ghost"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-3 px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors"
+        className="flex items-center space-x-3 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
       >
         <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
           {user?.avatar ? (
@@ -68,12 +68,12 @@ export function UserMenu() {
           )}
         </div>
         <div className="hidden md:flex flex-col items-start">
-          <span className="text-sm font-medium text-gray-900">
+          <span className="text-sm font-medium text-gray-900 dark:text-white">
             {user?.firstName || ''} {user?.lastName || ''}
           </span>
-          <span className="text-xs text-gray-500">{user?.email || ''}</span>
+          <span className="text-xs text-gray-500 dark:text-gray-300">{user?.email || ''}</span>
         </div>
-        <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </Button>
 
       {/* Dropdown Menu */}
