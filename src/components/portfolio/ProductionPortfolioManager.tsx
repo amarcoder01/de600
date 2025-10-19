@@ -998,7 +998,7 @@ export default function ProductionPortfolioManager() {
       </Card>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="w-full overflow-x-auto whitespace-nowrap gap-1">
           <TabsTrigger value="portfolio" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             Portfolio
