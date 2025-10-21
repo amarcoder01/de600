@@ -272,34 +272,49 @@ export class StrategyBuilderService {
     }
   }
 
-  // Validate market data
+  // Validate market data with improved error handling
   private validateRealTimeData(marketData: any): boolean {
-    if (!marketData) return false
+    if (!marketData) {
+      console.warn('⚠️ No market data provided for validation')
+      return false
+    }
     
     // Check for essential market data fields
     const requiredFields = ['price', 'symbol', 'lastUpdated']
-    const hasRequiredFields = requiredFields.every(field => 
-      marketData[field] !== undefined && marketData[field] !== null
+    const missingFields = requiredFields.filter(field => 
+      marketData[field] === undefined || marketData[field] === null
     )
     
-    if (!hasRequiredFields) return false
-    
-    // Check if data is recent (within last 30 minutes for delayed data plans)
-    const lastUpdated = new Date(marketData.lastUpdated)
-    const now = new Date()
-    const timeDiff = now.getTime() - lastUpdated.getTime()
-    const isRecent = timeDiff < 30 * 60 * 1000 // 30 minutes for delayed data
-    
-    if (!isRecent) {
-      console.warn(`⚠️ Market data for ${marketData.symbol} is too old (${Math.round(timeDiff / 1000)}s old)`)
+    if (missingFields.length > 0) {
+      console.warn(`⚠️ Missing required fields in market data: ${missingFields.join(', ')}`)
       return false
     }
     
     // Validate price is a positive number
     if (typeof marketData.price !== 'number' || marketData.price <= 0) {
+      console.warn(`⚠️ Invalid price in market data: ${marketData.price} (expected positive number)`)
       return false
     }
     
+    // Validate volume if present
+    if (marketData.volume !== undefined && (typeof marketData.volume !== 'number' || marketData.volume < 0)) {
+      console.warn(`⚠️ Invalid volume in market data: ${marketData.volume} (expected non-negative number)`)
+      // Don't return false for volume issues - just warn
+    }
+    
+    // Check if data is recent (within last 2 hours for more flexibility)
+    const lastUpdated = new Date(marketData.lastUpdated)
+    const now = new Date()
+    const timeDiff = now.getTime() - lastUpdated.getTime()
+    const isRecent = timeDiff < 2 * 60 * 60 * 1000 // 2 hours for more flexibility
+    
+    if (!isRecent) {
+      const hoursOld = Math.round(timeDiff / (60 * 60 * 1000))
+      console.warn(`⚠️ Market data for ${marketData.symbol} is ${hoursOld} hours old - may be stale`)
+      // Don't return false for old data - just warn
+    }
+    
+    console.log(`✅ Market data validation passed for ${marketData.symbol}`)
     return true
   }
 

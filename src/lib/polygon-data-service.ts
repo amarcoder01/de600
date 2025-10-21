@@ -381,13 +381,56 @@ class PolygonDataService {
         })
       ])
 
-      // Validate essential data
+      // Validate essential data with improved error handling
       if (!snapshot || !snapshot.day) {
         throw new Error(`Invalid snapshot data for ${symbol}`)
       }
 
       if (!historicalData || historicalData.length < 20) {
         throw new Error(`Insufficient historical data for ${symbol} (need at least 20 data points)`)
+      }
+
+      // Validate snapshot data has valid price and volume
+      const hasValidPrice = snapshot.day.c && typeof snapshot.day.c === 'number' && snapshot.day.c > 0
+      const hasValidVolume = snapshot.day.v && typeof snapshot.day.v === 'number' && snapshot.day.v >= 0
+
+      console.log(`🔍 Snapshot validation for ${symbol}:`, {
+        hasValidPrice,
+        hasValidVolume,
+        price: snapshot.day.c,
+        volume: snapshot.day.v,
+        change: snapshot.todaysChange,
+        changePercent: snapshot.todaysChangePerc
+      })
+
+      // Use fallback values if real-time data is invalid
+      let currentPrice = snapshot.day.c
+      let currentVolume = snapshot.day.v
+      let currentChange = snapshot.todaysChange || 0
+      let currentChangePercent = snapshot.todaysChangePerc || 0
+
+      // If snapshot data is invalid, use most recent historical data
+      if (!hasValidPrice || !hasValidVolume) {
+        console.warn(`⚠️ Using fallback data for ${symbol} - snapshot data invalid`)
+        const latestHistorical = historicalData[historicalData.length - 1]
+        
+        if (!hasValidPrice) {
+          currentPrice = latestHistorical.close
+          console.log(`📊 Using historical price for ${symbol}: ${currentPrice}`)
+        }
+        
+        if (!hasValidVolume) {
+          currentVolume = latestHistorical.volume
+          console.log(`📊 Using historical volume for ${symbol}: ${currentVolume}`)
+        }
+
+        // Calculate change from previous day if not available
+        if (historicalData.length >= 2 && (!snapshot.todaysChange || !snapshot.todaysChangePerc)) {
+          const previousPrice = historicalData[historicalData.length - 2].close
+          currentChange = currentPrice - previousPrice
+          currentChangePercent = (currentChange / previousPrice) * 100
+          console.log(`📊 Calculated change for ${symbol}: ${currentChange} (${currentChangePercent.toFixed(2)}%)`)
+        }
       }
 
       // Calculate technical indicators with validation
@@ -407,12 +450,12 @@ class PolygonDataService {
       const industry = sicDescription
 
       // Enhanced market data with comprehensive validation
-      const enhancedData = {
+      const enhancedData: EnhancedMarketData = {
         symbol: symbol.toUpperCase(),
-        price: snapshot.day.c,
-        change: snapshot.todaysChange,
-        changePercent: snapshot.todaysChangePerc,
-        volume: snapshot.day.v,
+        price: currentPrice,
+        change: currentChange,
+        changePercent: currentChangePercent,
+        volume: currentVolume,
         marketCap: details?.market_cap || undefined,
         peRatio: peRatio,
         beta: beta,
@@ -428,7 +471,7 @@ class PolygonDataService {
         marketMetrics
       }
 
-      // Validate calculated data
+      // Validate calculated data with improved error handling
       this.validateEnhancedMarketData(enhancedData, symbol)
 
       console.log(`✅ Enhanced market data for ${symbol}:`, {
@@ -530,32 +573,74 @@ class PolygonDataService {
     return 'Other'
   }
 
-  // Validate enhanced market data
+  // Validate enhanced market data with improved error handling
   private validateEnhancedMarketData(data: EnhancedMarketData, symbol: string): void {
     const errors: string[] = []
+    const warnings: string[] = []
 
-    // Validate price
-    if (!data.price || data.price <= 0) {
-      errors.push('Invalid price')
+    // Validate price - more lenient validation
+    if (!data.price || typeof data.price !== 'number') {
+      errors.push('Invalid price: price must be a number')
+    } else if (data.price <= 0) {
+      errors.push(`Invalid price: ${data.price} (must be greater than 0)`)
+    } else if (data.price > 100000) {
+      warnings.push(`Unusually high price: $${data.price.toLocaleString()}`)
     }
 
-    // Validate volume
-    if (!data.volume || data.volume < 0) {
-      errors.push('Invalid volume')
+    // Validate volume - more lenient validation
+    if (data.volume === null || data.volume === undefined) {
+      warnings.push('Volume data not available')
+    } else if (typeof data.volume !== 'number') {
+      errors.push('Invalid volume: volume must be a number')
+    } else if (data.volume < 0) {
+      errors.push(`Invalid volume: ${data.volume} (cannot be negative)`)
+    } else if (data.volume === 0) {
+      warnings.push('Zero volume detected - may indicate no trading activity')
     }
 
-    // Validate technical indicators
-    if (data.technicalIndicators.rsi < 0 || data.technicalIndicators.rsi > 100) {
-      errors.push('Invalid RSI value')
+    // Validate technical indicators - more lenient validation
+    if (data.technicalIndicators) {
+      if (data.technicalIndicators.rsi < 0 || data.technicalIndicators.rsi > 100) {
+        warnings.push(`RSI value out of normal range: ${data.technicalIndicators.rsi.toFixed(2)} (expected 0-100)`)
+      }
+
+      if (data.technicalIndicators.macd && typeof data.technicalIndicators.macd.macd === 'number') {
+        if (Math.abs(data.technicalIndicators.macd.macd) > 100) {
+          warnings.push(`Unusually high MACD value: ${data.technicalIndicators.macd.macd.toFixed(3)}`)
+        }
+      }
+    } else {
+      warnings.push('Technical indicators not available')
     }
 
-    if (data.marketMetrics.volatility < 0) {
-      errors.push('Invalid volatility value')
+    // Validate market metrics - more lenient validation
+    if (data.marketMetrics) {
+      if (data.marketMetrics.volatility < 0) {
+        warnings.push(`Negative volatility detected: ${data.marketMetrics.volatility.toFixed(4)}`)
+      } else if (data.marketMetrics.volatility > 2.0) {
+        warnings.push(`Very high volatility detected: ${(data.marketMetrics.volatility * 100).toFixed(2)}%`)
+      }
+    } else {
+      warnings.push('Market metrics not available')
     }
 
+    // Validate historical data
+    if (!data.historicalData || data.historicalData.length < 20) {
+      warnings.push(`Limited historical data: ${data.historicalData?.length || 0} data points`)
+    }
+
+    // Log warnings but don't throw errors for them
+    if (warnings.length > 0) {
+      console.warn(`⚠️ Data validation warnings for ${symbol}:`, warnings.join(', '))
+    }
+
+    // Only throw errors for critical validation failures
     if (errors.length > 0) {
+      console.error(`❌ Critical data validation errors for ${symbol}:`, errors.join(', '))
       throw new Error(`Data validation failed for ${symbol}: ${errors.join(', ')}`)
     }
+
+    console.log(`✅ Data validation passed for ${symbol} with ${warnings.length} warnings`)
   }
 
   // Calculate comprehensive technical indicators

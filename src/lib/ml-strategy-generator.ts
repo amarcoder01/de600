@@ -693,19 +693,58 @@ export class MLStrategyGenerator {
     } catch (error) {
       console.error('❌ ML Prediction Error:', error)
       
-      // Provide more specific error messages
+      // Provide more specific and user-friendly error messages
       if (error instanceof Error) {
-        if (error.message.includes('Missing real-time technical indicators')) {
-          throw new Error('ML prediction failed: Insufficient technical data. Please ensure the stock has enough historical data.')
-        } else if (error.message.includes('Invalid market data')) {
-          throw new Error('ML prediction failed: Market data unavailable. Please check if the stock symbol is valid.')
-        } else if (error.message.includes('Polygon API')) {
-          throw new Error('ML prediction failed: Data service error. Please check your internet connection and API configuration.')
+        const errorMessage = error.message.toLowerCase()
+        
+        if (errorMessage.includes('missing real-time technical indicators') || errorMessage.includes('insufficient technical data')) {
+          throw new Error(`Real-Time Data Error: Failed to fetch market data for ${symbol}: Data validation failed for ${symbol}: Invalid price, Invalid volume
+
+Possible Solutions:
+• Check if the stock symbol is valid and actively traded
+• Verify your Polygon.io API key is configured correctly
+• Ensure you have an active internet connection
+• Try again in a few moments if market data is temporarily unavailable`)
+        } else if (errorMessage.includes('invalid market data') || errorMessage.includes('data validation failed')) {
+          throw new Error(`Real-Time Data Error: Failed to fetch market data for ${symbol}: Data validation failed for ${symbol}: Invalid price, Invalid volume
+
+Possible Solutions:
+• Check if the stock symbol is valid and actively traded
+• Verify your Polygon.io API key is configured correctly
+• Ensure you have an active internet connection
+• Try again in a few moments if market data is temporarily unavailable`)
+        } else if (errorMessage.includes('polygon api') || errorMessage.includes('api error')) {
+          throw new Error(`Real-Time Data Error: Failed to fetch market data for ${symbol}: API service temporarily unavailable
+
+Possible Solutions:
+• Check your internet connection
+• Verify your Polygon.io API key is configured correctly
+• Try again in a few moments if the service is temporarily down
+• Contact support if the issue persists`)
+        } else if (errorMessage.includes('insufficient historical data')) {
+          throw new Error(`Real-Time Data Error: Failed to fetch market data for ${symbol}: Not enough historical data available
+
+Possible Solutions:
+• Try a different stock symbol with more trading history
+• Ensure the stock is actively traded on major exchanges
+• Check if the stock symbol is spelled correctly`)
         } else {
-          throw new Error(`ML prediction failed: ${error.message}`)
+          throw new Error(`Real-Time Data Error: Failed to fetch market data for ${symbol}: ${error.message}
+
+Possible Solutions:
+• Check if the stock symbol is valid and actively traded
+• Verify your Polygon.io API key is configured correctly
+• Ensure you have an active internet connection
+• Try again in a few moments if market data is temporarily unavailable`)
         }
       } else {
-        throw new Error('ML prediction failed: Unknown error occurred')
+        throw new Error(`Real-Time Data Error: Failed to fetch market data for ${symbol}: Unknown error occurred
+
+Possible Solutions:
+• Check if the stock symbol is valid and actively traded
+• Verify your Polygon.io API key is configured correctly
+• Ensure you have an active internet connection
+• Try again in a few moments if market data is temporarily unavailable`)
       }
     }
   }

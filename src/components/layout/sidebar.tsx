@@ -332,7 +332,7 @@ export function Sidebar() {
                     isActive ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-accent'
                   )}
                 >
-                  <Icon className={cn('w-5 h-5', isActive ? 'text-primary-foreground' : 'text-muted-foreground')} />
+                  <Icon className={cn('w-6 h-6 sm:w-5 sm:h-5', isActive ? 'text-primary-foreground' : 'text-muted-foreground')} />
                   <span className="font-medium">{item.label}</span>
                 </button>
               )
