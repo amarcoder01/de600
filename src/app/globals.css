@@ -12,6 +12,7 @@ img, video, canvas, svg {
 html, body {
   min-width: 320px;
   -webkit-text-size-adjust: 100%;
+  overflow-x: hidden; /* stop horizontal scroll globally */
 }
 
 /* Respect reduced-motion preferences */
@@ -448,6 +449,8 @@ html, body {
   flex: 1;
   overflow-y: auto;
   min-height: 0;
+  overflow-x: hidden; /* prevent horizontal overflow in scroll area */
+  max-width: 100%;
 }
 
 /* Screener specific styles */
