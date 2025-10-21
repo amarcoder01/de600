@@ -131,7 +131,7 @@ export function AlertsPanel({
           </div>
           
           {/* Filter Tabs */}
-          <div className="flex space-x-1 bg-muted p-1 rounded-lg mt-4">
+          <div className="flex space-x-1 bg-muted p-1 rounded-lg mt-4 max-w-full overflow-x-auto whitespace-nowrap">
             {[
               { id: 'all', label: 'All', count: alerts.length },
               { id: 'active', label: 'Active', count: alerts.filter(a => a.status === 'active').length },
@@ -142,7 +142,7 @@ export function AlertsPanel({
                 variant={filter === tab.id ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setFilter(tab.id as any)}
-                className="flex items-center space-x-1"
+                className="flex items-center space-x-1 shrink-0"
               >
                 <span>{tab.label}</span>
                 <Badge variant="secondary" className="text-xs">
