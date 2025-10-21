@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import { Filter, X, Brain, Sparkles, Info } from 'lucide-react';
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useRouter } from 'next/navigation';
 import FilterControls from './FilterControls';
 import ResultsTable from './ResultsTable';
@@ -551,61 +552,75 @@ const StockScreener: React.FC = () => {
   }, [stocks]);
 
   return (
+    <TooltipProvider>
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="bg-card border-b border-border shadow-sm">
-        <div className="px-4 lg:px-6 py-3 lg:py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <div className="flex items-center gap-3">
-                <h1 className="text-xl lg:text-2xl font-bold text-foreground">
-                  Stock Screener
-                </h1>
-                <div className="hidden sm:flex items-start gap-2 text-[12px] lg:text-sm text-muted-foreground">
-                  <Info className="w-4 h-4 mt-0.5" />
-                  <span>
-                    Market-wide screening fetches live data across the entire US market and may take some time to complete.
-                    You can keep working while results load.
-                  </span>
-                </div>
-                {/* AI Screener Button */}
-                <button
-                  onClick={() => router.push('/smart-screener')}
-                  className="hidden sm:flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
-                >
-                  <Brain className="w-4 h-4" />
-                  <span className="hidden md:inline">AI Screener</span>
-                  <Sparkles className="w-3 h-3 opacity-80" />
-                </button>
+        <div className="px-3 sm:px-4 lg:px-6 py-3 lg:py-4">
+          <div className="flex flex-col gap-3 sm:gap-2">
+            {/* Top row - Title and mobile controls */}
+            <div className="flex items-center justify-between">
+              <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
+                Stock Screener
+              </h1>
+              <div className="flex items-center gap-2">
                 {/* Mobile AI Screener Button */}
                 <button
                   onClick={() => router.push('/smart-screener')}
-                  className="sm:hidden p-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+                  className="sm:hidden flex items-center gap-1 px-2 py-1.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-md text-xs font-medium transition-all duration-200"
                   title="AI Screener"
                 >
-                  <Brain className="w-4 h-4" />
+                  <Brain className="w-3 h-3" />
+                  <span>AI</span>
                 </button>
-                {/* Mobile info message */}
-                <div className="sm:hidden text-[11px] text-muted-foreground">
-                  <span>
-                    Market-wide screening may take time to load full results.
-                  </span>
-                </div>
                 {/* Mobile Filter Toggle */}
-                <button
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="lg:hidden p-2 rounded-md bg-muted hover:bg-muted/80 transition-colors"
-                >
-                  <Filter className="w-4 h-4 text-foreground" />
-                </button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => setShowFilters(!showFilters)}
+                      className="lg:hidden flex items-center gap-1 px-2 py-1.5 rounded-md bg-muted hover:bg-muted/80 transition-colors text-xs font-medium"
+                    >
+                      <Filter className="w-3 h-3 text-foreground" />
+                      <span>Filters</span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>Open Filters</TooltipContent>
+                </Tooltip>
               </div>
+            </div>
+            
+            {/* Desktop row - Info and AI button */}
+            <div className="hidden sm:flex items-center justify-between">
+              <div className="flex items-start gap-2 text-xs lg:text-sm text-muted-foreground max-w-2xl">
+                <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                <span>
+                  Market-wide screening fetches live data across the entire US market and may take some time to complete.
+                  You can keep working while results load.
+                </span>
+              </div>
+              {/* Desktop AI Screener Button */}
+              <button
+                onClick={() => router.push('/smart-screener')}
+                className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 flex-shrink-0"
+              >
+                <Brain className="w-4 h-4" />
+                <span className="hidden md:inline">AI Screener</span>
+                <Sparkles className="w-3 h-3 opacity-80" />
+              </button>
+            </div>
+            
+            {/* Mobile info message */}
+            <div className="sm:hidden text-xs text-muted-foreground">
+              <span>
+                Market-wide screening may take time to load full results.
+              </span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col lg:flex-row h-[calc(100vh-120px)]">
+      <div className="flex-1 flex flex-col lg:flex-row h-[calc(100vh-140px)] sm:h-[calc(100vh-120px)]">
         {/* Mobile Filter Overlay */}
         {showFilters && (
           <div 
@@ -615,8 +630,8 @@ const StockScreener: React.FC = () => {
         )}
         
         {/* Filters Sidebar */}
-        <div className={`${showFilters ? 'block' : 'hidden'} lg:block lg:w-80 xl:w-96 bg-card border-r border-border overflow-y-auto order-2 lg:order-1 screener-filters-sidebar ${showFilters ? 'show' : ''}`}>
-          <div className="p-4 lg:p-6">
+        <div className={`${showFilters ? 'fixed inset-y-0 left-0 z-50' : 'hidden'} lg:block lg:relative lg:z-auto lg:w-80 xl:w-96 w-full max-w-sm bg-card border-r border-border overflow-y-auto order-2 lg:order-1 screener-filters-sidebar ${showFilters ? 'show' : ''}`}>
+          <div className="p-3 sm:p-4 lg:p-6">
             <div className="lg:hidden flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-foreground">Filters</h2>
               <button
@@ -719,6 +734,7 @@ const StockScreener: React.FC = () => {
         </div>
       </div>
     </div>
+    </TooltipProvider>
   );
 };
 
