@@ -96,7 +96,9 @@ export default function ProductionPortfolioManager() {
   const [isRefreshingData, setIsRefreshingData] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
-  const [isDeletingPortfolio, setIsDeletingPortfolio] = useState(false)
+  const [isDeletingPortfolio, setIsDeletingPortfolio] = useState<string | null>(null)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [portfolioToDelete, setPortfolioToDelete] = useState<Portfolio | null>(null)
   const isGuest = !isAuthenticated || !user
   
   const [tradeForm, setTradeForm] = useState({
@@ -616,6 +618,9 @@ export default function ProductionPortfolioManager() {
         
         // Refresh trades list
         await loadTrades(activePortfolio.id)
+        
+        // Notify success
+        toast({ title: 'Trade deleted', description: 'The trade was removed successfully.' })
       } catch (err) {
         console.error('❌ Portfolio Component - Error deleting trade:', err)
         setError(err instanceof Error ? err.message : 'Failed to delete trade')
@@ -669,6 +674,9 @@ export default function ProductionPortfolioManager() {
         
         // Refresh positions list
         await loadPositions(activePortfolio.id)
+        
+        // Notify success
+        toast({ title: 'Position deleted', description: 'The position was removed successfully.' })
       } catch (err) {
         console.error('❌ Portfolio Component - Error deleting position:', err)
         setError(err instanceof Error ? err.message : 'Failed to delete position')
@@ -676,6 +684,68 @@ export default function ProductionPortfolioManager() {
         setIsDeletingPosition(null)
       }
     }
+  }
+
+  // Delete an entire portfolio
+  const deletePortfolio = async (portfolioId: string) => {
+    if (isGuest) return
+    if (!window.confirm('Delete this portfolio? This will remove its positions and trades.')) return
+
+    try {
+      setIsDeletingPortfolio(portfolioId)
+      setError(null)
+
+      const response = await fetch(`/api/portfolio/${portfolioId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        let errorMessage = 'Failed to delete portfolio'
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.error || errorMessage
+        } catch {
+          if (response.status === 401) errorMessage = 'Authentication required. Please sign in and try again.'
+          else if (response.status === 404) errorMessage = 'Portfolio not found.'
+          else if (response.status === 503) errorMessage = 'Service temporarily unavailable. Please try again later.'
+          else errorMessage = `Failed to delete portfolio: ${response.status} ${response.statusText}`
+        }
+        throw new Error(errorMessage)
+      }
+
+      const remaining = portfolios.filter(p => p.id !== portfolioId)
+      setPortfolios(remaining)
+
+      if (activePortfolio?.id === portfolioId) {
+        if (remaining.length > 0) {
+          const next = remaining[0]
+          setActivePortfolio(next)
+          await Promise.all([
+            loadPositions(next.id),
+            loadTrades(next.id)
+          ])
+        } else {
+          setActivePortfolio(null)
+          setPositions([])
+          setTrades([])
+        }
+      }
+
+      toast({ title: 'Portfolio deleted', description: 'Portfolio removed successfully.' })
+    } catch (err) {
+      console.error('❌ Portfolio Component - Error deleting portfolio:', err)
+      setError(err instanceof Error ? err.message : 'Failed to delete portfolio')
+    } finally {
+      setIsDeletingPortfolio(null)
+    }
+  }
+
+  const confirmDeletePortfolio = async () => {
+    if (!portfolioToDelete) return
+    await deletePortfolio(portfolioToDelete.id)
+    setIsDeleteDialogOpen(false)
+    setPortfolioToDelete(null)
   }
 
   const portfolioStats = {
@@ -779,56 +849,6 @@ export default function ProductionPortfolioManager() {
       } finally {
         setIsRefreshingData(false)
       }
-    }
-  }
-
-  // Delete active portfolio
-  const deletePortfolio = async () => {
-    if (!activePortfolio) return
-    if (!window.confirm(`Delete portfolio "${activePortfolio.name}"? This will remove all its positions and trades. This action cannot be undone.`)) {
-      return
-    }
-
-    try {
-      setIsDeletingPortfolio(true)
-      setError(null)
-
-      const response = await fetch(`/api/portfolio/${activePortfolio.id}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      })
-
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}))
-        throw new Error(errData.error || `Failed to delete portfolio: ${response.status} ${response.statusText}`)
-      }
-
-      // Update local state: remove portfolio and select another if available
-      setPortfolios(prev => {
-        const updated = prev.filter(p => p.id !== activePortfolio.id)
-        // Pick next active portfolio (first in list) or clear
-        const nextActive = updated[0] || null
-        setActivePortfolio(nextActive)
-        if (nextActive) {
-          // Load its data safely
-          Promise.all([
-            loadPositions(nextActive.id),
-            loadTrades(nextActive.id)
-          ]).catch(() => {})
-        } else {
-          setPositions([])
-          setTrades([])
-        }
-        return updated
-      })
-
-      toast({ title: 'Portfolio deleted', description: 'The portfolio was removed successfully.' })
-    } catch (err) {
-      console.error('❌ Portfolio Component - Error deleting portfolio:', err)
-      setError(err instanceof Error ? err.message : 'Failed to delete portfolio')
-      toast({ title: 'Delete failed', description: err instanceof Error ? err.message : 'Failed to delete portfolio' })
-    } finally {
-      setIsDeletingPortfolio(false)
     }
   }
 
@@ -959,20 +979,34 @@ export default function ProductionPortfolioManager() {
           ) : (
             <div className="flex flex-wrap gap-4 items-center">
               {portfolios.map((portfolio) => (
-                <Button
-                  key={portfolio.id}
-                  variant={activePortfolio?.id === portfolio.id ? "default" : "outline"}
-                  onClick={() => handlePortfolioChange(portfolio)}
-                  disabled={isRefreshingData}
-                  className="min-w-[150px]"
-                >
-                  {isRefreshingData && activePortfolio?.id === portfolio.id ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <BarChart3 className="h-4 w-4 mr-2" />
-                  )}
-                  {portfolio.name}
-                </Button>
+                <div key={portfolio.id} className="flex items-center gap-1">
+                  <Button
+                    variant={activePortfolio?.id === portfolio.id ? "default" : "outline"}
+                    onClick={() => handlePortfolioChange(portfolio)}
+                    disabled={isRefreshingData}
+                    className="min-w-[150px]"
+                  >
+                    {isRefreshingData && activePortfolio?.id === portfolio.id ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <BarChart3 className="h-4 w-4 mr-2" />
+                    )}
+                    {portfolio.name}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => { setPortfolioToDelete(portfolio); setIsDeleteDialogOpen(true) }}
+                    disabled={isGuest || isDeletingPortfolio === portfolio.id}
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    {isDeletingPortfolio === portfolio.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
               ))}
               
               <div className="flex gap-2">
@@ -1003,6 +1037,35 @@ export default function ProductionPortfolioManager() {
                   </>
                 )}
               </div>
+              {/* Delete Portfolio Confirmation Dialog */}
+              <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Delete portfolio?</DialogTitle>
+                    <DialogDescription>
+                      This action will permanently remove the portfolio{portfolioToDelete ? ` "${portfolioToDelete.name}"` : ''} and its related data. This cannot be undone.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter>
+                    <Button
+                      variant="outline"
+                      onClick={() => { setIsDeleteDialogOpen(false); setPortfolioToDelete(null) }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={confirmDeletePortfolio}
+                      disabled={!!(portfolioToDelete && isDeletingPortfolio === portfolioToDelete.id)}
+                    >
+                      {portfolioToDelete && isDeletingPortfolio === portfolioToDelete.id ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : null}
+                      Delete
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
           )}
         </CardContent>
@@ -1674,29 +1737,6 @@ export default function ProductionPortfolioManager() {
                   <p>Positions: {positions.length}</p>
                   <p>Portfolios: {portfolios.length}</p>
                   <p>Last updated: {new Date().toLocaleString()}</p>
-                </div>
-              </div>
-
-              <div className="pt-4 border-t">
-                <h4 className="font-semibold mb-2">Danger Zone</h4>
-                <div className="space-y-2">
-                  <Label>Delete this portfolio</Label>
-                  <Button 
-                    onClick={deletePortfolio}
-                    className="w-full"
-                    variant="destructive"
-                    disabled={isDeletingPortfolio || isGuest}
-                  >
-                    {isDeletingPortfolio ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Trash2 className="h-4 w-4 mr-2" />
-                    )}
-                    {isDeletingPortfolio ? 'Deleting...' : 'Delete Portfolio'}
-                  </Button>
-                  <p className="text-sm text-red-600">
-                    This permanently removes the portfolio, its positions and trades.
-                  </p>
                 </div>
               </div>
             </CardContent>
