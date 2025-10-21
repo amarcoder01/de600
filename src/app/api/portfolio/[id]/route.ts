@@ -150,7 +150,15 @@ export async function DELETE(
       )
     }
 
-    await prisma.portfolio.delete({ where: { id } })
+    // Perform cascade delete in a transaction to avoid FK violations
+    await prisma.$transaction([
+      // Delete trades first (depends on portfolio)
+      prisma.trade.deleteMany({ where: { portfolioId: id } }),
+      // Delete positions next
+      prisma.position.deleteMany({ where: { portfolioId: id } }),
+      // Finally delete the portfolio
+      prisma.portfolio.delete({ where: { id } })
+    ])
 
     return NextResponse.json({
       success: true,

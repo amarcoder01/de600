@@ -67,22 +67,46 @@ export function TradingViewChart({
   // Helper function to sort and deduplicate chart data
   const sanitizeChartData = (rawData: any[]): ChartData[] => {
     if (!rawData || rawData.length === 0) return []
-    
-    return rawData
-      .map((item: any) => ({
-        time: new Date(item.time).toISOString().split('T')[0],
+
+    // Intraday ranges should keep time-of-day (seconds). Others can use business-day strings.
+    const isIntraday = ['1d', '5d', '1mo'].includes((timeframe || '').toLowerCase())
+
+    const toUtcSeconds = (t: any): number => {
+      if (typeof t === 'number') {
+        return t < 2e10 ? t : Math.floor(t / 1000)
+      }
+      const d = new Date(t)
+      return Math.floor(d.getTime() / 1000)
+    }
+
+    const mapped = rawData.map((item: any) => {
+      const timeVal = item.time
+      const time: any = isIntraday
+        ? toUtcSeconds(timeVal) // seconds for lightweight-charts intraday
+        : new Date(timeVal).toISOString().split('T')[0] // business day for longer ranges
+      return {
+        time,
         open: Number(item.open) || 0,
         high: Number(item.high) || 0,
         low: Number(item.low) || 0,
         close: Number(item.close) || 0,
-        volume: Number(item.volume) || 0
-      }))
-      .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()) // Sort by time ascending
-      .filter((item, index, array) => {
-        // Remove duplicate timestamps and invalid data
-        if (index === 0) return true
-        return item.time !== array[index - 1].time && item.close > 0
-      })
+        volume: Number(item.volume) || 0,
+      }
+    })
+
+    const sorted = mapped.sort((a, b) => {
+      if (isIntraday) {
+        // numeric seconds
+        return (a.time as any) - (b.time as any)
+      }
+      return new Date(a.time as any).getTime() - new Date(b.time as any).getTime()
+    })
+
+    return sorted.filter((item, index, array) => {
+      if (index === 0) return item.close > 0
+      const prev = array[index - 1]
+      return item.time !== prev.time && item.close > 0
+    })
   }
 
   // Helper function to safely remove series

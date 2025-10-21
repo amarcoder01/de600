@@ -14,6 +14,21 @@ interface ChartDataPoint {
   changePercent?: number
 }
 
+// Map potentially unsupported Yahoo interval/range combinations to safe defaults
+function getSafeInterval(range: string, requested: string): string {
+  const r = (range || '').toLowerCase()
+  const req = (requested || '').toLowerCase()
+
+  // Practical constraints observed for Yahoo v8
+  if (r === '1d') return ['1m', '2m', '5m', '15m'].includes(req) ? req : '5m'
+  if (r === '5d' || r === '7d') return ['1m', '2m', '5m', '15m'].includes(req) ? req : '15m'
+  if (r === '1mo') return ['30m', '60m', '90m', '1h'].includes(req) ? req : '1h'
+  if (r === '3mo' || r === '6mo' || r === 'ytd' || r === '1y' || r === '2y') return ['1d', '1wk'].includes(req) ? req : '1d'
+  if (r === '5y' || r === '10y' || r === 'max') return ['1wk', '1mo'].includes(req) ? req : '1mo'
+
+  return req || '1d'
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { symbol: string } }
@@ -22,6 +37,7 @@ export async function GET(
     const { searchParams } = new URL(request.url)
     const range = searchParams.get('range') || '1d'
     const interval = searchParams.get('interval') || '1m'
+    const safeInterval = getSafeInterval(range, interval)
     
     const symbol = params.symbol
 
@@ -34,7 +50,7 @@ export async function GET(
       // Use Yahoo Finance API to get real chart data
       const result = await YahooFinanceChartAPI.fetchChartData({
         symbol,
-        interval,
+        interval: safeInterval,
         range
       })
       

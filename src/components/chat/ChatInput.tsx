@@ -18,7 +18,7 @@ export function ChatInput({
   onChange, 
   onSend, 
   isLoading = false,
-  placeholder = "Ask me anything about trading, stocks, or just chat..."
+  placeholder = "Ask about trading or stocks..."
 }: ChatInputProps) {
   const [isRecording, setIsRecording] = useState(false)
   const [isListening, setIsListening] = useState(false)
@@ -68,7 +68,7 @@ export function ChatInput({
   return (
     <form onSubmit={handleSubmit} className="relative">
       <div className="flex items-end space-x-2 p-3 border border-border rounded-lg bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary">
-        <div className="flex-1 min-h-[20px] max-h-32 overflow-y-auto">
+        <div className="flex-1 min-h-[20px] max-h-32 overflow-y-hidden">
           <textarea
             ref={textareaRef}
             value={value}

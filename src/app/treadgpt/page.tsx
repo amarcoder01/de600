@@ -71,6 +71,16 @@ export default function TradeGPTPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
+  const exampleToPrompt = (text: string): string => {
+    try {
+      let s = text.replace(/^e\.g\.,\s*/i, '')
+      s = s.replace(/^['"“”‘’]\s*|\s*['"“”‘’]$/g, '')
+      return s.trim()
+    } catch {
+      return text
+    }
+  }
+
   const clearChatHistory = () => {
     const defaultMessage: Message = {
       id: '1',
@@ -580,7 +590,7 @@ export default function TradeGPTPage() {
             {quickActions.map((action, index) => (
               <button
                 key={index}
-                onClick={() => action.action ? action.action() : setInputValue(action.example)}
+                onClick={() => action.action ? action.action() : setInputValue(exampleToPrompt(action.example))}
                 className="text-left p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
                 <div className="text-lg mb-1">{action.icon}</div>
@@ -591,8 +601,6 @@ export default function TradeGPTPage() {
           </div>
         </div>
       )}
-
-      {/* File Upload Modal */}
       {showFileUpload && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
@@ -693,8 +701,8 @@ export default function TradeGPTPage() {
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder={fileUpload ? "Add a message about this file (optional)..." : "Ask me anything about trading, stocks, or market analysis..."}
-                  className="w-full resize-none border border-gray-300 dark:border-gray-600 rounded-lg p-3 pr-12 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder={fileUpload ? "Add a note about this file..." : "Ask about trading or stocks..."}
+                  className="w-full resize-none overflow-hidden border border-gray-300 dark:border-gray-600 rounded-lg p-3 pr-12 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   rows={1}
                   style={{ minHeight: '44px', maxHeight: '120px' }}
                 />
