@@ -385,11 +385,16 @@ function DrawingCanvas({
     
     resizeCanvas()
     window.addEventListener('resize', resizeCanvas)
-    return () => window.removeEventListener('resize', resizeCanvas)
+    const ro = new ResizeObserver(() => resizeCanvas())
+    if (canvas.parentElement) ro.observe(canvas.parentElement)
+    return () => {
+      window.removeEventListener('resize', resizeCanvas)
+      try { ro.disconnect() } catch {}
+    }
   }, [drawCanvas])
 
   return (
-    <div className="relative w-full h-[400px] border rounded-lg overflow-hidden">
+    <div className="relative w-full h-[45vh] sm:h-[400px] border rounded-lg overflow-hidden min-w-0">
       <canvas
         ref={canvasRef}
         className="absolute inset-0 cursor-crosshair"
@@ -578,7 +583,7 @@ export function DrawingToolsComponent() {
       {/* Drawing Canvas */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Grid className="h-5 w-5" />
@@ -756,7 +761,7 @@ export function DrawingToolsComponent() {
       {/* Drawing Elements */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Layers className="h-5 w-5" />

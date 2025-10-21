@@ -408,10 +408,10 @@ export default function AdvancedChartsPage() {
   }, [isFullscreen])
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <div className="min-h-screen bg-background p-4 md:p-6 overflow-x-hidden">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
             <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
               <TrendingUp className="h-8 w-8 text-primary" />
@@ -569,23 +569,23 @@ export default function AdvancedChartsPage() {
 
         {/* Main Chart Area */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3">
-           <TabsTrigger value="chart" className="flex items-center gap-2">
+          <TabsList className="w-full flex gap-2 overflow-x-auto">
+           <TabsTrigger value="chart" className="flex items-center gap-2 shrink-0">
              <BarChart3 className="h-4 w-4" />
              Chart
            </TabsTrigger>
-           <TabsTrigger value="indicators" className="flex items-center gap-2">
+           <TabsTrigger value="indicators" className="flex items-center gap-2 shrink-0">
              <Calculator className="h-4 w-4" />
              Indicators
            </TabsTrigger>
-           <TabsTrigger value="drawing" className="flex items-center gap-2">
+           <TabsTrigger value="drawing" className="flex items-center gap-2 shrink-0">
              <Ruler className="h-4 w-4" />
              Drawing Tools
            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="chart" className="space-y-4">
-            <Card className={isFullscreen ? 'fixed inset-4 z-50 bg-background shadow-2xl border-2' : ''}>
+            <Card className={isFullscreen ? 'fixed inset-2 sm:inset-4 z-50 bg-background shadow-2xl border-2' : ''}>
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2">
@@ -624,7 +624,7 @@ export default function AdvancedChartsPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className={`w-full relative ${isFullscreen ? 'h-[calc(100vh-200px)]' : 'h-[600px]'}`} data-chart-container>
+                <div className={`w-full relative min-w-0 ${isFullscreen ? 'h-[calc(100vh-180px)]' : 'h-[60vh] sm:h-[65vh] md:h-[600px]'}`} data-chart-container>
                   <ErrorBoundary>
                     <AdvancedChartingComponent
                       key={`chart-${chartSettings.symbol}-${chartSettings.timeframe}-${chartSettings.chartType}-${chartSettings.theme}-${chartKey}`}

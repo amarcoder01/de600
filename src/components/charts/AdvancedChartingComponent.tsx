@@ -356,12 +356,19 @@ export function AdvancedChartingComponent({
         }
       }
 
+      // Observe container size changes for responsive charts
+      const ro = new ResizeObserver(() => handleResize())
+      if (chartContainerRef.current) {
+        ro.observe(chartContainerRef.current)
+      }
+
       window.addEventListener('resize', handleResize)
       handleResize()
 
       // Store cleanup function
       cleanupRef.current = () => {
         window.removeEventListener('resize', handleResize)
+        try { ro.disconnect() } catch {}
       }
 
     } catch (e) {
@@ -1062,7 +1069,7 @@ export function AdvancedChartingComponent({
       {/* Chart Container */}
       <div 
         ref={chartContainerRef}
-        className={`w-full ${isFullscreen ? 'h-[calc(100vh-200px)]' : 'h-[500px]'}`}
+        className={`w-full h-full min-h-[300px]`}
       >
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
