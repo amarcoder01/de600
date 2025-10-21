@@ -274,9 +274,9 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             Dashboard
@@ -332,11 +332,11 @@ export default function Dashboard() {
 
       {/* Enhanced Top Gainers & Losers Widget */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
             Market Overview
           </h2>
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-3 w-full sm:w-auto justify-end flex-wrap gap-2 mt-1 sm:mt-0">
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-600 dark:text-gray-400">View:</span>
               <Button
@@ -385,7 +385,7 @@ export default function Dashboard() {
           animate={{ opacity: 1, y: 0 }}
           className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4"
         >
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center space-x-3">
               <Star className="w-8 h-8 text-green-600" />
               <div>
@@ -400,7 +400,7 @@ export default function Dashboard() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 w-full sm:w-auto justify-end flex-wrap gap-2">
               {watchlists.length > 1 && (
                 <select
                   value={selectedWatchlistId || ''}
@@ -469,7 +469,7 @@ export default function Dashboard() {
           {/* Watchlist Status Indicator */}
           {selectedWatchlistId && watchlists.find(w => w.id === selectedWatchlistId) && (
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center space-x-3">
                   <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
                   <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
@@ -562,17 +562,17 @@ export default function Dashboard() {
             <CardContent>
               <div className="space-y-3">
                 {watchlistItems.slice(0, 5).map((item) => (
-                  <div key={item.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
-                    <div className="flex items-center space-x-3">
+                  <div key={item.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800 gap-3">
+                    <div className="flex items-center space-x-3 min-w-0">
                       <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
                         <span className="text-white font-bold text-sm">{item.symbol[0]}</span>
                       </div>
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-white">{item.symbol}</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{item.name}</p>
+                      <div className="min-w-0">
+                        <p className="font-medium text-gray-900 dark:text-white truncate">{item.symbol}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{item.name}</p>
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right shrink-0">
                       <p className="font-medium text-gray-900 dark:text-white">${item.price?.toFixed(2) || 'N/A'}</p>
                       <p className={`text-sm ${(item.changePercent || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                         {(item.changePercent || 0) >= 0 ? '+' : ''}{(item.changePercent || 0).toFixed(2)}%
@@ -594,10 +594,10 @@ export default function Dashboard() {
           className="space-y-6"
         >
           {/* Portfolio Selector */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-3">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Portfolio Trades</h2>
             {portfolioOptions.length > 0 && (
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 w-full sm:w-auto justify-end flex-wrap gap-2">
                 <label htmlFor="portfolio-select" className="text-sm text-gray-600 dark:text-gray-300">Portfolio</label>
                 <select
                   id="portfolio-select"
@@ -642,19 +642,19 @@ export default function Dashboard() {
                 {!tradesLoading && trades.length > 0 && (
                   <div className="space-y-3">
                     {trades.slice(0, 5).map((t) => (
-                      <div key={t.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
-                        <div className="flex items-center space-x-3">
+                      <div key={t.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800 gap-3">
+                        <div className="flex items-center space-x-3 min-w-0">
                           <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-blue-600 rounded-lg flex items-center justify-center">
                             <span className="text-white font-bold text-sm">{t.symbol?.[0]}</span>
                           </div>
-                          <div>
-                            <p className="font-medium text-gray-900 dark:text-white">{t.symbol} • {t.type.toUpperCase()}</p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                          <div className="min-w-0">
+                            <p className="font-medium text-gray-900 dark:text-white truncate">{t.symbol} • {t.type.toUpperCase()}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
                               {new Date(t.date).toLocaleString()} • {t.quantity} @ ${t.price.toFixed(2)}
                             </p>
                           </div>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right shrink-0">
                           <p className={`font-medium ${t.type === 'buy' ? 'text-red-600' : 'text-green-600'}`}>
                             {t.type === 'buy' ? '-' : '+'}${t.amount.toFixed(2)}
                           </p>

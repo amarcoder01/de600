@@ -853,7 +853,7 @@ export default function WatchlistPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="px-3 pt-4 pb-24 sm:p-6 space-y-6">
       {/* Error Messages */}
       {error && (
         <motion.div
@@ -1045,19 +1045,19 @@ export default function WatchlistPage() {
       )}
 
       {/* Page Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Watchlist</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Watchlist</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">
             Track your favorite stocks and monitor their performance
           </p>
         </div>
         
         {/* Action Buttons */}
-        <div className="flex items-center space-x-3">
+        <div className="flex w-full sm:w-auto flex-wrap items-center gap-2 sm:gap-3">
           {/* Watchlist Selector */}
           {watchlists.length > 0 && (
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center gap-2 min-w-0">
               <label htmlFor="watchlist-selector" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 Active:
               </label>
@@ -1082,7 +1082,7 @@ export default function WatchlistPage() {
                     }
                   }
                 }}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                className="w-full sm:w-auto max-w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
               >
                 <option value="">All Watchlists</option>
                 {watchlists.map((watchlist, index) => (
@@ -1144,7 +1144,7 @@ export default function WatchlistPage() {
                 Currently viewing: <strong>{watchlists.find(w => w.id === activeWatchlistId)?.name}</strong>
               </span>
             </div>
-            <div className="flex items-center space-x-4 text-sm text-blue-700 dark:text-blue-300">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs sm:text-sm text-blue-700 dark:text-blue-300">
               <span>
                 📊 {watchlists.find(w => w.id === activeWatchlistId)?.items?.length || 0} stocks
               </span>
@@ -1167,8 +1167,8 @@ export default function WatchlistPage() {
       >
         {/* Enhanced Search Bar */}
         <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm">
-        <div className="flex items-center space-x-4">
-          <div className="relative flex-1">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="relative flex-1 min-w-0">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5" />
             <input
               type="text"
@@ -1221,12 +1221,12 @@ export default function WatchlistPage() {
               
               {/* Watchlist Selection for Adding Stocks */}
               {watchlists.length > 0 && (
-                <div className="mt-3 flex items-center space-x-2">
+                <div className="mt-3 flex flex-wrap items-center gap-2">
                   <span className="text-sm text-gray-600 dark:text-gray-400">Add to:</span>
                   <select
                     value={activeWatchlistId || ''}
                     onChange={(e) => { suppressScrollRef.current = true; setActiveWatchlistId(e.target.value || null) }}
-                    className="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full sm:w-auto max-w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   >
                     <option value="">Select Watchlist</option>
                     {watchlists.map((watchlist) => (
@@ -1251,16 +1251,16 @@ export default function WatchlistPage() {
                       key={stock.symbol}
                       className="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
                     >
-                          <div className="flex items-center space-x-3">
+                          <div className="flex items-center space-x-3 min-w-0">
                         <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
                           <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
                             {stock.symbol[0]}
                           </span>
                             </div>
-                            <div>
-                          <div className="font-semibold text-gray-900 dark:text-white">{stock.symbol}</div>
-                          <div className="text-sm text-gray-600 dark:text-gray-400">{stock.name}</div>
-                          <div className="text-xs text-gray-500 dark:text-gray-500">
+                            <div className="min-w-0">
+                          <div className="font-semibold text-gray-900 dark:text-white truncate">{stock.symbol}</div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400 truncate" title={stock.name}>{stock.name}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-500 break-words">
                             {stock.exchange} • {stock.sector || 'N/A'}
                             </div>
                           </div>
@@ -1369,9 +1369,9 @@ export default function WatchlistPage() {
                       <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform duration-200">
                         <span className="text-white font-bold text-lg">{stock.symbol.charAt(0)}</span>
                           </div>
-                    <div className="text-center">
-                        <div className="font-bold text-gray-900 dark:text-white text-sm mb-1">{stock.symbol}</div>
-                        <div className="text-xs text-gray-600 dark:text-gray-400 leading-tight">{stock.name}</div>
+                    <div className="text-center min-w-0">
+                        <div className="font-bold text-gray-900 dark:text-white text-sm mb-1 truncate">{stock.symbol}</div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400 leading-tight truncate" title={stock.name}>{stock.name}</div>
                           </div>
                         </div>
                       </div>
@@ -1730,7 +1730,7 @@ export default function WatchlistPage() {
             </div>
             
             {/* Quick Actions for Selected Watchlist */}
-            <div className="flex items-center space-x-3 pt-3 border-t border-blue-200 dark:border-blue-700">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 pt-3 border-t border-blue-200 dark:border-blue-700">
               <div className="text-sm text-blue-700 dark:text-blue-300 font-medium">
                 Quick Actions:
               </div>
@@ -1775,7 +1775,7 @@ export default function WatchlistPage() {
         {/* Only show watchlist items if watchlists exist */}
         {watchlists.length > 0 && (
           <>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <h2 className="text-xl font-semibold">
                 {activeWatchlistId 
                   ? `${watchlists.find(w => w.id === activeWatchlistId)?.name} Stocks`
@@ -1811,14 +1811,14 @@ export default function WatchlistPage() {
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between">
                       <div className="flex-1">
-                            <div className="flex items-center space-x-3 mb-2">
+                                          <div className="flex items-center space-x-3 mb-2 min-w-0">
                               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
                                 <span className="text-white font-bold text-sm">{item.symbol[0]}</span>
                         </div>
-                              <div>
-                                <div className="font-semibold">{item.symbol}</div>
-                                <div className="text-sm text-muted-foreground">{item.name}</div>
-                                <div className="text-xs text-muted-foreground">{item.exchange}</div>
+                              <div className="min-w-0">
+                                <div className="font-semibold truncate">{item.symbol}</div>
+                                <div className="text-sm text-muted-foreground truncate" title={item.name}>{item.name}</div>
+                                <div className="text-xs text-muted-foreground break-words">{item.exchange}</div>
                       </div>
                             </div>
                             

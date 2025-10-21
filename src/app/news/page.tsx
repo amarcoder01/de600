@@ -385,15 +385,15 @@ export default function NewsPage() {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between"
+        className="flex items-center justify-between flex-wrap gap-3"
       >
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Market News</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Market News</h1>
           <p className="text-muted-foreground">
             Real-time news, market updates, and AI-powered insights
           </p>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Badge variant="outline" className="flex items-center space-x-1">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
             <span>LIVE</span>
@@ -441,7 +441,7 @@ export default function NewsPage() {
         animate={{ opacity: 1, y: 0 }}
         className="space-y-4"
       >
-        <div className="flex items-center space-x-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
@@ -455,11 +455,11 @@ export default function NewsPage() {
               <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 animate-spin" />
             )}
           </div>
-          <Button onClick={handleSearch} disabled={searchLoading}>
+          <Button onClick={handleSearch} disabled={searchLoading} className="w-full sm:w-auto">
             Search
           </Button>
           <Select value={selectedCategory} onValueChange={handleCategoryChange}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-full sm:w-40">
               <SelectValue placeholder="Category" />
             </SelectTrigger>
             <SelectContent>
@@ -473,7 +473,7 @@ export default function NewsPage() {
             </SelectContent>
           </Select>
           <Select value={selectedSentiment} onValueChange={handleSentimentChange}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-full sm:w-40">
               <SelectValue placeholder="Sentiment" />
             </SelectTrigger>
             <SelectContent>
@@ -488,7 +488,7 @@ export default function NewsPage() {
 
              {/* News Content */}
        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                   <TabsList className="grid w-full grid-cols-3">
+                  <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 gap-2">
             <TabsTrigger value="all">All News ({filteredNews.length})</TabsTrigger>
             <TabsTrigger value="bookmarked">Bookmarked ({bookmarkedNews.length})</TabsTrigger>
             <TabsTrigger value="market-updates">Market Updates</TabsTrigger>
@@ -566,7 +566,7 @@ export default function NewsPage() {
                       
                       
                       
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                         <Button 
                           variant="outline" 
                           size="sm"
@@ -577,7 +577,7 @@ export default function NewsPage() {
                           <span>Read Full Article</span>
                         </Button>
                         {item.relatedStocks && (
-                          <div className="flex items-center space-x-1">
+                          <div className="flex items-center space-x-1 flex-wrap">
                             <span className="text-xs text-muted-foreground">Related:</span>
                             {item.relatedStocks.slice(0, 3).map((stock) => (
                               <Badge key={stock} variant="secondary" className="text-xs">
@@ -667,11 +667,11 @@ export default function NewsPage() {
                     <CardDescription>{item.summary}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between text-sm">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-sm">
                       <span className="text-muted-foreground">Source: {item.source}</span>
                       <span className="text-muted-foreground">{formatTimeAgo(item.publishedAt)}</span>
                     </div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                       <Button 
                         variant="outline" 
                         size="sm"
@@ -757,46 +757,46 @@ export default function NewsPage() {
                    >
                      <Card className="hover:shadow-lg transition-all duration-200">
                        <CardContent className="p-4">
-                         <div className="flex items-center justify-between">
-                           <div className="flex-1">
-                             <div className="flex items-center space-x-2 mb-2">
-                               <Badge variant="outline" className="text-xs">
-                                 {update.symbol}
-                               </Badge>
-                               <Badge variant="secondary" className="text-xs">
-                                 {update.type.replace('_', ' ').toUpperCase()}
-                               </Badge>
-                               <span className="text-xs text-muted-foreground">
-                                 {formatTimeAgo(update.timestamp)}
-                               </span>
-                               {update.priority === 'high' && (
-                                 <Badge className="bg-red-100 text-red-800 text-xs">
-                                   HIGH PRIORITY
-                                 </Badge>
-                               )}
-                             </div>
-                             <h4 className="font-semibold mb-1 text-lg group-hover:text-primary transition-colors">
-                               {update.title}
-                             </h4>
-                             <p className="text-sm text-muted-foreground">{update.message}</p>
-                           </div>
-                                                       <div className="flex items-center space-x-2">
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={() => handleViewMarketUpdateDetails(update)}
-                              >
-                                <Eye className="w-4 h-4 mr-1" />
-                                View Details
-                              </Button>
+                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2 mb-2">
+                              <Badge variant="outline" className="text-xs">
+                                {update.symbol}
+                              </Badge>
+                              <Badge variant="secondary" className="text-xs">
+                                {update.type.replace('_', ' ').toUpperCase()}
+                              </Badge>
+                              <span className="text-xs text-muted-foreground">
+                                {formatTimeAgo(update.timestamp)}
+                              </span>
+                              {update.priority === 'high' && (
+                                <Badge className="bg-red-100 text-red-800 text-xs">
+                                  HIGH PRIORITY
+                                </Badge>
+                              )}
                             </div>
-                         </div>
-                       </CardContent>
-                     </Card>
-                   </motion.div>
-                 ))}
-               </div>
+                            <h4 className="font-semibold mb-1 text-lg group-hover:text-primary transition-colors">
+                              {update.title}
+                            </h4>
+                            <p className="text-sm text-muted-foreground">{update.message}</p>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                             <Button 
+                               variant="outline" 
+                               size="sm" 
+                               className="opacity-0 group-hover:opacity-100 transition-opacity"
+                               onClick={() => handleViewMarketUpdateDetails(update)}
+                             >
+                               <Eye className="w-4 h-4 mr-1" />
+                               View Details
+                             </Button>
+                           </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
                
                {/* Load More Button for Market Updates */}
                {hasMoreMarketUpdates && (

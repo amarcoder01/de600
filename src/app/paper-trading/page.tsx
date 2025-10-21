@@ -404,22 +404,23 @@ export default function PaperTradingPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto px-4 sm:px-6 py-4 space-y-6 max-w-screen-xl">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold">Paper Trading</h1>
           <p className="text-muted-foreground">Practice trading with virtual money</p>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-stretch sm:items-center gap-2 w-full sm:w-auto">
           <Button
             variant="outline"
+            className="w-full sm:w-auto"
             onClick={() => setShowCreateAccount(true)}
           >
             <Plus className="w-4 h-4 mr-2" />
             New Account
           </Button>
-          <Button onClick={fetchAccounts}>
+          <Button onClick={fetchAccounts} className="w-full sm:w-auto">
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh
           </Button>
@@ -554,9 +555,9 @@ export default function PaperTradingPage() {
 
       {/* Main Content */}
       {selectedAccount && (
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 min-w-0">
           {/* Left Sidebar - Account Overview */}
-          <div className="lg:col-span-1 space-y-6">
+          <div className="lg:col-span-1 space-y-6 min-w-0">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
@@ -620,11 +621,11 @@ export default function PaperTradingPage() {
           </div>
 
           {/* Main Content Area */}
-          <div className="lg:col-span-3 space-y-6">
+          <div className="lg:col-span-3 space-y-6 min-w-0">
             {/* Tabs */}
             <Card>
               <CardContent className="pt-6">
-                <div className="flex space-x-1">
+                <div className="flex flex-wrap gap-2 overflow-x-auto">
                   {[ 
                     { id: 'overview', label: 'Overview', icon: Eye },
                     { id: 'positions', label: 'Positions', icon: BarChart3 },
@@ -637,7 +638,7 @@ export default function PaperTradingPage() {
                         key={tab.id}
                         variant={activeTab === tab.id ? 'default' : 'ghost'}
                         onClick={() => setActiveTab(tab.id as any)}
-                        className="flex items-center space-x-2"
+                        className="flex items-center space-x-2 shrink-0 text-sm"
                       >
                         <Icon className="w-4 h-4" />
                         <span>{tab.label}</span>

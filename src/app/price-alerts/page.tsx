@@ -456,7 +456,7 @@ export default function PriceAlertsPage() {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
       >
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Price Alerts</h1>
@@ -467,8 +467,8 @@ export default function PriceAlertsPage() {
             💡 Automatic price checking runs every 5 minutes • Manual check available below
           </p>
         </div>
-        <div className="flex items-center space-x-2">
-          <div className="flex items-center space-x-2 text-xs text-muted-foreground whitespace-nowrap">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto justify-start sm:justify-end">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground whitespace-nowrap">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shrink-0"></div>
             <span className="leading-none tracking-normal font-medium shrink-0">Auto-check: 5min</span>
           </div>
@@ -707,7 +707,7 @@ export default function PriceAlertsPage() {
 
       {/* Alerts Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-2">
           <TabsTrigger value="active">Active ({displayStats.active})</TabsTrigger>
           <TabsTrigger value="triggered">Triggered ({displayStats.triggered})</TabsTrigger>
           <TabsTrigger value="cancelled">Cancelled ({displayStats.cancelled})</TabsTrigger>
