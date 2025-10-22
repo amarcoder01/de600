@@ -73,10 +73,15 @@ export default function PaperTradingPage() {
   // Redirect if not authenticated
   useEffect(() => {
     if (!isAuthenticated || !user) {
-      router.push('/login')
+      router.replace('/login')
       return
     }
   }, [isAuthenticated, user, router])
+
+  // Do not render content while unauthenticated to avoid stale content flashing
+  if (!isAuthenticated || !user) {
+    return null
+  }
 
   // Fetch accounts on component mount
   useEffect(() => {

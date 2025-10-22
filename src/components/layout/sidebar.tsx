@@ -208,7 +208,6 @@ export function Sidebar() {
                 onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
                 className="ml-auto"
                 aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-                title={sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
               >
                 {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
               </Button>
@@ -222,55 +221,81 @@ export function Sidebar() {
 
       {/* Navigation Items */}
       <nav className="sidebar-content py-4">
-        <div className="space-y-1 px-3">
-          {sidebarItems.map((item) => {
-            const Icon = item.icon
-            const isActive = pathname === item.href
-            
-            return (
-              <motion.div
-                key={item.id}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <button
-                  onClick={() => handleItemClick(item.href)}
-                  className={cn(
-                    "w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 group",
-                    isActive
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
-                  )}
+        <TooltipProvider delayDuration={300}>
+          <div className="space-y-1 px-3">
+            {sidebarItems.map((item) => {
+              const Icon = item.icon
+              const isActive = pathname === item.href
+              
+              const menuButton = (
+                <motion.div
+                  key={item.id}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full"
                 >
-                  <Icon className={cn(
-                    "w-5 h-5 transition-colors",
-                    isActive ? "text-primary-foreground" : "text-muted-foreground group-hover:text-foreground"
-                  )} />
-                  
-                  <AnimatePresence mode="wait">
-                    {!sidebarCollapsed && (
-                      <motion.div
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -10 }}
-                        className="flex-1 flex items-center justify-between"
-                      >
-                        <div className="flex flex-col items-start">
-                          <span className="font-medium">{item.label}</span>
-                          {item.description && (
-                            <span className="text-xs text-muted-foreground/70 truncate max-w-[180px]">
-                              {item.description}
-                            </span>
-                          )}
-                        </div>
-                      </motion.div>
+                  <button
+                    onClick={() => handleItemClick(item.href)}
+                    className={cn(
+                      "w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 group",
+                      isActive
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground hover:bg-accent"
                     )}
-                  </AnimatePresence>
-                </button>
-              </motion.div>
-            )
-          })}
-        </div>
+                  >
+                    <Icon className={cn(
+                      "w-5 h-5 transition-colors",
+                      isActive ? "text-primary-foreground" : "text-muted-foreground group-hover:text-foreground"
+                    )} />
+                    
+                    <AnimatePresence mode="wait">
+                      {!sidebarCollapsed && (
+                        <motion.div
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -10 }}
+                          className="flex-1 flex items-center justify-between"
+                        >
+                          <div className="flex flex-col items-start">
+                            <span className="font-medium">{item.label}</span>
+                            {item.description && (
+                              <span className="text-xs text-muted-foreground/70 truncate max-w-[180px]">
+                                {item.description}
+                              </span>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </button>
+                </motion.div>
+              )
+              
+              // Show tooltip only when sidebar is collapsed
+              if (sidebarCollapsed) {
+                return (
+                  <Tooltip key={item.id}>
+                    <TooltipTrigger asChild>
+                      {menuButton}
+                    </TooltipTrigger>
+                    <TooltipContent side="right" align="center" className="ml-2">
+                      <div className="flex flex-col">
+                        <span className="font-medium">{item.label}</span>
+                        {item.description && (
+                          <span className="text-xs text-muted-foreground mt-1">
+                            {item.description}
+                          </span>
+                        )}
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                )
+              }
+              
+              return menuButton
+            })}
+          </div>
+        </TooltipProvider>
       </nav>
 
       {/* Footer */}

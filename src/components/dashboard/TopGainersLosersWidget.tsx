@@ -120,11 +120,14 @@ export default function TopGainersLosersWidget({
     const isGainer = type === 'gainer'
     
     return (
-      <motion.div
+      <motion.a
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
-        className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 hover:shadow-md transition-all duration-200 group cursor-pointer"
-        onClick={() => window.open(`/top-movers?symbol=${stock.symbol}`, '_blank')}
+        href={`/top-movers?symbol=${stock.symbol}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`Open details for ${stock.symbol}`}
+        className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 hover:shadow-md transition-all duration-200 group cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring"
       >
         <div className="flex items-center space-x-3 min-w-0 flex-1">
           <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm shrink-0 ${
@@ -166,9 +169,9 @@ export default function TopGainersLosersWidget({
               : 'text-red-600 dark:text-red-400'
           }`}>
             {isGainer ? (
-              <TrendingUp className="w-3 h-3" />
+              <TrendingUp className="w-3 h-3" aria-hidden="true" focusable="false" />
             ) : (
-              <TrendingDown className="w-3 h-3" />
+              <TrendingDown className="w-3 h-3" aria-hidden="true" focusable="false" />
             )}
             <span>{changeData.percent}</span>
           </div>
@@ -180,7 +183,7 @@ export default function TopGainersLosersWidget({
             {changeData.change}
           </div>
         </div>
-      </motion.div>
+      </motion.a>
     )
   }
 
@@ -226,12 +229,12 @@ export default function TopGainersLosersWidget({
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <Activity className="w-5 h-5 text-white" />
+              <Activity className="w-5 h-5 text-white" aria-hidden="true" focusable="false" />
             </div>
             <div>
               <CardTitle className="text-xl">Top Market Movers</CardTitle>
               <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
-                <Clock className="w-3 h-3" />
+                <Clock className="w-3 h-3" aria-hidden="true" focusable="false" />
                 <span>
                   {lastUpdated 
                     ? `Updated ${lastUpdated.toLocaleTimeString()}` 
@@ -250,7 +253,7 @@ export default function TopGainersLosersWidget({
               disabled={loading || isRefreshing}
               className="flex items-center space-x-2"
             >
-              <RefreshCw className={`w-4 h-4 ${(loading || isRefreshing) ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 ${(loading || isRefreshing) ? 'animate-spin' : ''}`} aria-hidden="true" focusable="false" />
               <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
             </Button>
           )}
@@ -279,7 +282,7 @@ export default function TopGainersLosersWidget({
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400" />
+                <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400" aria-hidden="true" focusable="false" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                 Top Gainers
@@ -308,7 +311,7 @@ export default function TopGainersLosersWidget({
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
-                <TrendingDown className="w-4 h-4 text-red-600 dark:text-red-400" />
+                <TrendingDown className="w-4 h-4 text-red-600 dark:text-red-400" aria-hidden="true" focusable="false" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                 Top Losers
@@ -343,7 +346,7 @@ export default function TopGainersLosersWidget({
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <BarChart3 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                <BarChart3 className="w-5 h-5 text-blue-600 dark:text-blue-400" aria-hidden="true" focusable="false" />
                 <div>
                   <h4 className="text-sm font-medium text-gray-900 dark:text-white">
                     Market Activity
@@ -360,7 +363,7 @@ export default function TopGainersLosersWidget({
                 className="flex items-center space-x-2"
               >
                 <span>View All</span>
-                <ExternalLink className="w-3 h-3" />
+                <ExternalLink className="w-3 h-3" aria-hidden="true" focusable="false" />
               </Button>
             </div>
           </motion.div>

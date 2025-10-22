@@ -60,7 +60,7 @@ const AIQueryInput: React.FC<AIQueryInputProps> = ({
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="relative">
               <div className="flex items-center space-x-2">
-                <Sparkles className="h-5 w-5 text-primary" />
+                <Sparkles className="h-5 w-5 text-primary" aria-hidden="true" focusable="false" />
                 <h3 className="text-lg font-semibold">Ask in Natural Language</h3>
               </div>
               <p className="text-sm text-muted-foreground mt-1">
@@ -85,7 +85,7 @@ const AIQueryInput: React.FC<AIQueryInputProps> = ({
                 className="absolute right-1 top-1 h-8 w-8 p-0"
                 disabled={!query.trim() || loading}
               >
-                <Search className="h-4 w-4" />
+                <Search className="h-4 w-4" aria-hidden="true" focusable="false" />
               </Button>
             </div>
 
@@ -118,7 +118,7 @@ const AIQueryInput: React.FC<AIQueryInputProps> = ({
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center space-x-2">
-                <Clock className="h-4 w-4 text-muted-foreground" />
+                <Clock className="h-4 w-4 text-muted-foreground" aria-hidden="true" focusable="false" />
                 <h4 className="text-sm font-medium">Recent Searches</h4>
               </div>
               <div className="flex items-center space-x-2">
@@ -138,7 +138,7 @@ const AIQueryInput: React.FC<AIQueryInputProps> = ({
                   onClick={() => setShowHistory(false)}
                   className="h-6 w-6 p-0"
                 >
-                  <X className="h-3 w-3" />
+                  <X className="h-3 w-3" aria-hidden="true" focusable="false" />
                 </Button>
               </div>
             </div>
@@ -156,7 +156,7 @@ const AIQueryInput: React.FC<AIQueryInputProps> = ({
                       {item.resultCount} results • {new Date(item.createdAt).toLocaleDateString()}
                     </p>
                   </div>
-                  <Search className="h-3 w-3 text-muted-foreground ml-2 flex-shrink-0" />
+                  <Search className="h-3 w-3 text-muted-foreground ml-2 flex-shrink-0" aria-hidden="true" focusable="false" />
                 </div>
               ))}
             </div>

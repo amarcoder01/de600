@@ -200,7 +200,7 @@ const SmartScreener: React.FC = () => {
       {/* Header (compact, production-friendly) */}
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
-          <Brain className="h-6 w-6 text-blue-600 hidden sm:inline" />
+          <Brain className="h-6 w-6 text-blue-600 hidden sm:inline" aria-hidden="true" focusable="false" />
           Smart Stock Screener
         </h1>
         {!hasAccess && (
@@ -221,7 +221,7 @@ const SmartScreener: React.FC = () => {
       <Card className={!hasAccess ? "opacity-75" : ""}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Search className="h-5 w-5" />
+            <Search className="h-5 w-5" aria-hidden="true" focusable="false" />
             Search
           </CardTitle>
         </CardHeader>
@@ -256,7 +256,7 @@ const SmartScreener: React.FC = () => {
                   </div>
                 ) : hasAccess ? (
                   <div className="flex items-center gap-2">
-                    <Brain className="h-4 w-4" />
+                    <Brain className="h-4 w-4" aria-hidden="true" focusable="false" />
                     Search Stocks
                   </div>
                 ) : (
@@ -277,7 +277,7 @@ const SmartScreener: React.FC = () => {
       {parsedFilters && (
         <div className="flex flex-wrap gap-2">
           {parsedFilters.search && (
-            <Badge variant="outline"><Filter className="h-3 w-3 mr-1" />{parsedFilters.search}</Badge>
+            <Badge variant="outline"><Filter className="h-3 w-3 mr-1" aria-hidden="true" focusable="false" />{parsedFilters.search}</Badge>
           )}
           {typeof parsedFilters.priceMin === 'number' && (
             <Badge variant="outline">Min ${parsedFilters.priceMin}</Badge>

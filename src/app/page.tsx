@@ -601,7 +601,7 @@ const DemoSection = () => (
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span>
+                      <span className="block mt-2">
                         <Button
                           className="w-full bg-green-600 opacity-60 cursor-not-allowed"
                           disabled
