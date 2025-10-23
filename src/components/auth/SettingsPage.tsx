@@ -100,38 +100,38 @@ export function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-          <p className="text-gray-600 mt-2">Manage your account preferences and settings</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Settings</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">Manage your account preferences and settings</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Appearance Settings */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
                   {getThemeIcon(settings.theme)}
                 </div>
-                <h2 className="text-xl font-semibold text-gray-900">Appearance</h2>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Appearance</h2>
               </div>
             </div>
 
             <div className="space-y-6">
               {/* Theme Setting */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Theme</Label>
+                <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Theme</Label>
                 <Select
                   value={settings.theme}
                   onValueChange={handleThemeChange}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100">
                     <SelectItem value="system">
                       <div className="flex items-center space-x-2">
                         <Monitor className="w-4 h-4" />
@@ -152,45 +152,45 @@ export function SettingsPage() {
                     </SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-gray-500">Theme changes are applied immediately</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Theme changes are applied immediately</p>
               </div>
             </div>
           </div>
 
           {/* Trading Preferences */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-green-100 rounded-lg">
+                <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
                   <DollarSign className="w-5 h-5 text-green-600" />
                 </div>
-                <h2 className="text-xl font-semibold text-gray-900">Trading Preferences</h2>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Trading Preferences</h2>
               </div>
             </div>
 
             <div className="space-y-6">
               {/* Currency Setting */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Currency</Label>
-                <div className="flex items-center space-x-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                  <span className="text-sm font-medium text-gray-900">USD - US Dollar</span>
-                  <span className="text-xs text-gray-500">(Fixed)</span>
+                <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Currency</Label>
+                <div className="flex items-center space-x-2 p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg">
+                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">USD - US Dollar</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">(Fixed)</span>
                 </div>
-                <p className="text-xs text-gray-500">Currency is fixed to USD for US stock trading</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Currency is fixed to USD for US stock trading</p>
               </div>
 
               {/* Timezone Setting */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Timezone</Label>
+                <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Timezone</Label>
                 <Select
                   value={settings.timezone}
                   onValueChange={(value) => setSettings({ ...settings, timezone: value })}
                   disabled={!isEditing}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100">
                     <SelectItem value="UTC">UTC - Coordinated Universal Time</SelectItem>
                     <SelectItem value="EST">EST - Eastern Standard Time</SelectItem>
                     <SelectItem value="PST">PST - Pacific Standard Time</SelectItem>

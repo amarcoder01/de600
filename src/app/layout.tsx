@@ -22,6 +22,10 @@ export const metadata: Metadata = {
   keywords: 'vidality, trading, US stocks, NYSE, NASDAQ, real-time data, AI trading',
   authors: [{ name: 'Vidality Team' }],
   robots: 'index, follow',
+  icons: {
+    icon: '/icon.svg',
+    shortcut: '/icon.svg',
+  },
   openGraph: {
     title: 'Vidality - Professional Trading Platform',
     description: 'Advanced trading platform with real-time data, AI-powered analysis, and professional tools for US stock market traders.',

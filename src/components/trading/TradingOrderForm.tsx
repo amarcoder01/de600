@@ -236,18 +236,26 @@ export function TradingOrderForm({ symbol = '', accountId, onOrderPlaced, onCanc
             <div className="grid grid-cols-2 gap-2 mt-1">
               <Button
                 type="button"
-                variant={side === 'buy' ? 'default' : 'outline'}
+                variant="outline"
                 onClick={() => setSide('buy')}
-                className="text-green-600 hover:text-green-600"
+                className={
+                  side === 'buy'
+                    ? 'bg-green-600 text-white hover:bg-green-700 border-green-600'
+                    : 'text-green-600 hover:text-green-700 border-green-600/40 hover:bg-accent/50'
+                }
               >
                 <TrendingUp className="w-4 h-4 mr-2" />
                 Buy
               </Button>
               <Button
                 type="button"
-                variant={side === 'sell' ? 'default' : 'outline'}
+                variant="outline"
                 onClick={() => setSide('sell')}
-                className="text-red-600 hover:text-red-600"
+                className={
+                  side === 'sell'
+                    ? 'bg-red-600 text-white hover:bg-red-700 border-red-600'
+                    : 'text-red-600 hover:text-red-700 border-red-600/40 hover:bg-accent/50'
+                }
               >
                 <TrendingDown className="w-4 h-4 mr-2" />
                 Sell

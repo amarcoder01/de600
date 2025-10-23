@@ -565,9 +565,8 @@ export default function PaperTradingPage() {
           <div className="lg:col-span-1 space-y-6 min-w-0">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center justify-between">
+                <CardTitle className="flex items-center">
                   <span>Account Overview</span>
-                  <Settings className="w-4 h-4" />
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -731,7 +730,7 @@ export default function PaperTradingPage() {
                             const rtPrice = getRealTimePrice(position.symbol) || position.currentPrice
                             const marketValue = position.quantity * rtPrice
                             return (
-                              <tr key={position.id} className="border-b hover:bg-gray-50">
+                              <tr key={position.id} className="border-b hover:bg-accent/50 transition-colors">
                                 <td className="p-2 font-medium">{position.symbol}</td>
                                 <td className="p-2 text-right">{position.quantity.toLocaleString()}</td>
                                 <td className="p-2 text-right">{formatCurrency(position.averagePrice)}</td>

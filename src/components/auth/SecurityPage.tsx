@@ -92,7 +92,7 @@ export function SecurityPage() {
         setTimeout(() => {
           setError(null)
           setValidationInfo({})
-        }, 5000)
+        }, 10000)
       }
     } catch (error) {
       console.error('Password change error:', error)
@@ -101,7 +101,7 @@ export function SecurityPage() {
       // Clear error message after 5 seconds
       setTimeout(() => {
         setError(null)
-      }, 5000)
+      }, 10000)
     } finally {
       setIsLoading(false)
     }
@@ -122,32 +122,32 @@ export function SecurityPage() {
     passwordData.newPassword !== passwordData.currentPassword
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Security Settings</h1>
-          <p className="text-gray-600 mt-2">Manage your account security settings</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Security Settings</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">Manage your account security settings</p>
         </div>
 
         {/* Success/Error Messages */}
         {success && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg">
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <p className="text-sm text-green-700">{success}</p>
+              <p className="text-sm text-green-700 dark:text-green-300">{success}</p>
             </div>
           </div>
         )}
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg">
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-              <p className="text-sm text-red-700">{error}</p>
+              <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
             </div>
             {(validationInfo.requirements || validationInfo.feedback || validationInfo.suggestions) && (
-              <div className="mt-3 text-xs text-red-700">
+              <div className="mt-3 text-xs text-red-700 dark:text-red-300">
                 {validationInfo.requirements && validationInfo.requirements.length > 0 && (
                   <div className="mt-2">
                     <p className="font-medium">Password should:</p>
@@ -185,15 +185,15 @@ export function SecurityPage() {
 
         <div className="grid grid-cols-1 gap-8">
           {/* Update Password */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
                   <Lock className="w-5 h-5 text-blue-600" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900">Update Password</h2>
-                  <p className="text-sm text-gray-500">Change your account password to keep it secure</p>
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Update Password</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Change your account password to keep it secure</p>
                 </div>
               </div>
               {!isChangingPassword && (
@@ -211,7 +211,7 @@ export function SecurityPage() {
               <div className="space-y-4">
                 {/* Current Password */}
                 <div className="space-y-2">
-                  <Label htmlFor="currentPassword" className="text-sm font-medium text-gray-700">
+                  <Label htmlFor="currentPassword" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Current Password
                   </Label>
                   <div className="relative">
@@ -226,7 +226,7 @@ export function SecurityPage() {
                     <button
                       type="button"
                       onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
                     >
                       {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -235,7 +235,7 @@ export function SecurityPage() {
 
                 {/* New Password */}
                 <div className="space-y-2">
-                  <Label htmlFor="newPassword" className="text-sm font-medium text-gray-700">
+                  <Label htmlFor="newPassword" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     New Password
                   </Label>
                   <div className="relative">
@@ -250,7 +250,7 @@ export function SecurityPage() {
                     <button
                       type="button"
                       onClick={() => setShowNewPassword(!showNewPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
                     >
                       {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -262,7 +262,7 @@ export function SecurityPage() {
 
                 {/* Confirm New Password */}
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
+                  <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Confirm New Password
                   </Label>
                   <div className="relative">
@@ -277,7 +277,7 @@ export function SecurityPage() {
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
                     >
                       {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>

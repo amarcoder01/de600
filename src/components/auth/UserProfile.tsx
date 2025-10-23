@@ -34,19 +34,19 @@ export function UserProfile() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Profile</h1>
-          <p className="text-gray-600 mt-2">Manage your account information and preferences</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Profile</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">Manage your account information and preferences</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Profile Card */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <div className="mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Personal Information</h2>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Personal Information</h2>
               </div>
 
               <div className="space-y-6">
@@ -64,11 +64,11 @@ export function UserProfile() {
                     )}
                   </div>
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                     {user?.firstName || ''} {user?.lastName || ''}
                     </h3>
-                  <p className="text-gray-500">{user?.email || ''}</p>
-                    <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
+                  <p className="text-gray-500 dark:text-gray-400">{user?.email || ''}</p>
+                    <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500 dark:text-gray-400">
                       <div className="flex items-center space-x-1">
                         <Calendar className="w-4 h-4" />
                       <span>Joined {user?.createdAt ? formatUtcDate(user.createdAt) : 'Unknown'}</span>
@@ -86,54 +86,54 @@ export function UserProfile() {
                 {/* Form Fields */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="firstName" className="text-sm font-medium text-gray-700">
+                    <Label htmlFor="firstName" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       First Name
                     </Label>
                     <div className="relative">
-                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
                       <Input
                         id="firstName"
                         type="text"
                        value={user?.firstName || ''}
-                       className="pl-10 bg-gray-50"
+                       className="pl-10"
                        disabled={true}
                       />
                     </div>
-                   <p className="text-xs text-gray-500 mt-1">Name cannot be changed for security reasons</p>
+                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Name cannot be changed for security reasons</p>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="lastName" className="text-sm font-medium text-gray-700">
+                    <Label htmlFor="lastName" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       Last Name
                     </Label>
                     <div className="relative">
-                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
                       <Input
                         id="lastName"
                         type="text"
                        value={user?.lastName || ''}
-                       className="pl-10 bg-gray-50"
+                       className="pl-10"
                        disabled={true}
                       />
                     </div>
-                   <p className="text-xs text-gray-500 mt-1">Name cannot be changed for security reasons</p>
+                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Name cannot be changed for security reasons</p>
                   </div>
 
                   <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                    <Label htmlFor="email" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       Email Address
                     </Label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
                       <Input
                         id="email"
                         type="email"
                       value={user?.email || ''}
-                      className="pl-10 bg-gray-50"
+                      className="pl-10"
                       disabled={true}
                       />
                     </div>
-                  <p className="text-xs text-gray-500 mt-1">Email address cannot be changed for security reasons</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Email address cannot be changed for security reasons</p>
                   </div>
                 </div>
 
@@ -142,20 +142,20 @@ export function UserProfile() {
           </div>
 
           {/* Password Card */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-red-100 rounded-lg">
+                <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
                   <Lock className="w-5 h-5 text-red-600" />
                 </div>
-                <h2 className="text-xl font-semibold text-gray-900">Password</h2>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Password</h2>
               </div>
             </div>
               
               <div className="space-y-4">
                 <div>
-                <Label className="text-sm font-medium text-gray-700">Last Password Change</Label>
-                <p className="text-sm text-gray-500 mt-1">
+                <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Last Password Change</Label>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                   {user?.lastPasswordChange ? formatUtcDateTime(user.lastPasswordChange as any) : (user?.updatedAt ? formatUtcDateTime(user.updatedAt as any) : 'Unknown')}
                 </p>
                 </div>
@@ -169,7 +169,7 @@ export function UserProfile() {
                   <Lock className="w-4 h-4 mr-2" />
                   Update Password
                 </Button>
-                <p className="text-xs text-gray-500 mt-2 text-center">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
                   Click to go to Security settings to change your password
                 </p>
               </div>

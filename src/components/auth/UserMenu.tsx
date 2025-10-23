@@ -83,10 +83,10 @@ export function UserMenu() {
             initial={{ opacity: 0, y: -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50"
+            className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50"
           >
             {/* User Info */}
-            <div className="px-4 py-3 border-b border-gray-100">
+            <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-medium">
                   {user?.avatar ? (
@@ -100,10 +100,10 @@ export function UserMenu() {
                   )}
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
                     {user?.firstName || ''} {user?.lastName || ''}
                   </p>
-                  <p className="text-xs text-gray-500">{user?.email || ''}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-300">{user?.email || ''}</p>
                 </div>
               </div>
             </div>
@@ -115,7 +115,7 @@ export function UserMenu() {
                   setIsOpen(false)
                   router.push('/profile')
                 }}
-                className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
                 <User className="w-4 h-4" />
                 <span>Profile</span>
@@ -126,7 +126,7 @@ export function UserMenu() {
                   setIsOpen(false)
                   router.push('/settings')
                 }}
-                className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
                 <Settings className="w-4 h-4" />
                 <span>Settings</span>
@@ -134,14 +134,14 @@ export function UserMenu() {
             </div>
 
             {/* Divider */}
-            <div className="border-t border-gray-100 my-1" />
+            <div className="border-t border-gray-100 dark:border-gray-700 my-1" />
 
             {/* Logout */}
             <div className="py-1">
               <button
                 onClick={handleLogout}
                 disabled={isLoggingOut}
-                className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoggingOut ? (
                   <>
