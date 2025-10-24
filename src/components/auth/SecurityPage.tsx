@@ -11,6 +11,7 @@ import { useAuthStore } from '@/store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { BackButton } from '@/components/navigation/BackButton'
 
 export function SecurityPage() {
   const { user } = useAuthStore()
@@ -126,6 +127,9 @@ export function SecurityPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
+          <div className="mb-3">
+            <BackButton buttonClassName="h-8 w-8" />
+          </div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Security Settings</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">Manage your account security settings</p>
         </div>

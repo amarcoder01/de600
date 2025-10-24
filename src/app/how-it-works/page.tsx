@@ -14,7 +14,8 @@ import {
   Zap,
   Cpu,
   Target,
-  Globe
+  Globe,
+  ArrowLeft
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -69,6 +70,12 @@ export default function HowItWorksPage() {
     <main className="min-h-screen bg-slate-900 text-white">
       <section className="relative px-4 pt-28 pb-12">
         <div className="max-w-7xl mx-auto">
+          <div className="mb-4">
+            <Link href="/" className="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 text-white/90">
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back</span>
+            </Link>
+          </div>
           {/* Header */}
           <div className="flex items-center gap-3 mb-6">
             <VidalityLogo className="h-8 w-auto text-white" />

@@ -2,14 +2,16 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, Plus, X, Filter, TrendingUp, TrendingDown, Star, RefreshCw, Loader2, Check, AlertCircle, CheckCircle, XCircle } from 'lucide-react'
+import { Search, Plus, X, Filter, TrendingUp, TrendingDown, Star, RefreshCw, Loader2, Check, AlertCircle, CheckCircle, XCircle, ArrowLeft } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Badge } from '@/components/ui/badge'
 import { PriceTicker } from '@/components/trading/price-ticker'
 import { searchStocks as multiSourceSearchStocks, getStockData } from '@/lib/multi-source-api'
 import { Stock, WatchlistItem } from '@/types'
 import { useWatchlistStore, useAuthStore } from '@/store'
+import { useRouter } from 'next/navigation'
 
 // WebSocket event data type
 interface WebSocketEvent {
@@ -24,6 +26,7 @@ interface WebSocketEvent {
 // WatchlistItem now includes all required fields
 
 export default function WatchlistPage() {
+  const router = useRouter()
   // IMPORTANT: This page follows a database-first architecture
   // - All watchlist data is fetched fresh from the database
   // - No watchlist data is stored in localStorage
@@ -54,6 +57,14 @@ export default function WatchlistPage() {
   const [isSearching, setIsSearching] = useState(false)
   const [isAddingSymbol, setIsAddingSymbol] = useState(false)
   const [showFloatingButton, setShowFloatingButton] = useState(true)
+  const handleBack = () => {
+    const canGoBack = typeof window !== 'undefined' && ((window.history?.state as any)?.idx ?? 0) > 0
+    if (canGoBack) {
+      router.back()
+    } else {
+      router.push('/dashboard')
+    }
+  }
 
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -1046,11 +1057,31 @@ export default function WatchlistPage() {
 
       {/* Page Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Watchlist</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Track your favorite stocks and monitor their performance
-          </p>
+        <div className="flex items-start gap-2 sm:gap-3">
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleBack}
+                  aria-label="Go back"
+                  className="mt-1 transition-transform hover:scale-[1.03] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-primary/50"
+                >
+                  <ArrowLeft className="w-5 h-5 transition-colors hover:text-primary" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" align="center">
+                Back to dashboard
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Watchlist</h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">
+              Track your favorite stocks and monitor their performance
+            </p>
+          </div>
         </div>
         
         {/* Action Buttons */}

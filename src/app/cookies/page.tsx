@@ -1,4 +1,6 @@
 import { Metadata } from 'next'
+import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Cookie Policy - Vidality Trading Platform',
@@ -11,6 +13,12 @@ export default function CookiesPage() {
   return (
     <main className="min-h-screen bg-gray-50 text-gray-900 px-6 py-12">
       <div className="max-w-3xl mx-auto bg-white shadow rounded-2xl p-8 md:p-12">
+        <div className="mb-4 flex items-center">
+          <Link href="/" className="inline-flex items-center gap-2 px-3 py-2 rounded-md border bg-white hover:bg-gray-50 text-gray-700">
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back</span>
+          </Link>
+        </div>
         <header>
           <h1 className="text-3xl font-bold mb-2">Cookie Policy</h1>
           <p className="text-sm text-gray-600 mb-6">

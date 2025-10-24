@@ -25,10 +25,12 @@ import {
   Eye,
   ExternalLink,
   Copy,
-  Check
+  Check,
+  ArrowLeft
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -36,6 +38,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useNewsStore } from '@/store'
 import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
 
 interface NewsItem {
   id: string
@@ -64,6 +67,7 @@ interface MarketUpdate {
 }
 
 export default function NewsPage() {
+  const router = useRouter()
   const { 
     news: storeNews, 
     marketUpdates: storeUpdates, 
@@ -94,6 +98,15 @@ export default function NewsPage() {
   const [loadingMoreMarketUpdates, setLoadingMoreMarketUpdates] = useState(false)
   const [selectedMarketUpdate, setSelectedMarketUpdate] = useState<MarketUpdate | null>(null)
   const [showMarketUpdateModal, setShowMarketUpdateModal] = useState(false)
+
+  const handleBack = () => {
+    const canGoBack = typeof window !== 'undefined' && ((window.history?.state as any)?.idx ?? 0) > 0
+    if (canGoBack) {
+      router.back()
+    } else {
+      router.push('/dashboard')
+    }
+  }
 
   // Fetch news from API directly
   const fetchNewsFromAPI = async (query?: string, category?: string, page: number = 1, append: boolean = false) => {
@@ -387,11 +400,31 @@ export default function NewsPage() {
         animate={{ opacity: 1, y: 0 }}
         className="flex items-center justify-between flex-wrap gap-3"
       >
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Market News</h1>
-          <p className="text-muted-foreground">
-            Real-time news, market updates, and AI-powered insights
-          </p>
+        <div className="flex items-start sm:items-center gap-2">
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleBack}
+                  aria-label="Go back"
+                  className="mt-1 sm:mt-0 transition-transform hover:scale-[1.03] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-primary/50"
+                >
+                  <ArrowLeft className="w-5 h-5 transition-colors hover:text-primary" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" align="center">
+                Back to dashboard
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Market News</h1>
+            <p className="text-muted-foreground">
+              Real-time news, market updates, and AI-powered insights
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Badge variant="outline" className="flex items-center space-x-1">

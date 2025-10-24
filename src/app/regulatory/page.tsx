@@ -1,4 +1,6 @@
 import { Metadata } from 'next'
+import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
@@ -11,6 +13,12 @@ export default function RegulatoryPage() {
   return (
     <main className="min-h-screen bg-white py-12 px-6">
       <div className="max-w-4xl mx-auto p-6 space-y-6">
+        <div className="mb-2 flex items-center">
+          <Link href="/" className="inline-flex items-center gap-2 px-3 py-2 rounded-md border bg-white hover:bg-gray-50 text-gray-700">
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back</span>
+          </Link>
+        </div>
         <h1 className="text-3xl font-bold text-center text-gray-900">Regulatory Framework</h1>
         <p className="text-center text-gray-700">
           This section outlines the regulatory framework, compliance obligations, and disclosures
@@ -79,6 +87,7 @@ export default function RegulatoryPage() {
         <p className="text-sm text-gray-500 text-center">
           Last Updated: {new Date().toLocaleDateString()}
         </p>
+        
       </div>
     </main>
   );

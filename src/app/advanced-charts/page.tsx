@@ -36,6 +36,7 @@ import {
   Monitor
 } from 'lucide-react'
 import { AdvancedChartingComponent } from '@/components/charts/AdvancedChartingComponent'
+import { BackButton } from '@/components/navigation/BackButton'
 import { DrawingToolsComponent } from '@/components/charts/DrawingToolsComponent'
 
 import { ErrorBoundary } from '@/components/charts/ErrorBoundary'
@@ -412,14 +413,17 @@ export default function AdvancedChartsPage() {
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-              <TrendingUp className="h-8 w-8 text-primary" />
-              Professional Chart Analysis
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              Advanced charting tools with 50+ technical indicators and professional analysis features
-            </p>
+          <div className="flex items-start sm:items-center gap-2 sm:gap-3">
+            <BackButton buttonClassName="h-8 w-8" />
+            <div>
+              <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
+                <TrendingUp className="h-8 w-8 text-primary" />
+                Professional Chart Analysis
+              </h1>
+              <p className="text-muted-foreground mt-2">
+                Advanced charting tools with 50+ technical indicators and professional analysis features
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">

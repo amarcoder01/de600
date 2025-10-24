@@ -80,10 +80,23 @@ export default function TermsPage() {
               color: var(--muted);
             }
             a { color: var(--accent); }
+            .back-row { display:flex; align-items:center; margin-bottom: 12px; }
+            .back-btn {
+              display:inline-flex; align-items:center; gap:8px; padding:8px 12px;
+              border: 1px solid var(--border); border-radius: 8px; background:#fff; color: var(--fg);
+              text-decoration: none;
+            }
+            .back-btn:hover { background:#f8fafc; }
           </style>
         </head>
         <body>
           <main class="container" role="main">
+            <div class="back-row">
+              <a href="/" class="back-btn" aria-label="Back to Home">
+                <span aria-hidden>←</span>
+                <span>Back</span>
+              </a>
+            </div>
             <header>
               <h1>Terms of Service</h1>
               <div class="meta">Effective Date: August 31, 2025</div>

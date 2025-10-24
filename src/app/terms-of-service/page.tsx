@@ -6,6 +6,15 @@ export default function TermsOfServicePage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
       <div className="max-w-4xl mx-auto px-6 py-12">
         <div className="bg-white rounded-xl shadow-lg p-8">
+          <div className="mb-4">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-md border bg-white hover:bg-gray-50 text-gray-700"
+            >
+              <span className="text-lg">←</span>
+              <span>Back</span>
+            </Link>
+          </div>
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-4">Terms of Service</h1>
             <p className="text-gray-600">
@@ -165,14 +174,7 @@ export default function TermsOfServicePage() {
             </section>
           </div>
 
-          <div className="mt-12 pt-8 border-t border-gray-200">
-            <Link
-              href="/"
-              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg font-medium transition-colors"
-            >
-              ← Back to Home
-            </Link>
-          </div>
+          
         </div>
       </div>
     </div>

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Send, Plus, Upload, FileText, Image, BarChart, X, ArrowLeft } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChartMessage } from '@/components/chat/ChartMessage'
+import { BackButton } from '@/components/navigation/BackButton'
 
 interface Message {
   id: string
@@ -438,7 +439,10 @@ export default function TradeGPTPage() {
       {/* Header */}
       <div className="p-3 border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-4xl mx-auto flex items-center justify-between gap-2 sm:gap-3">
-          <h1 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">TradeGPT</h1>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <BackButton buttonClassName="h-8 w-8" />
+            <h1 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">TradeGPT</h1>
+          </div>
           <button
             onClick={startNewConversation}
             className="flex items-center space-x-1 sm:space-x-2 px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"

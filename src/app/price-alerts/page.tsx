@@ -33,6 +33,7 @@ import { usePriceAlertStore, useAuthStore } from '@/store'
 import { toast } from 'sonner'
 import { PriceAlert, CreatePriceAlertRequest } from '@/types'
 import { useSearchParams, useRouter } from 'next/navigation'
+import { BackButton } from '@/components/navigation/BackButton'
 
 export default function PriceAlertsPage() {
   const { 
@@ -451,22 +452,25 @@ export default function PriceAlertsPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="px-3 sm:px-6 lg:px-8 py-6 space-y-6">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
       >
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Price Alerts</h1>
-          <p className="text-muted-foreground">
-            Set up price alerts for your favorite assets and get notified instantly
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            💡 Automatic price checking runs every 5 minutes • Manual check available below
-          </p>
+        <div className="flex items-start gap-2 sm:gap-3">
+          <BackButton buttonClassName="h-8 w-8" />
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Price Alerts</h1>
+            <p className="text-muted-foreground">
+              Set up price alerts for your favorite assets and get notified instantly
+            </p>
+          </div>
         </div>
+        <p className="text-xs text-muted-foreground mt-1">
+          💡 Automatic price checking runs every 5 minutes • Manual check available below
+        </p>
         <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto justify-start sm:justify-end">
           <div className="flex items-center gap-2 text-xs text-muted-foreground whitespace-nowrap">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shrink-0"></div>

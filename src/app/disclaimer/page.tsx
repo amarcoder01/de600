@@ -1,4 +1,6 @@
 import { Metadata } from 'next'
+import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Disclaimer - Vidality Trading Platform',
@@ -11,6 +13,12 @@ export default function DisclaimerPage() {
   return (
     <main className="min-h-screen bg-gray-50 py-12 px-6">
       <div className="mx-auto max-w-4xl bg-white rounded-2xl shadow-md p-8 md:p-12">
+        <div className="mb-4 flex items-center">
+          <Link href="/" className="inline-flex items-center gap-2 px-3 py-2 rounded-md border bg-white hover:bg-gray-50 text-gray-700">
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back</span>
+          </Link>
+        </div>
         
         {/* Header */}
         <header className="mb-8 text-center">
@@ -165,10 +173,8 @@ export default function DisclaimerPage() {
         </div>
 
         {/* Footer */}
-        <footer className="mt-8 pt-6 border-t border-gray-200 text-center">
-          <p className="text-sm text-gray-500">
-            © 2025 Vidality Pty Ltd. All rights reserved.
-          </p>
+        <footer className="mt-10 pt-6 border-t border-gray-200 text-center text-sm text-gray-500">
+          © 2025 Vidality Pty Ltd. All rights reserved.
         </footer>
       </div>
     </main>

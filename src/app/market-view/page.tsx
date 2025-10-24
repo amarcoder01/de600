@@ -3,10 +3,11 @@
 import { useState, useEffect, useRef } from "react"
 import { useQuery, useMutation, useQueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Filter, ChevronDown, RefreshCw, Play, Pause, BarChart3 } from "lucide-react"
+import { Filter, ChevronDown, RefreshCw, Play, Pause, BarChart3, ArrowLeft } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { MarketOverview } from "@/components/market/market-overview"
 import { StockCard } from "@/components/market/stock-card"
@@ -15,8 +16,10 @@ import { StockDetailModal } from "@/components/market/stock-detail-modal"
 import { stockApi } from "@/lib/market-api"
 import type { Stock } from "@/types/market"
 import { queryClient } from "@/lib/queryClient"
+import { useRouter } from "next/navigation"
 
 function MarketViewContent() {
+  const router = useRouter()
   const [currentPage, setCurrentPage] = useState(1)
   const [sortBy, setSortBy] = useState("marketCap")
   const [selectedStock, setSelectedStock] = useState<Stock | null>(null)
@@ -26,6 +29,23 @@ function MarketViewContent() {
   const autoRefreshRef = useRef<NodeJS.Timeout | null>(null)
   const { toast } = useToast()
   const queryClient = useQueryClient()
+  const [hasScrolled, setHasScrolled] = useState(false)
+
+  useEffect(() => {
+    const onScroll = () => setHasScrolled(window.scrollY > 2)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  const handleBack = () => {
+    const canGoBack = typeof window !== 'undefined' && ((window.history?.state as any)?.idx ?? 0) > 0
+    if (canGoBack) {
+      router.back()
+    } else {
+      router.push('/dashboard')
+    }
+  }
 
   const limit = 10
 
@@ -151,11 +171,28 @@ function MarketViewContent() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4 lg:px-8">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+      <header data-scrolled={hasScrolled} className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-none data-[scrolled=true]:shadow-md transition-shadow">
+        <div className="px-4 lg:px-8 flex h-16 items-center justify-between">
+          <div className="flex items-center gap-1.5 sm:gap-2.5">
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleBack}
+                    aria-label="Go back"
+                    className="h-8 w-8 p-0 transition-transform hover:scale-[1.03] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-primary/50"
+                  >
+                    <ArrowLeft className="w-4 h-4 transition-colors hover:text-primary" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" align="center">
+                  Back to dashboard
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
                 <svg 
                   className="w-4 h-4 text-primary-foreground" 
                   fill="currentColor" 
@@ -163,11 +200,10 @@ function MarketViewContent() {
                 >
                   <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
                 </svg>
-              </div>
-              <h1 className="text-xl font-bold tracking-tight" data-testid="app-title">
-                Market View
-              </h1>
             </div>
+            <h1 className="text-xl font-bold tracking-tight" data-testid="app-title">
+              Market View
+            </h1>
           </div>
           <div className="flex items-center space-x-4">
             {/* Removed refresh and play buttons for cleaner production interface */}

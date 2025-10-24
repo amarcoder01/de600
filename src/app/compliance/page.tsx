@@ -1,4 +1,6 @@
 import { Metadata } from 'next'
+import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Compliance - Vidality Trading Platform',
@@ -9,6 +11,12 @@ export default function CompliancePage() {
   return (
     <main className="min-h-screen bg-gray-50 py-12 px-6">
       <div className="max-w-5xl mx-auto p-8">
+        <div className="mb-2 flex items-center">
+          <Link href="/" className="inline-flex items-center gap-2 px-3 py-2 rounded-md border bg-white hover:bg-gray-50 text-gray-700">
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back</span>
+          </Link>
+        </div>
         <h1 className="text-4xl font-bold mb-6 text-gray-900">Compliance</h1>
 
         <p className="text-gray-700 mb-6">
@@ -114,6 +122,7 @@ export default function CompliancePage() {
           Users are responsible for ensuring their activities on the platform are
           lawful under applicable local regulations.
         </p>
+        
       </div>
     </main>
   );

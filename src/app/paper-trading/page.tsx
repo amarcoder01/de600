@@ -41,6 +41,7 @@ import {
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { BackButton } from '@/components/navigation/BackButton'
 import { Badge } from '@/components/ui/badge'
 import { PaperTradingAccount, PaperPosition, PaperOrder, PaperTransaction, Stock } from '@/types'
 import { TradingOrderForm } from '@/components/trading/TradingOrderForm'
@@ -410,6 +411,14 @@ export default function PaperTradingPage() {
 
   return (
     <div className="container mx-auto px-4 sm:px-6 py-4 space-y-6 max-w-screen-xl">
+      <div className="flex items-center gap-2 sm:gap-3">
+        <BackButton buttonClassName="h-8 w-8" />
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Paper Trading</h1>
+          <p className="text-muted-foreground">Simulate trades and track performance risk-free</p>
+        </div>
+      </div>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
