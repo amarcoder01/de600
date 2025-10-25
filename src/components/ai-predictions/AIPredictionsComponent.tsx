@@ -429,7 +429,7 @@ export default function AIPredictionsComponent({ className }: AIPredictionsCompo
               <div className="grid grid-cols-1 gap-3">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="useEnsemble" className="text-sm">
-                    Use Ensemble AI (QLib + ML + Web + OpenAI)
+                    Enable Ensemble AI (QLib · ML · Web Signals · OpenAI)
                   </Label>
                   <Switch
                     id="useEnsemble"
