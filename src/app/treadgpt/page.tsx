@@ -458,7 +458,7 @@ export default function TradeGPTPage() {
         <div className="max-w-4xl mx-auto px-3 sm:px-4 py-2.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div className="flex-1 min-w-0">
             <p className="text-xs sm:text-sm text-emerald-900 dark:text-emerald-100 leading-relaxed truncate">
-              <span className="font-semibold">TradGPT: Zero‑Trace Intelligence</span> — Your Trades • Your Secrets • Your Edge • Private by design: no chat storage • no logs • no tracking
+              <span className="font-semibold">TradeGPT: Zero‑Trace Intelligence</span> — Your Trades • Your Secrets • Your Edge • Private by design: no chat storage • no logs • no tracking
             </p>
           </div>
           <button
@@ -498,7 +498,7 @@ export default function TradeGPTPage() {
             </div>
             {/* Content */}
             <div className="p-4 sm:p-5 space-y-4 text-sm text-gray-800 dark:text-gray-100 overflow-y-auto">
-              <p className="font-medium">At TradGPT, your privacy isn’t an option — it’s a principle.</p>
+              <p className="font-medium">At TradeGPT, your privacy isn’t an option — it’s a principle.</p>
               <p>We believe traders deserve full control over their data, strategies, and conversations. That’s why our system is built in Zero-Trace Mode.</p>
 
               <div>
@@ -507,7 +507,7 @@ export default function TradeGPTPage() {
                   <li>No Chat Logs: Every message you send is processed instantly and then deleted.</li>
                   <li>No Storage: We don’t save your trading data, preferences, or history.</li>
                   <li>No Tracking: We don’t monitor, analyze, or sell your usage behavior.</li>
-                  <li>No Learning from You: TradGPT doesn’t train or improve using your personal data.</li>
+                  <li>No Learning from You: TradeGPT doesn’t train or improve using your personal data.</li>
                 </ul>
               </div>
 
@@ -527,7 +527,7 @@ export default function TradeGPTPage() {
               </div>
 
               <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-                <p className="font-medium">TradGPT: Where Intelligence Meets True Privacy.</p>
+                <p className="font-medium">TradeGPT: Where Intelligence Meets True Privacy.</p>
                 <p>Your Trades. Your Secrets. Your Edge.</p>
               </div>
             </div>
