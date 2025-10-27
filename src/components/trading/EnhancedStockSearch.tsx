@@ -284,7 +284,7 @@ export function EnhancedStockSearch({
           ref={searchInputRef}
           type="text"
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => setSearchQuery(e.target.value.toUpperCase())}
           onFocus={() => setShowSuggestions(true)}
           placeholder={placeholder}
           className="w-full pl-10 pr-20 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"

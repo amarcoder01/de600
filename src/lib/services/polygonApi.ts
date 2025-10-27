@@ -170,4 +170,25 @@ export class PolygonApiService {
     const endpoint = `/v3/reference/tickers/${symbol}?apikey=${this.apiKey}`;
     return this.makeRequest<PolygonTickerDetailsResponse>(endpoint);
   }
+
+  // New: exact ticker lookup to prioritize precise matches like GOOG
+  async searchExactTicker(symbol: string): Promise<PolygonTickerResponse> {
+    const ticker = symbol.toUpperCase();
+    const endpoint = `/v3/reference/tickers?ticker=${encodeURIComponent(ticker)}&market=stocks&active=true&limit=1&apikey=${this.apiKey}`;
+    return this.makeRequest<PolygonTickerResponse>(endpoint);
+  }
+
+  // New: real-time snapshot for a single ticker
+  async getSnapshot(symbol: string): Promise<any> {
+    const ticker = symbol.toUpperCase();
+    const endpoint = `/v2/snapshot/locale/us/markets/stocks/tickers/${ticker}?apikey=${this.apiKey}`;
+    return this.makeRequest<any>(endpoint);
+  }
+
+  // New: last trade for a ticker (ultra low-latency price)
+  async getLastTrade(symbol: string): Promise<any> {
+    const ticker = symbol.toUpperCase();
+    const endpoint = `/v2/last/trade/${ticker}?apikey=${this.apiKey}`;
+    return this.makeRequest<any>(endpoint);
+  }
 }

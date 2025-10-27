@@ -53,7 +53,7 @@ export function StockSearch({ className, onStockSelect }: StockSearchProps) {
             type="text"
             placeholder="Search stocks by symbol or company name..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => setSearchQuery(e.target.value.toUpperCase())}
             className="pl-10 pr-14 py-2 w-full"
             data-testid="input-stock-search"
           />

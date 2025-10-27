@@ -187,7 +187,7 @@ export function GlobalSearch({ placeholder = "Search symbols, news, or analysis.
         <input
           type="text"
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => setSearchQuery(e.target.value.toUpperCase())}
           placeholder={placeholder}
           className="pl-10 pr-10 py-2 w-80 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
           onFocus={() => setShowResults(true)}

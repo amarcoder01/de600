@@ -351,6 +351,96 @@ export class StockDataService {
       const polygonApiKey = process.env.POLYGON_API_KEY || process.env.NEXT_PUBLIC_POLYGON_API_KEY;
       
       if (polygonApiKey && polygonApiKey !== 'your_polygon_api_key_here') {
+        // 1) Try exact ticker match first for real-time accuracy (e.g., GOOG)
+        const q = (query || '').trim().toUpperCase();
+        if (q && /^[A-Z\.]+$/.test(q)) {
+          try {
+            const exact = await this.polygonApi.searchExactTicker(q);
+            const exactTicker = exact?.results?.find(r => r.ticker === q && r.active && r.market === 'stocks');
+            if (exactTicker) {
+              // Fetch real-time price via last trade and previous close via prev aggs
+              let price = 0;
+              let previousClose = 0;
+              try {
+                const lastTrade = await this.polygonApi.getLastTrade(q);
+                // polygon last trade response has price in last.price or results.p depending on endpoint
+                price = lastTrade?.results?.p || lastTrade?.price || 0;
+              } catch (e) {
+                // Fallback to snapshot close if last trade unavailable
+                try {
+                  const snap = await this.polygonApi.getSnapshot(q);
+                  price = snap?.ticker?.lastTrade?.p || snap?.ticker?.min?.c || snap?.ticker?.prevDay?.c || 0;
+                } catch { /* ignore */ }
+              }
+              try {
+                const prev = await this.polygonApi.getStockQuote(q);
+                const res: any = (prev as any)?.results;
+                previousClose = Array.isArray(res) ? (res[0]?.c || 0) : (res?.c || 0);
+              } catch { /* ignore */ }
+
+              const change = price && previousClose ? price - previousClose : 0;
+              const changePercent = previousClose ? (change / previousClose) * 100 : 0;
+
+              stocks.push({
+                symbol: q,
+                name: this.cleanCompanyName(exactTicker.name || q),
+                sector: await this.getSectorForStock(q, undefined, exactTicker.type),
+                currentPrice: price || previousClose || 0,
+                previousClose: previousClose || 0,
+                change: isNaN(change) ? 0 : change,
+                changePercent: isNaN(changePercent) ? 0 : changePercent,
+                volume: 0,
+                marketCap: undefined,
+                isActive: true,
+              });
+
+              // Return immediately with exact real-time match
+              return stocks;
+            }
+          } catch (exactErr) {
+            // Continue to broader search if exact lookup fails
+            console.warn('Exact ticker lookup failed, falling back to broader search:', exactErr);
+          }
+
+          // Try well-known alternate class ticker mapping (e.g., GOOG <-> GOOGL)
+          const altMap: Record<string, string> = { GOOG: 'GOOGL', GOOGL: 'GOOG' };
+          const alt = altMap[q];
+          if (alt) {
+            try {
+              const exactAlt = await this.polygonApi.searchExactTicker(alt);
+              const exactTickerAlt = exactAlt?.results?.find(r => r.ticker === alt && r.active && r.market === 'stocks');
+              if (exactTickerAlt) {
+                let price = 0;
+                let previousClose = 0;
+                try {
+                  const lastTrade = await this.polygonApi.getLastTrade(alt);
+                  price = lastTrade?.results?.p || lastTrade?.price || 0;
+                } catch {}
+                try {
+                  const prev = await this.polygonApi.getStockQuote(alt);
+                  const res: any = (prev as any)?.results;
+                  previousClose = Array.isArray(res) ? (res[0]?.c || 0) : (res?.c || 0);
+                } catch {}
+                const change = price && previousClose ? price - previousClose : 0;
+                const changePercent = previousClose ? (change / previousClose) * 100 : 0;
+                stocks.push({
+                  symbol: alt,
+                  name: this.cleanCompanyName(exactTickerAlt.name || alt),
+                  sector: await this.getSectorForStock(alt, undefined, exactTickerAlt.type),
+                  currentPrice: price || previousClose || 0,
+                  previousClose: previousClose || 0,
+                  change: isNaN(change) ? 0 : change,
+                  changePercent: isNaN(changePercent) ? 0 : changePercent,
+                  volume: 0,
+                  marketCap: undefined,
+                  isActive: true,
+                });
+                return stocks;
+              }
+            } catch {}
+          }
+        }
+
         try {
           // Try Polygon search first, but use Yahoo Finance for accurate price data
           const polygonResults = await this.polygonApi.searchTickers(query);
