@@ -29,7 +29,7 @@ export function TradingOrderForm({ symbol = '', accountId, onOrderPlaced, onCanc
   // State
   const [orderType, setOrderType] = useState<'market' | 'limit' | 'stop' | 'stop-limit'>('market')
   const [side, setSide] = useState<'buy' | 'sell'>('buy')
-  const [quantity, setQuantity] = useState<number>(0)
+  const [quantity, setQuantity] = useState<string>('')
   const [price, setPrice] = useState<number>(0)
   const [stopPrice, setStopPrice] = useState<number>(0)
   const [notes, setNotes] = useState('')
@@ -60,7 +60,18 @@ export function TradingOrderForm({ symbol = '', accountId, onOrderPlaced, onCanc
       
       if (!response.ok) {
         console.error(`❌ Failed to fetch stock data for ${symbol}:`, response.status)
-        setError('Failed to fetch stock data')
+        
+        // Provide specific error messages based on status code
+        if (response.status === 404) {
+          setError(`Invalid stock symbol "${symbol}". Please check the symbol and try again.`)
+        } else if (response.status === 400) {
+          setError(`Invalid stock symbol format. Please enter a valid symbol.`)
+        } else if (response.status >= 500) {
+          setError('Stock data service is temporarily unavailable. Please try again later.')
+        } else {
+          setError(`Unable to fetch data for "${symbol}". Please verify the symbol is correct.`)
+        }
+        setStockData(null)
         return
       }
       
@@ -72,17 +83,34 @@ export function TradingOrderForm({ symbol = '', accountId, onOrderPlaced, onCanc
         setError(null)
       } else {
         console.error(`❌ No stock data for ${symbol}:`, data.error)
-        setError(`Stock data not available for ${symbol}`)
+        
+        // Provide specific error message based on the API response
+        if (data.error && data.error.toLowerCase().includes('not found')) {
+          setError(`Stock symbol "${symbol}" not found. Please check the symbol and try again.`)
+        } else if (data.error && data.error.toLowerCase().includes('invalid')) {
+          setError(`Invalid stock symbol "${symbol}". Please enter a valid symbol.`)
+        } else {
+          setError(`Unable to retrieve data for "${symbol}". Please verify the symbol is correct.`)
+        }
+        setStockData(null)
       }
     } catch (error) {
       console.error(`❌ Error fetching stock data for ${symbol}:`, error)
-      setError('Failed to fetch stock data')
+      
+      // Provide user-friendly error message for network issues
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        setError('Network connection error. Please check your internet connection and try again.')
+      } else {
+        setError(`Unable to fetch data for "${symbol}". Please try again or check your connection.`)
+      }
+      setStockData(null)
     }
   }
 
   const calculateTotal = () => {
     const orderPrice = orderType === 'market' ? (stockData?.price || 0) : price
-    return quantity * orderPrice
+    const qty = parseFloat(quantity) || 0
+    return qty * orderPrice
   }
 
   const calculateCommission = () => {
@@ -98,7 +126,8 @@ export function TradingOrderForm({ symbol = '', accountId, onOrderPlaced, onCanc
       return
     }
 
-    if (quantity <= 0) {
+    const qty = parseFloat(quantity) || 0
+    if (qty <= 0) {
       setError('Quantity must be greater than 0')
       return
     }
@@ -130,7 +159,7 @@ export function TradingOrderForm({ symbol = '', accountId, onOrderPlaced, onCanc
           symbol,
           type: orderType,
           side,
-          quantity,
+          quantity: qty,
           price: orderType === 'market' ? undefined : price,
           stopPrice: orderType === 'stop' || orderType === 'stop-limit' ? stopPrice : undefined,
           notes,
@@ -169,7 +198,7 @@ export function TradingOrderForm({ symbol = '', accountId, onOrderPlaced, onCanc
             <CheckCircle className="mx-auto h-12 w-12 text-green-500 mb-4" />
             <h3 className="text-lg font-semibold mb-2">Order Placed Successfully!</h3>
             <p className="text-muted-foreground">
-              Your {side} order for {quantity} shares of {symbol} has been placed.
+              Your {side} order for {parseFloat(quantity) || 0} shares of {symbol} has been placed.
             </p>
           </div>
         </CardContent>
@@ -269,7 +298,17 @@ export function TradingOrderForm({ symbol = '', accountId, onOrderPlaced, onCanc
             <input
               type="number"
               value={quantity}
-              onChange={(e) => setQuantity(Number(e.target.value))}
+              onChange={(e) => {
+                const value = e.target.value
+                // Remove leading zeros but keep empty string and valid numbers
+                if (value === '' || value === '0') {
+                  setQuantity(value)
+                } else {
+                  // Remove leading zeros from non-zero numbers
+                  const cleanValue = value.replace(/^0+/, '') || '0'
+                  setQuantity(cleanValue)
+                }
+              }}
               className="w-full mt-1 p-2 border rounded-md bg-white text-gray-900 placeholder-gray-500 dark:bg-white dark:text-gray-900 dark:placeholder-gray-600"
               placeholder="Enter quantity"
               min="1"
@@ -322,12 +361,12 @@ export function TradingOrderForm({ symbol = '', accountId, onOrderPlaced, onCanc
           </div>
 
           {/* Order Summary */}
-          {quantity > 0 && (
+          {parseFloat(quantity) > 0 && (
             <div className="p-3 bg-muted rounded-lg space-y-2">
               <h4 className="font-semibold">Order Summary</h4>
               <div className="flex justify-between text-sm">
                 <span>Quantity:</span>
-                <span>{quantity} shares</span>
+                <span>{parseFloat(quantity) || 0} shares</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span>Price:</span>
@@ -370,7 +409,7 @@ export function TradingOrderForm({ symbol = '', accountId, onOrderPlaced, onCanc
             </Button>
             <Button
               type="submit"
-              disabled={loading || quantity <= 0}
+              disabled={loading || parseFloat(quantity) <= 0}
               className="flex-1"
             >
               {loading ? (
