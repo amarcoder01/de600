@@ -5,6 +5,7 @@ import { TradingViewChart } from '@/components/charts/TradingViewChart'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Home } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { navigateSafely } from '@/lib/safe-redirect'
 
 interface ChartPageProps {
   params: {
@@ -35,7 +36,7 @@ function ChartPageContent({ symbol }: { symbol: string }) {
   const handleBackToChat = () => {
     if (returnUrl) {
       // Navigate back to the specific chat page with preserved state
-      window.location.href = decodeURIComponent(returnUrl)
+      navigateSafely(decodeURIComponent(returnUrl), { fallback: '/treadgpt' })
     } else {
       // Fallback to TradeGPT page
       router.push('/treadgpt')

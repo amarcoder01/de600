@@ -16,6 +16,7 @@ interface PortfolioCardProps {
   subtitle?: string
   trend?: 'up' | 'down' | 'neutral'
   formatAsCurrency?: boolean
+  onClick?: () => void
 }
 
 export function PortfolioCard({ 
@@ -27,7 +28,8 @@ export function PortfolioCard({
   iconColor, 
   subtitle,
   trend = 'neutral',
-  formatAsCurrency = true
+  formatAsCurrency = true,
+  onClick
 }: PortfolioCardProps) {
   const formatValue = (val: string | number) => {
     if (typeof val === 'number') {
@@ -68,7 +70,20 @@ export function PortfolioCard({
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
     >
-      <Card className="hover:shadow-lg transition-all duration-200 cursor-pointer">
+      <Card 
+        className="hover:shadow-lg transition-all duration-200 cursor-pointer"
+        onClick={onClick}
+        role={onClick ? 'button' : undefined}
+        tabIndex={onClick ? 0 : -1}
+        onKeyDown={(e) => {
+          if (!onClick) return
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            onClick()
+          }
+        }}
+        aria-label={onClick ? title : undefined}
+      >
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium flex items-center justify-between">
             <span>{title}</span>

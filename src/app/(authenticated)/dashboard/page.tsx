@@ -562,7 +562,20 @@ export default function Dashboard() {
             <CardContent>
               <div className="space-y-3">
                 {watchlistItems.slice(0, 5).map((item) => (
-                  <div key={item.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800 gap-3">
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800 gap-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onClick={() => router.push('/watchlist#watchlist-items-section')}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        router.push('/watchlist#watchlist-items-section')
+                      }
+                    }}
+                    aria-label={`Open watchlist details for ${item.symbol}`}
+                  >
                     <div className="flex items-center space-x-3 min-w-0">
                       <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
                         <span className="text-white font-bold text-sm">{item.symbol[0]}</span>

@@ -70,6 +70,8 @@ export default function PaperTradingPage() {
   const [deletingAccount, setDeletingAccount] = useState(false)
   const [validatingSymbol, setValidatingSymbol] = useState(false)
   const [symbolValidationError, setSymbolValidationError] = useState<string | null>(null)
+  const enableAddToPortfolio = true
+  const [addingPositionId, setAddingPositionId] = useState<string | null>(null)
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -351,6 +353,49 @@ export default function PaperTradingPage() {
   const getRealTimeChange = (symbol: string) => {
     const stock = realTimeData.get(symbol)
     return stock ? stock.changePercent : 0
+  }
+
+  const addPositionToPortfolio = async (position: PaperPosition) => {
+    try {
+      setAddingPositionId(position.id)
+      const portfoliosRes = await fetch('/api/portfolio')
+      const portfoliosJson = await portfoliosRes.json()
+      if (!portfoliosRes.ok || !portfoliosJson?.success) {
+        alert('Failed to load portfolios. Please try again later.')
+        return
+      }
+      const portfolios = portfoliosJson.data || []
+      if (!portfolios.length) {
+        alert('No portfolio available yet. Please try again.')
+        return
+      }
+      const target = portfolios[0]
+      const confirmMsg = `Add ${position.symbol} (Qty: ${position.quantity} @ $${position.averagePrice.toFixed(2)}) to portfolio "${target.name}"?`
+      const ok = window.confirm(confirmMsg)
+      if (!ok) return
+
+      const resp = await fetch(`/api/portfolio/${target.id}/positions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          symbol: position.symbol,
+          quantity: position.quantity,
+          averagePrice: position.averagePrice,
+          notes: `Imported from Paper Trading on ${new Date().toISOString()}`
+        })
+      })
+      const out = await resp.json().catch(() => ({} as any))
+      if (resp.ok && out?.success) {
+        alert('Position added to Portfolio Manager.')
+      } else {
+        alert(out?.error || 'Failed to add position to Portfolio Manager.')
+      }
+    } catch (e) {
+      alert('Unexpected error while adding to Portfolio. Please try again.')
+      console.error('Add to Portfolio error:', e)
+    } finally {
+      setAddingPositionId(null)
+    }
   }
 
   // Export selected account data as a JSON file
@@ -732,6 +777,9 @@ export default function PaperTradingPage() {
                             <th className="text-right p-2">Avg Price</th>
                             <th className="text-right p-2">Current Price</th>
                             <th className="text-right p-2">Market Value</th>
+                            {enableAddToPortfolio && (
+                              <th className="text-right p-2">Actions</th>
+                            )}
                           </tr>
                         </thead>
                         <tbody>
@@ -745,6 +793,19 @@ export default function PaperTradingPage() {
                                 <td className="p-2 text-right">{formatCurrency(position.averagePrice)}</td>
                                 <td className="p-2 text-right">{formatCurrency(rtPrice)}</td>
                                 <td className="p-2 text-right">{formatCurrency(marketValue)}</td>
+                                {enableAddToPortfolio && (
+                                  <td className="p-2 text-right">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => addPositionToPortfolio(position)}
+                                      disabled={addingPositionId === position.id}
+                                      className="whitespace-nowrap"
+                                    >
+                                      {addingPositionId === position.id ? 'Adding…' : 'Add to Portfolio'}
+                                    </Button>
+                                  </td>
+                                )}
                               </tr>
                             )
                           })}
