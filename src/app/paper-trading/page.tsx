@@ -37,13 +37,23 @@ import {
   Pause,
   Square,
   RotateCcw,
-  Trash2
+  Trash2,
+  FolderPlus,
+  X,
+  Loader2,
+  ExternalLink
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { BackButton } from '@/components/navigation/BackButton'
 import { Badge } from '@/components/ui/badge'
-import { PaperTradingAccount, PaperPosition, PaperOrder, PaperTransaction, Stock } from '@/types'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import { useToast } from '@/hooks/use-toast'
+import { PaperTradingAccount, PaperPosition, PaperOrder, PaperTransaction, Stock, Portfolio } from '@/types'
 import { TradingOrderForm } from '@/components/trading/TradingOrderForm'
 import { useAuthStore } from '@/store'
 import { useRouter } from 'next/navigation'
@@ -70,8 +80,22 @@ export default function PaperTradingPage() {
   const [deletingAccount, setDeletingAccount] = useState(false)
   const [validatingSymbol, setValidatingSymbol] = useState(false)
   const [symbolValidationError, setSymbolValidationError] = useState<string | null>(null)
-  const enableAddToPortfolio = true
-  const [addingPositionId, setAddingPositionId] = useState<string | null>(null)
+
+  // Add to Portfolio Manager Feature (with feature flag for safety)
+  const ENABLE_ADD_TO_PORTFOLIO = true // Feature flag - can be disabled if needed
+  const { toast } = useToast()
+  const [showAddToPortfolioModal, setShowAddToPortfolioModal] = useState(false)
+  const [selectedPosition, setSelectedPosition] = useState<PaperPosition | null>(null)
+  const [portfolios, setPortfolios] = useState<Portfolio[]>([])
+  const [selectedPortfolioId, setSelectedPortfolioId] = useState<string>('')
+  const [newPortfolioName, setNewPortfolioName] = useState('')
+  const [showCreatePortfolio, setShowCreatePortfolio] = useState(false)
+  const [addingToPortfolio, setAddingToPortfolio] = useState(false)
+  const [loadingPortfolios, setLoadingPortfolios] = useState(false)
+  const [portfolioError, setPortfolioError] = useState<string | null>(null)
+  const [positionNotes, setPositionNotes] = useState('')
+  const [positionQuantity, setPositionQuantity] = useState<number>(0)
+  const [positionAveragePrice, setPositionAveragePrice] = useState<number>(0)
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -355,49 +379,6 @@ export default function PaperTradingPage() {
     return stock ? stock.changePercent : 0
   }
 
-  const addPositionToPortfolio = async (position: PaperPosition) => {
-    try {
-      setAddingPositionId(position.id)
-      const portfoliosRes = await fetch('/api/portfolio')
-      const portfoliosJson = await portfoliosRes.json()
-      if (!portfoliosRes.ok || !portfoliosJson?.success) {
-        alert('Failed to load portfolios. Please try again later.')
-        return
-      }
-      const portfolios = portfoliosJson.data || []
-      if (!portfolios.length) {
-        alert('No portfolio available yet. Please try again.')
-        return
-      }
-      const target = portfolios[0]
-      const confirmMsg = `Add ${position.symbol} (Qty: ${position.quantity} @ $${position.averagePrice.toFixed(2)}) to portfolio "${target.name}"?`
-      const ok = window.confirm(confirmMsg)
-      if (!ok) return
-
-      const resp = await fetch(`/api/portfolio/${target.id}/positions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          symbol: position.symbol,
-          quantity: position.quantity,
-          averagePrice: position.averagePrice,
-          notes: `Imported from Paper Trading on ${new Date().toISOString()}`
-        })
-      })
-      const out = await resp.json().catch(() => ({} as any))
-      if (resp.ok && out?.success) {
-        alert('Position added to Portfolio Manager.')
-      } else {
-        alert(out?.error || 'Failed to add position to Portfolio Manager.')
-      }
-    } catch (e) {
-      alert('Unexpected error while adding to Portfolio. Please try again.')
-      console.error('Add to Portfolio error:', e)
-    } finally {
-      setAddingPositionId(null)
-    }
-  }
-
   // Export selected account data as a JSON file
   const exportSelectedAccountData = () => {
     if (!selectedAccount) return
@@ -426,6 +407,256 @@ export default function PaperTradingPage() {
       URL.revokeObjectURL(url)
     } catch (e) {
       console.error('Failed to export account data:', e)
+    }
+  }
+
+  // Portfolio Management Functions
+  const fetchPortfolios = async () => {
+    if (!ENABLE_ADD_TO_PORTFOLIO) return
+    
+    try {
+      setLoadingPortfolios(true)
+      setPortfolioError(null)
+      
+      const response = await fetch('/api/portfolio', {
+        method: 'GET',
+        credentials: 'include', // Include cookies for authentication
+      })
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Authentication required. Please log in again.')
+        } else if (response.status === 403) {
+          throw new Error('Access denied. Please check your permissions.')
+        } else if (response.status >= 500) {
+          throw new Error('Server error. Please try again later.')
+        } else {
+          throw new Error(`Failed to load portfolios (${response.status})`)
+        }
+      }
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        setPortfolios(data.data || [])
+        // Auto-select first portfolio if available
+        if (data.data && data.data.length > 0 && !selectedPortfolioId) {
+          setSelectedPortfolioId(data.data[0].id)
+        }
+      } else {
+        throw new Error(data.error || 'Failed to load portfolios')
+      }
+    } catch (error) {
+      console.error('Error fetching portfolios:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load portfolios'
+      setPortfolioError(errorMessage)
+      toast({
+        title: "Error Loading Portfolios",
+        description: errorMessage,
+        variant: "destructive",
+      })
+    } finally {
+      setLoadingPortfolios(false)
+    }
+  }
+
+  const createPortfolio = async () => {
+    if (!newPortfolioName.trim()) {
+      toast({
+        title: "Invalid Portfolio Name",
+        description: "Please enter a valid portfolio name.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      setLoadingPortfolios(true)
+      setPortfolioError(null)
+      
+      const response = await fetch('/api/portfolio', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: newPortfolioName.trim()
+        })
+      })
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Authentication required. Please log in again.')
+        } else if (response.status === 403) {
+          throw new Error('Access denied. Please check your permissions.')
+        } else if (response.status >= 500) {
+          throw new Error('Server error. Please try again later.')
+        } else {
+          throw new Error(`Failed to create portfolio (${response.status})`)
+        }
+      }
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        const newPortfolio = data.data
+        setPortfolios(prev => [newPortfolio, ...prev])
+        setSelectedPortfolioId(newPortfolio.id)
+        setNewPortfolioName('')
+        setShowCreatePortfolio(false)
+        
+        toast({
+          title: "Portfolio Created",
+          description: `Portfolio "${newPortfolio.name}" created successfully.`,
+        })
+      } else {
+        throw new Error(data.error || 'Failed to create portfolio')
+      }
+    } catch (error) {
+      console.error('Error creating portfolio:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create portfolio'
+      setPortfolioError(errorMessage)
+      toast({
+        title: "Error Creating Portfolio",
+        description: errorMessage,
+        variant: "destructive",
+      })
+    } finally {
+      setLoadingPortfolios(false)
+    }
+  }
+
+  const openAddToPortfolioModal = (position: PaperPosition) => {
+    if (!ENABLE_ADD_TO_PORTFOLIO) return
+    
+    setSelectedPosition(position)
+    setPositionQuantity(position.quantity)
+    setPositionAveragePrice(position.averagePrice)
+    setPositionNotes(`Imported from Paper Trading on ${new Date().toLocaleDateString()}`)
+    setShowAddToPortfolioModal(true)
+    
+    // Fetch portfolios when modal opens
+    fetchPortfolios()
+  }
+
+  const closeAddToPortfolioModal = () => {
+    setShowAddToPortfolioModal(false)
+    setSelectedPosition(null)
+    setSelectedPortfolioId('')
+    setPositionQuantity(0)
+    setPositionAveragePrice(0)
+    setPositionNotes('')
+    setPortfolioError(null)
+    setShowCreatePortfolio(false)
+    setNewPortfolioName('')
+  }
+
+  const addPositionToPortfolio = async () => {
+    if (!selectedPosition || !selectedPortfolioId) {
+      toast({
+        title: "Missing Information",
+        description: "Please select a portfolio and ensure position data is valid.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Validate inputs
+    if (positionQuantity <= 0) {
+      toast({
+        title: "Invalid Quantity",
+        description: "Quantity must be greater than 0.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (positionAveragePrice <= 0) {
+      toast({
+        title: "Invalid Price",
+        description: "Average price must be greater than 0.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      setAddingToPortfolio(true)
+      setPortfolioError(null)
+      
+      const requestBody = {
+        symbol: selectedPosition.symbol.toUpperCase(),
+        quantity: positionQuantity,
+        averagePrice: positionAveragePrice,
+        notes: positionNotes.trim() || undefined
+      }
+      
+      console.log('Adding position to portfolio:', {
+        portfolioId: selectedPortfolioId,
+        position: requestBody
+      })
+      
+      const response = await fetch(`/api/portfolio/${selectedPortfolioId}/positions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(requestBody)
+      })
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Authentication required. Please log in again.')
+        } else if (response.status === 403) {
+          throw new Error('Access denied. Please check your permissions.')
+        } else if (response.status === 404) {
+          throw new Error('Portfolio not found. Please refresh and try again.')
+        } else if (response.status >= 500) {
+          throw new Error('Server error. Please try again later.')
+        } else {
+          throw new Error(`Failed to add position (${response.status})`)
+        }
+      }
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        const portfolioName = portfolios.find(p => p.id === selectedPortfolioId)?.name || 'Portfolio'
+        
+        toast({
+          title: "Position Added Successfully",
+          description: `${selectedPosition.symbol} has been added to ${portfolioName}.`,
+          action: (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                router.push('/portfolio-manager')
+              }}
+            >
+              <ExternalLink className="h-4 w-4 mr-1" />
+              View Portfolio
+            </Button>
+          ),
+        })
+        
+        closeAddToPortfolioModal()
+      } else {
+        throw new Error(data.error || 'Failed to add position to portfolio')
+      }
+    } catch (error) {
+      console.error('Error adding position to portfolio:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to add position to portfolio'
+      setPortfolioError(errorMessage)
+      toast({
+        title: "Error Adding Position",
+        description: errorMessage,
+        variant: "destructive",
+      })
+    } finally {
+      setAddingToPortfolio(false)
     }
   }
 
@@ -777,7 +1008,7 @@ export default function PaperTradingPage() {
                             <th className="text-right p-2">Avg Price</th>
                             <th className="text-right p-2">Current Price</th>
                             <th className="text-right p-2">Market Value</th>
-                            {enableAddToPortfolio && (
+                            {ENABLE_ADD_TO_PORTFOLIO && (
                               <th className="text-right p-2">Actions</th>
                             )}
                           </tr>
@@ -793,16 +1024,18 @@ export default function PaperTradingPage() {
                                 <td className="p-2 text-right">{formatCurrency(position.averagePrice)}</td>
                                 <td className="p-2 text-right">{formatCurrency(rtPrice)}</td>
                                 <td className="p-2 text-right">{formatCurrency(marketValue)}</td>
-                                {enableAddToPortfolio && (
+                                {ENABLE_ADD_TO_PORTFOLIO && (
                                   <td className="p-2 text-right">
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      onClick={() => addPositionToPortfolio(position)}
-                                      disabled={addingPositionId === position.id}
-                                      className="whitespace-nowrap"
+                                      onClick={() => openAddToPortfolioModal(position)}
+                                      className="h-8 px-2 text-xs"
+                                      title={`Add ${position.symbol} to Portfolio Manager`}
                                     >
-                                      {addingPositionId === position.id ? 'Adding…' : 'Add to Portfolio'}
+                                      <FolderPlus className="h-3 w-3 mr-1" />
+                                      <span className="hidden sm:inline">Add to Portfolio</span>
+                                      <span className="sm:hidden">Add</span>
                                     </Button>
                                   </td>
                                 )}
@@ -1056,6 +1289,212 @@ export default function PaperTradingPage() {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Add to Portfolio Modal */}
+      {ENABLE_ADD_TO_PORTFOLIO && (
+        <Dialog open={showAddToPortfolioModal} onOpenChange={closeAddToPortfolioModal}>
+          <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <FolderPlus className="h-5 w-5" />
+                Add to Portfolio Manager
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-6">
+              {selectedPosition && (
+                <div className="bg-muted/50 p-4 rounded-lg">
+                  <h4 className="font-medium mb-2">Position Details</h4>
+                  <div className="text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Symbol:</span>
+                      <span className="ml-2 font-medium">{selectedPosition.symbol}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {portfolioError && (
+                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
+                  <div className="flex items-center gap-2 text-destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <span className="text-sm font-medium">Error</span>
+                  </div>
+                  <p className="text-sm text-destructive/80 mt-1">{portfolioError}</p>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="portfolio-select">Target Portfolio</Label>
+                  <div className="flex gap-2 mt-1">
+                    <Select
+                      value={selectedPortfolioId}
+                      onValueChange={setSelectedPortfolioId}
+                      disabled={loadingPortfolios}
+                    >
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder={loadingPortfolios ? "Loading portfolios..." : "Select a portfolio"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {portfolios.map((portfolio) => (
+                          <SelectItem key={portfolio.id} value={portfolio.id}>
+                            {portfolio.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowCreatePortfolio(true)}
+                      disabled={loadingPortfolios}
+                      className="px-3"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {portfolios.length === 0 && !loadingPortfolios && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      No portfolios found. Create one to continue.
+                    </p>
+                  )}
+                </div>
+
+                {showCreatePortfolio && (
+                  <div className="border rounded-lg p-4 bg-muted/30">
+                    <Label htmlFor="new-portfolio-name">Create New Portfolio</Label>
+                    <div className="flex gap-2 mt-1">
+                      <Input
+                        id="new-portfolio-name"
+                        value={newPortfolioName}
+                        onChange={(e) => setNewPortfolioName(e.target.value)}
+                        placeholder="Enter portfolio name"
+                        disabled={loadingPortfolios}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            createPortfolio()
+                          }
+                        }}
+                      />
+                      <Button
+                        onClick={createPortfolio}
+                        disabled={!newPortfolioName.trim() || loadingPortfolios}
+                        size="sm"
+                      >
+                        {loadingPortfolios ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          'Create'
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setShowCreatePortfolio(false)
+                          setNewPortfolioName('')
+                        }}
+                        size="sm"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="position-quantity">Quantity</Label>
+                    <Input
+                      id="position-quantity"
+                      type="number"
+                      value={positionQuantity}
+                      onChange={(e) => setPositionQuantity(parseFloat(e.target.value) || 0)}
+                      min="0"
+                      step="1"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="position-avg-price">Average Price</Label>
+                    <Input
+                      id="position-avg-price"
+                      type="number"
+                      value={positionAveragePrice}
+                      onChange={(e) => setPositionAveragePrice(parseFloat(e.target.value) || 0)}
+                      min="0"
+                      step="0.01"
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="position-notes">Notes (Optional)</Label>
+                  <Textarea
+                    id="position-notes"
+                    value={positionNotes}
+                    onChange={(e) => setPositionNotes(e.target.value)}
+                    placeholder="Add any notes about this position..."
+                    className="mt-1"
+                    rows={3}
+                  />
+                </div>
+
+                {selectedPosition && positionQuantity > 0 && positionAveragePrice > 0 && (
+                  <div className="bg-muted/50 p-3 rounded-lg">
+                    <h5 className="text-sm font-medium mb-2">Position Summary</h5>
+                    <div className="text-sm space-y-1">
+                      <div className="flex justify-between">
+                        <span>Total Value:</span>
+                        <span className="font-medium">{formatCurrency(positionQuantity * positionAveragePrice)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Symbol:</span>
+                        <span className="font-medium">{selectedPosition.symbol}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Shares:</span>
+                        <span className="font-medium">{positionQuantity.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button variant="outline" onClick={closeAddToPortfolioModal} className="w-full sm:w-auto">
+                Cancel
+              </Button>
+              <Button
+                onClick={addPositionToPortfolio}
+                disabled={
+                  !selectedPosition ||
+                  !selectedPortfolioId ||
+                  positionQuantity <= 0 ||
+                  positionAveragePrice <= 0 ||
+                  addingToPortfolio ||
+                  loadingPortfolios
+                }
+                className="w-full sm:w-auto"
+              >
+                {addingToPortfolio ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Adding Position...
+                  </>
+                ) : (
+                  <>
+                    <FolderPlus className="h-4 w-4 mr-2" />
+                    Add to Portfolio
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   )
