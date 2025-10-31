@@ -55,6 +55,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
 import { PaperTradingAccount, PaperPosition, PaperOrder, PaperTransaction, Stock, Portfolio } from '@/types'
 import { TradingOrderForm } from '@/components/trading/TradingOrderForm'
+import AdvancedPnLDashboard from '@/components/trading/AdvancedPnLDashboard'
 import { useAuthStore } from '@/store'
 import { useRouter } from 'next/navigation'
  
@@ -67,7 +68,7 @@ export default function PaperTradingPage() {
   // State
   const [accounts, setAccounts] = useState<PaperTradingAccount[]>([])
   const [selectedAccount, setSelectedAccount] = useState<PaperTradingAccount | null>(null)
-  const [activeTab, setActiveTab] = useState<'overview' | 'positions' | 'orders' | 'history'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'positions' | 'orders' | 'history' | 'pnl'>('overview')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showCreateAccount, setShowCreateAccount] = useState(false)
@@ -920,6 +921,7 @@ export default function PaperTradingPage() {
                     { id: 'positions', label: 'Positions', icon: BarChart3 },
                     { id: 'orders', label: 'Orders', icon: Clock },
                     { id: 'history', label: 'History', icon: Calendar },
+                    { id: 'pnl', label: 'P&L Analytics', icon: TrendingUp },
                   ].map((tab) => {
                     const Icon = tab.icon
                     return (
@@ -1140,6 +1142,14 @@ export default function PaperTradingPage() {
                   )}
                 </CardContent>
               </Card>
+            )}
+
+            {activeTab === 'pnl' && (
+              <AdvancedPnLDashboard
+                account={selectedAccount}
+                onRefresh={fetchAccounts}
+                realTimeData={realTimeData}
+              />
             )}
 
             
