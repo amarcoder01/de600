@@ -41,7 +41,8 @@ import {
   FolderPlus,
   X,
   Loader2,
-  ExternalLink
+  ExternalLink,
+  MessageCircle
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -56,6 +57,7 @@ import { useToast } from '@/hooks/use-toast'
 import { PaperTradingAccount, PaperPosition, PaperOrder, PaperTransaction, Stock, Portfolio } from '@/types'
 import { TradingOrderForm } from '@/components/trading/TradingOrderForm'
 import AdvancedPnLDashboard from '@/components/trading/AdvancedPnLDashboard'
+import PaperTradingAI from '@/components/trading/PaperTradingAI'
 import { useAuthStore } from '@/store'
 import { useRouter } from 'next/navigation'
  
@@ -78,6 +80,7 @@ export default function PaperTradingPage() {
   const [realTimeData, setRealTimeData] = useState<Map<string, Stock>>(new Map())
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [accountToDelete, setAccountToDelete] = useState<PaperTradingAccount | null>(null)
+  const [showAI, setShowAI] = useState(false)
   const [deletingAccount, setDeletingAccount] = useState(false)
   const [validatingSymbol, setValidatingSymbol] = useState(false)
   const [symbolValidationError, setSymbolValidationError] = useState<string | null>(null)
@@ -715,6 +718,14 @@ export default function PaperTradingPage() {
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh
           </Button>
+          <Button 
+            onClick={() => setShowAI(true)}
+            disabled={!selectedAccount}
+            className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0"
+          >
+            <MessageCircle className="w-4 h-4 mr-2" />
+            AI Assistant
+          </Button>
         </div>
       </div>
 
@@ -873,18 +884,6 @@ export default function PaperTradingPage() {
                     <span className="text-sm text-muted-foreground">Total Value:</span>
                     <span className="font-medium">{formatCurrency(selectedAccount.totalValue)}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Total P&L:</span>
-                    <span className={`font-medium ${selectedAccount.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {formatCurrency(selectedAccount.totalPnL)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">P&L %:</span>
-                    <span className={`font-medium ${selectedAccount.totalPnLPercent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {formatPercentage(selectedAccount.totalPnLPercent)}
-                    </span>
-                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -905,6 +904,15 @@ export default function PaperTradingPage() {
                 <Button className="w-full" variant="outline" onClick={exportSelectedAccountData} disabled={!selectedAccount}>
                   <Download className="w-4 h-4 mr-2" />
                   Export Data
+                </Button>
+                <Button 
+                  className="w-full" 
+                  variant="outline"
+                  onClick={() => setShowAI(true)}
+                  disabled={!selectedAccount}
+                >
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  AI Assistant
                 </Button>
               </CardContent>
             </Card>
@@ -956,20 +964,6 @@ export default function PaperTradingPage() {
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total P&L</CardTitle>
-                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className={`text-2xl font-bold ${selectedAccount.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {formatCurrency(selectedAccount.totalPnL)}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {formatPercentage(selectedAccount.totalPnLPercent)} from initial balance
-                    </p>
-                  </CardContent>
-                </Card>
 
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -1505,6 +1499,16 @@ export default function PaperTradingPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+      )}
+
+      {/* AI Assistant */}
+      {showAI && selectedAccount && (
+        <PaperTradingAI
+          account={selectedAccount}
+          realTimeData={realTimeData}
+          onClose={() => setShowAI(false)}
+          allAccounts={accounts}
+        />
       )}
     </div>
   )

@@ -188,40 +188,86 @@ export default function AdvancedPnLDashboard({
     const weekTransactions = transactions.filter(t => new Date(t.timestamp) >= weekAgo)
     const monthTransactions = transactions.filter(t => new Date(t.timestamp) >= monthAgo)
 
-    // Calculate time-based P&L more accurately
-    const calculatePeriodPnL = (periodTransactions: any[]) => {
+    // Calculate time-based P&L more accurately - only for specific periods
+    const calculatePeriodPnL = (periodStart: Date, periodEnd: Date, periodName: string) => {
+      let periodPnL = 0
+      
+      // Get transactions within this specific period
+      const periodTransactions = transactions.filter(t => {
+        const transactionDate = new Date(t.timestamp)
+        return transactionDate >= periodStart && transactionDate <= periodEnd
+      })
+      
       const periodSells = periodTransactions.filter(t => t.type === 'sell')
       const periodBuys = periodTransactions.filter(t => t.type === 'buy')
       
-      let periodPnL = 0
+      // Calculate realized P&L from completed trades in this period
       periodSells.forEach(sell => {
         if (sell.price && sell.quantity) {
           const sellValue = sell.price * sell.quantity - (sell.commission || 0)
-          // Find corresponding buy (simplified for time-based calculation)
-          const correspondingBuy = periodBuys.find(buy => 
-            buy.symbol === sell.symbol && 
-            buy.price && buy.quantity &&
-            new Date(buy.timestamp) <= new Date(sell.timestamp)
-          )
+          // Find corresponding buy (can be from any time, not just this period)
+          const correspondingBuy = transactions
+            .filter(t => t.type === 'buy' && t.symbol === sell.symbol && t.price && t.quantity)
+            .find(buy => new Date(buy.timestamp) <= new Date(sell.timestamp))
+          
           if (correspondingBuy && correspondingBuy.price) {
             const buyValue = correspondingBuy.price * sell.quantity + (correspondingBuy.commission || 0)
             periodPnL += (sellValue - buyValue)
           }
         }
       })
+      
+      // For positions opened in this period, add their current unrealized P&L
+      positions.forEach(position => {
+        const firstBuyTransaction = transactions
+          .filter(t => t.type === 'buy' && t.symbol === position.symbol)
+          .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())[0]
+        
+        if (firstBuyTransaction) {
+          const openDate = new Date(firstBuyTransaction.timestamp)
+          // Only include if position was opened within this specific period
+          if (openDate >= periodStart && openDate <= periodEnd) {
+            const realTimePrice = realTimeData.get(position.symbol)?.price || position.currentPrice
+            const unrealizedPnL = (realTimePrice - position.averagePrice) * position.quantity
+            periodPnL += unrealizedPnL
+          }
+        }
+      })
+      
       return periodPnL
     }
 
-    const dayPnL = calculatePeriodPnL(dayTransactions)
-    const weekPnL = calculatePeriodPnL(weekTransactions)
-    const monthPnL = calculatePeriodPnL(monthTransactions)
+    const dayPnL = calculatePeriodPnL(dayAgo, now, 'day')
+    const weekPnL = calculatePeriodPnL(weekAgo, now, 'week') 
+    const monthPnL = calculatePeriodPnL(monthAgo, now, 'month')
+
+    // Include unrealized P&L in statistics for open positions
+    let totalWinsIncludingUnrealized = totalWins
+    let totalLossesIncludingUnrealized = totalLosses
+    let winsIncludingUnrealized = wins
+    let lossesIncludingUnrealized = losses
+
+    // Add unrealized P&L from open positions to statistics
+    positions.forEach(position => {
+      const realTimePrice = realTimeData.get(position.symbol)?.price || position.currentPrice
+      const unrealizedPnL = (realTimePrice - position.averagePrice) * position.quantity
+      
+      if (unrealizedPnL > 0) {
+        totalWinsIncludingUnrealized += unrealizedPnL
+        winsIncludingUnrealized++
+      } else if (unrealizedPnL < 0) {
+        totalLossesIncludingUnrealized += Math.abs(unrealizedPnL)
+        lossesIncludingUnrealized++
+      }
+    })
 
     const totalPnL = totalRealizedPnL + totalUnrealizedPnL
     const totalPnLPercent = account.initialBalance > 0 ? (totalPnL / account.initialBalance) * 100 : 0
-    const winRate = (wins + losses) > 0 ? (wins / (wins + losses)) * 100 : 0
-    const avgWin = wins > 0 ? totalWins / wins : 0
-    const avgLoss = losses > 0 ? totalLosses / losses : 0
-    const profitFactor = avgLoss > 0 ? avgWin / avgLoss : 0
+    const winRate = (winsIncludingUnrealized + lossesIncludingUnrealized) > 0 ? 
+      (winsIncludingUnrealized / (winsIncludingUnrealized + lossesIncludingUnrealized)) * 100 : 0
+    const avgWin = winsIncludingUnrealized > 0 ? totalWinsIncludingUnrealized / winsIncludingUnrealized : 0
+    const avgLoss = lossesIncludingUnrealized > 0 ? totalLossesIncludingUnrealized / lossesIncludingUnrealized : 0
+    const profitFactor = avgLoss > 0 ? avgWin / avgLoss : (avgWin > 0 ? 999 : 0)
 
     setPnlMetrics({
       totalPnL,
@@ -393,7 +439,13 @@ export default function AdvancedPnLDashboard({
               <div>
                 <p className="text-sm text-muted-foreground">Total Profits</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {formatCurrency(Math.max(0, pnlMetrics.totalPnL))}
+                  {formatCurrency(
+                    account.positions.reduce((sum, pos) => {
+                      const realTimePrice = realTimeData.get(pos.symbol)?.price || pos.currentPrice
+                      const unrealizedPnL = (realTimePrice - pos.averagePrice) * pos.quantity
+                      return sum + Math.max(0, unrealizedPnL)
+                    }, Math.max(0, pnlMetrics.realizedPnL))
+                  )}
                 </p>
                 <p className="text-sm text-green-600">
                   Avg: {formatCurrency(pnlMetrics.avgWin)}
@@ -410,7 +462,13 @@ export default function AdvancedPnLDashboard({
               <div>
                 <p className="text-sm text-muted-foreground">Total Losses</p>
                 <p className="text-2xl font-bold text-red-600">
-                  {formatCurrency(Math.abs(Math.min(0, pnlMetrics.totalPnL)))}
+                  {formatCurrency(
+                    account.positions.reduce((sum, pos) => {
+                      const realTimePrice = realTimeData.get(pos.symbol)?.price || pos.currentPrice
+                      const unrealizedPnL = (realTimePrice - pos.averagePrice) * pos.quantity
+                      return sum + Math.abs(Math.min(0, unrealizedPnL))
+                    }, Math.abs(Math.min(0, pnlMetrics.realizedPnL)))
+                  )}
                 </p>
                 <p className="text-sm text-red-600">
                   Avg: {formatCurrency(pnlMetrics.avgLoss)}
