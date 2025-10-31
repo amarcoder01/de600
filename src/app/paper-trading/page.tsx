@@ -785,8 +785,90 @@ export default function PaperTradingPage() {
             <CardTitle className="flex items-center justify-between">
               <span>Select Account</span>
               {selectedAccount && (
-                <Badge variant={selectedAccount.totalPnL >= 0 ? 'default' : 'destructive'}>
-                  {formatPercentage(selectedAccount.totalPnLPercent)}
+                <Badge variant={(() => {
+                  // Calculate unrealized P&L using live prices
+                  const unrealizedPnL = selectedAccount.positions?.reduce((total, position) => {
+                    const realTimePrice = realTimeData.get(position.symbol)?.price || position.currentPrice
+                    const positionValue = realTimePrice * position.quantity
+                    const investedAmount = position.averagePrice * position.quantity
+                    return total + (positionValue - investedAmount)
+                  }, 0) || 0
+                  
+                  // Calculate realized P&L using FIFO matching (same as P&L Analytics)
+                  const sellTransactions = selectedAccount.transactions?.filter(t => t.type === 'sell') || []
+                  const buyTransactions = selectedAccount.transactions?.filter(t => t.type === 'buy') || []
+                  
+                  let realizedPnL = 0
+                  
+                  sellTransactions.forEach(sell => {
+                    if (!sell.symbol || !sell.quantity || !sell.price) return
+                    
+                    let remainingQuantity = sell.quantity
+                    const relevantBuys = buyTransactions
+                      .filter(buy => buy.symbol === sell.symbol && buy.quantity && buy.price)
+                      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+                    
+                    for (const buy of relevantBuys) {
+                      if (remainingQuantity <= 0) break
+                      
+                      const tradeQuantity = Math.min(remainingQuantity, buy.quantity!)
+                      const tradePnL = (sell.price! - buy.price!) * tradeQuantity - 
+                                      ((sell.commission || 0) + (buy.commission || 0)) * (tradeQuantity / sell.quantity!)
+                      
+                      realizedPnL += tradePnL
+                      remainingQuantity -= tradeQuantity
+                    }
+                  })
+                  
+                  // Total P&L = Realized + Unrealized
+                  const totalPnL = realizedPnL + unrealizedPnL
+                  
+                  return totalPnL >= 0 ? 'default' : 'destructive'
+                })()}>
+                  {(() => {
+                    // Calculate unrealized P&L using live prices
+                    const unrealizedPnL = selectedAccount.positions?.reduce((total, position) => {
+                      const realTimePrice = realTimeData.get(position.symbol)?.price || position.currentPrice
+                      const positionValue = realTimePrice * position.quantity
+                      const investedAmount = position.averagePrice * position.quantity
+                      return total + (positionValue - investedAmount)
+                    }, 0) || 0
+                    
+                    // Calculate realized P&L using FIFO matching (same as P&L Analytics)
+                    const sellTransactions = selectedAccount.transactions?.filter(t => t.type === 'sell') || []
+                    const buyTransactions = selectedAccount.transactions?.filter(t => t.type === 'buy') || []
+                    
+                    let realizedPnL = 0
+                    
+                    sellTransactions.forEach(sell => {
+                      if (!sell.symbol || !sell.quantity || !sell.price) return
+                      
+                      let remainingQuantity = sell.quantity
+                      const relevantBuys = buyTransactions
+                        .filter(buy => buy.symbol === sell.symbol && buy.quantity && buy.price)
+                        .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+                      
+                      for (const buy of relevantBuys) {
+                        if (remainingQuantity <= 0) break
+                        
+                        const tradeQuantity = Math.min(remainingQuantity, buy.quantity!)
+                        const tradePnL = (sell.price! - buy.price!) * tradeQuantity - 
+                                        ((sell.commission || 0) + (buy.commission || 0)) * (tradeQuantity / sell.quantity!)
+                        
+                        realizedPnL += tradePnL
+                        remainingQuantity -= tradeQuantity
+                      }
+                    })
+                    
+                    // Total P&L = Realized + Unrealized
+                    const totalPnL = realizedPnL + unrealizedPnL
+                    
+                    const totalPnLPercent = selectedAccount.initialBalance > 0 
+                      ? (totalPnL / selectedAccount.initialBalance) * 100 
+                      : 0
+                    
+                    return formatPercentage(totalPnLPercent)
+                  })()}
                 </Badge>
               )}
             </CardTitle>
@@ -842,8 +924,86 @@ export default function PaperTradingPage() {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm text-muted-foreground">P&L:</span>
-                        <span className={`font-medium ${account.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {formatCurrency(account.totalPnL)}
+                        <span className={`font-medium ${(() => {
+                          // Calculate unrealized P&L using live prices
+                          const unrealizedPnL = account.positions?.reduce((total, position) => {
+                            const realTimePrice = realTimeData.get(position.symbol)?.price || position.currentPrice
+                            const positionValue = realTimePrice * position.quantity
+                            const investedAmount = position.averagePrice * position.quantity
+                            return total + (positionValue - investedAmount)
+                          }, 0) || 0
+                          
+                          // Calculate realized P&L using FIFO matching (same as P&L Analytics)
+                          const sellTransactions = account.transactions?.filter(t => t.type === 'sell') || []
+                          const buyTransactions = account.transactions?.filter(t => t.type === 'buy') || []
+                          
+                          let realizedPnL = 0
+                          
+                          sellTransactions.forEach(sell => {
+                            if (!sell.symbol || !sell.quantity || !sell.price) return
+                            
+                            let remainingQuantity = sell.quantity
+                            const relevantBuys = buyTransactions
+                              .filter(buy => buy.symbol === sell.symbol && buy.quantity && buy.price)
+                              .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+                            
+                            for (const buy of relevantBuys) {
+                              if (remainingQuantity <= 0) break
+                              
+                              const tradeQuantity = Math.min(remainingQuantity, buy.quantity!)
+                              const tradePnL = (sell.price! - buy.price!) * tradeQuantity - 
+                                              ((sell.commission || 0) + (buy.commission || 0)) * (tradeQuantity / sell.quantity!)
+                              
+                              realizedPnL += tradePnL
+                              remainingQuantity -= tradeQuantity
+                            }
+                          })
+                          
+                          // Total P&L = Realized + Unrealized
+                          const totalPnL = realizedPnL + unrealizedPnL
+                          
+                          return totalPnL >= 0 ? 'text-green-600' : 'text-red-600'
+                        })()}`}>
+                          {(() => {
+                            // Calculate unrealized P&L using live prices
+                            const unrealizedPnL = account.positions?.reduce((total, position) => {
+                              const realTimePrice = realTimeData.get(position.symbol)?.price || position.currentPrice
+                              const positionValue = realTimePrice * position.quantity
+                              const investedAmount = position.averagePrice * position.quantity
+                              return total + (positionValue - investedAmount)
+                            }, 0) || 0
+                            
+                            // Calculate realized P&L using FIFO matching (same as P&L Analytics)
+                            const sellTransactions = account.transactions?.filter(t => t.type === 'sell') || []
+                            const buyTransactions = account.transactions?.filter(t => t.type === 'buy') || []
+                            
+                            let realizedPnL = 0
+                            
+                            sellTransactions.forEach(sell => {
+                              if (!sell.symbol || !sell.quantity || !sell.price) return
+                              
+                              let remainingQuantity = sell.quantity
+                              const relevantBuys = buyTransactions
+                                .filter(buy => buy.symbol === sell.symbol && buy.quantity && buy.price)
+                                .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+                              
+                              for (const buy of relevantBuys) {
+                                if (remainingQuantity <= 0) break
+                                
+                                const tradeQuantity = Math.min(remainingQuantity, buy.quantity!)
+                                const tradePnL = (sell.price! - buy.price!) * tradeQuantity - 
+                                                ((sell.commission || 0) + (buy.commission || 0)) * (tradeQuantity / sell.quantity!)
+                                
+                                realizedPnL += tradePnL
+                                remainingQuantity -= tradeQuantity
+                              }
+                            })
+                            
+                            // Total P&L = Realized + Unrealized
+                            const totalPnL = realizedPnL + unrealizedPnL
+                            
+                            return formatCurrency(totalPnL)
+                          })()}
                         </span>
                       </div>
                     </div>

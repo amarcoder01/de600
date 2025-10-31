@@ -725,9 +725,21 @@ export default function AdvancedPnLDashboard({
                       </td>
                       <td className="p-2 text-center">
                         {unrealizedPnL >= 0 ? (
-                          <Badge className="bg-green-100 text-green-800">Profit</Badge>
+                          <Badge
+                            variant="secondary"
+                            className="bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-md font-medium"
+                            aria-label="Profitable position"
+                          >
+                            Profit
+                          </Badge>
                         ) : (
-                          <Badge className="bg-red-100 text-red-800">Loss</Badge>
+                          <Badge
+                            variant="secondary"
+                            className="bg-rose-500/15 text-rose-400 border border-rose-500/30 px-2 py-0.5 rounded-md font-medium"
+                            aria-label="Losing position"
+                          >
+                            Loss
+                          </Badge>
                         )}
                       </td>
                     </tr>
